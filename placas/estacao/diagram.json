@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "author": "pick-to-light",
+  "editor": "wokwi",
+  "parts": [
+    {"type": "board-pi-pico-w", "id": "pico", "top": 40, "left": -160, "attrs": {"env": "micropython-20231227-v1.22.0"}},
+    {"type": "wokwi-lcd1602", "id": "lcd", "top": -40, "left": 40, "attrs": {"pins": "i2c"}},
+    {"type": "wokwi-pushbutton", "id": "btBip", "top": 120, "left": 60, "attrs": {"color": "blue", "label": "BIPAR CAIXA", "key": "b"}},
+    {"type": "wokwi-pushbutton", "id": "btCanc", "top": 120, "left": 200, "attrs": {"color": "red", "label": "CANCELA", "key": "c"}},
+    {"type": "wokwi-led", "id": "ledLivre", "top": 210, "left": 80, "attrs": {"color": "limegreen", "label": "LIVRE"}},
+    {"type": "wokwi-resistor", "id": "r1", "top": 290, "left": 40, "rotate": 90, "attrs": {"value": "220"}},
+    {"type": "wokwi-led", "id": "ledSep", "top": 210, "left": 220, "attrs": {"color": "yellow", "label": "SEPARANDO"}},
+    {"type": "wokwi-resistor", "id": "r2", "top": 290, "left": 180, "rotate": 90, "attrs": {"value": "220"}}
+  ],
+  "connections": [
+    ["pico:GP0", "$serialMonitor:RX", "", []],
+    ["pico:GP1", "$serialMonitor:TX", "", []],
+    ["lcd:GND", "pico:GND.8", "black", []],
+    ["lcd:VCC", "pico:VBUS", "red", []],
+    ["lcd:SDA", "pico:GP4", "blue", []],
+    ["lcd:SCL", "pico:GP5", "orange", []],
+    ["pico:GP14", "btBip:1.l", "blue", []],
+    ["btBip:2.l", "pico:GND.3", "black", []],
+    ["pico:GP15", "btCanc:1.l", "red", []],
+    ["btCanc:2.l", "pico:GND.4", "black", []],
+    ["pico:GP16", "r1:1", "green", []],
+    ["r1:2", "ledLivre:A", "green", []],
+    ["ledLivre:C", "pico:GND.5", "black", []],
+    ["pico:GP17", "r2:1", "gold", []],
+    ["r2:2", "ledSep:A", "gold", []],
+    ["ledSep:C", "pico:GND.5", "black", []]
+  ],
+  "dependencies": {}
+}

@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Simulador Pick-to-Light",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/iniciar.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}
