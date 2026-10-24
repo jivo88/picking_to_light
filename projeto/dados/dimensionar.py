@@ -18,7 +18,7 @@ def zona(r):
     if p <= 10:
         a = int(r["cd_andar"])
         if a in (4, 5):
-            return "AG-E" if p <= 5 else "AG-D"            # alto giro 4-5: blocos esquerdo/direito
+            return ("AG-E" if p <= 5 else "AG-D") + str(a)  # alto giro 4-5: 1 display E+Q por andar e por lado
         return None                                         # alto giro 0-3: display proprio
     if p < 20:
         return "BG-01"                                      # predio 015 entra na 1a zona do fundo

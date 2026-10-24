@@ -1,8 +1,10 @@
 /* Simulador 3D — estação de flow rack com pick-to-light
- * Layout conforme o desenho da operação:
- *   Esteira 1 (transporte) → alto giro ao longo da esteira → transferência entre estações →
- *   área de espera em frente ao alto giro → corredor perpendicular do baixo giro.
- *   Andar 0 é o de cima. A altura de cada endereço = altura do prédio / nº de endereços do prédio.
+ * Layout conforme a operação (desenho e fotos):
+ *   esteira de transporte e esteira de separação lado a lado (≈ 20 cm entre elas);
+ *   transferência a cada 4 estações com rolete direcionador (2 estações à esquerda, 2 à direita);
+ *   operador entre a esteira de separação e o alto giro, que fica atrás dele;
+ *   passagem no meio do alto giro para o corredor do baixo giro.
+ *   Prateleiras alinhadas, andar 0 em cima; a caixa do endereço varia pelo tipo (A, B, C, F, N).
  * Regras de funcionamento iguais às do documento técnico (Arquitetura A e B).
  * Medidas ficam em CFG e são premissas até chegarem as medidas reais. */
 (function () {
@@ -12,32 +14,41 @@
 
   // ======================================================================= CONFIGURAÇÃO
   const CFG = {
-    // alto giro, ao longo da Esteira 1
-    WA: 0.47, baseAlto: 0.3, alturaAlto: 1.98, profAlto: 1.15,
-    // baixo giro, corredor perpendicular
-    WB: 0.6, baseBaixo: 0.25, alturaBaixo: 2.04, profBaixo: 2.2,
-    larguraCorredor: 1.5, larguraVao: 1.2,
-    larg015: 1.1, prof015: 1.0,
-    predioVirada: 32,            // prédios < 32 no lado esquerdo do corredor; >= 32 no direito
-    tilt: 0.12,
-    zEsteira1: -2.75, alturaEsteira1: 0.8, largEsteira1: 0.6,
-    zAltoFace: -0.95,
-    zEspera: -0.52, largEspera: 0.55, alturaEspera: 0.75,
-    zOperAlto: -0.05, zCabeca: 1.2,
-    xPega: 0.0, xFila: -1.45,
-    xIni: -18, xFimEsteira: 18,
+    // alto giro: atrás do operador, de frente para as esteiras, dividido pela passagem do corredor
+    WA: 0.44, baseAlto: 0.3, alturaAlto: 1.98, niveisAlto: 6, profAlto: 1.15,
+    // baixo giro: corredor perpendicular às esteiras
+    WB: 0.6, baseBaixo: 0.25, alturaBaixo: 2.04, niveisBaixo: 8, profBaixo: 2.2,
+    larguraCorredor: 1.5,
+    predioVirada: 32,            // prédios < 32 no lado esquerdo do corredor; 015 e >= 32 no direito
+    tilt: 0.1,
+    zTransp: -1.55, largTransp: 0.55, altTransp: 0.8,   // esteira de transporte
+    zSep: -0.8, largSep: 0.55, altSep: 0.75,             // esteira de separação (≈ 20 cm da de transporte)
+    zAltoFace: 0.7,
+    zOperAlto: 0.3, zOperSep: -0.22,
+    xPega: 0.0, distFila: 1.45,
     velEsteira: 1.8, velEmpurre: 0.9, velOperador: 1.3,
     tempoPega: 1.6, tempoPorUnidade: 0.25, tempoDeposito: 0.5,
-    bacia: { c: 0.6, a: 0.3, l: 0.4 },   // bacia retornável: tamanho único
+    bacia: { c: 0.6, a: 0.3, l: 0.4, cor: '#2E9E4F', borda: '#1d6b35' },   // bacia retornável verde, tamanho único
+    // caixa do endereço por tipo: fração da largura e da altura do vão
+    caixaTipo: { A: [0.9, 0.78], B: [0.8, 0.68], C: [0.72, 0.6], F: [0.58, 0.48], N: [0.86, 0.72] },
+    segmentos: { Medicamento: [3, 22], Perfumaria: [26, 45] },   // estações de ponta de cada esteira
   };
-  CFG.compAlto = 10 * CFG.WA;
-  CFG.passo = CFG.compAlto + CFG.larguraVao;                     // distância entre estações
-  CFG.xEntrada = -(CFG.compAlto / 2 + CFG.larguraVao / 2) + 0.3;  // faixa de entrada no vão oeste
-  CFG.xSaida = CFG.compAlto / 2 + CFG.larguraVao / 2 - 0.3;       // faixa de saída no vão leste
-  CFG.x015 = -(CFG.larguraCorredor / 2 + CFG.profBaixo / 2);      // cabeceira do bloco oeste
+  CFG.passo = 2 * CFG.profBaixo + CFG.larguraCorredor;          // distância entre estações
+  CFG.meioAlto = (CFG.passo - CFG.larguraCorredor) / 2;        // largura de cada metade do alto giro
+  CFG.zFaces = CFG.zAltoFace + CFG.profAlto + 0.15;            // início das faces do baixo giro
 
   const CORES_ZONA = ['#2E8B57', '#2F5597', '#D68910', '#7B4FA0', '#C0392B', '#138D90', '#8E6C3A', '#D35400', '#5B6675'];
-  const COR_SEG = { Medicamento: '#1F6FB5', Perfumaria: '#8E44AD' };
+
+  // transferência que atende a estação: cada uma atende 2 estações à esquerda e 2 à direita;
+  // na ponta inicial (3 ou 26) atende a ponta à esquerda e as duas seguintes à direita
+  function transferenciaDe(est) {
+    const seg = DADOS[est].info.segmento;
+    const [p0, p1] = CFG.segmentos[seg] || [3, 22];
+    let b = p0 + 4 * Math.round((est - p0 - 0.5) / 4);
+    if (b + 1 > p1) b = p1 - 1;
+    if (b < p0) b = p0;
+    return { b, x: (b + 0.5 - est) * CFG.passo, lado: est <= b ? 'esquerda' : 'direita', p0, p1 };
+  }
 
   // ======================================================================= ESTADO
   const S = { est: '05', modo: 'A', itens: 8, vel: 1, auto: false, guia: true, destaque: true, cabos: true, cam: 'geral' };
@@ -65,9 +76,9 @@
   scene.background = new THREE.Color('#dfe4ea');
   scene.fog = new THREE.Fog('#dfe4ea', 32, 62);
   const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.05, 220);
-  camera.position.set(-3.6, 6.0, 6.2);
+  camera.position.set(-5.6, 6.4, -6.2);
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.target.set(0.6, 0.8, -0.3);
+  controls.target.set(0.4, 0.7, 1.8);
   controls.enableDamping = true;
   controls.maxPolarAngle = Math.PI * 0.495;
   controls.minDistance = 0.6;
@@ -94,7 +105,7 @@
     trilho: mat('#9AA4AE', { metalness: 0.5, roughness: 0.4 }),
     corpo: mat('#1d2129', { roughness: 0.5 }),
     tote: mat('#3E5C7E', { roughness: 0.6 }),
-    caixaPapelao: mat('#B98B57', { roughness: 0.85 }),
+    caixaPapelao: mat('#C9A574', { roughness: 0.85 }),
     rolete: mat('#B8C0C8', { metalness: 0.7, roughness: 0.3 }),
     esteira: mat('#4A5563', { metalness: 0.4, roughness: 0.5 }),
     amarelo: mat('#F4C430'),
@@ -102,6 +113,7 @@
     cinzaEstr: mat('#A3ABB5', { metalness: 0.2, roughness: 0.6 }),
     cinzaViga: mat('#B9C0C8', { metalness: 0.2, roughness: 0.6 }),
     cinzaTote: mat('#C4CAD1', { roughness: 0.8 }),
+    etiqueta: new THREE.MeshBasicMaterial({ color: '#f4f4f2' }),
   };
   const PRODUTOS = ['#E74C3C', '#F5F5F5', '#3498DB', '#F1C40F', '#2ECC71', '#E67E22', '#9B59B6', '#ECF0F1', '#1ABC9C', '#FADBD8', '#D6EAF8'].map((c) => mat(c, { roughness: 0.6 }));
   const BOX1 = new THREE.BoxGeometry(1, 1, 1);
@@ -322,55 +334,54 @@
   }
 
   // ======================================================================= RACK (frente local +z, prédios ao longo de x local)
-  // colunas: [{x, w, predio, ends:[endereços em ordem de andar]}]; o: {base, altura, prof, cinza, lado, rotulos}
+  // colunas: [{x, w, predio, ends:{andar: endereço}}]; o: {base, altura, niveis, prof, cinza, lado}
+  // Prateleiras alinhadas: todos os prédios têm os mesmos níveis; andar 0 em cima.
   function construirRack(colunas, o) {
     const g = new THREE.Group();
-    const top = o.base + o.altura;
-    const hM = top + 0.56;
+    const top = o.base + o.altura, h = o.altura / o.niveis;
+    const hM = top + 0.5;
     const cinza = !!o.cinza;
     const bordas = new Set();
     colunas.forEach((c) => { bordas.add(Math.round((c.x - c.w / 2) * 1000) / 1000); bordas.add(Math.round((c.x + c.w / 2) * 1000) / 1000); });
-    const mont = [], vigas = [], trilhos = [], reservas = [], totesCinza = [];
+    const mont = [], vigas = [], trilhos = [], reservas = [], caixas = [], etiquetas = [];
     const rotPorAndar = ROT_ANDAR.map(() => []), prodPorMat = PRODUTOS.map(() => []);
     bordas.forEach((bx) => {
-      mont.push(matriz(bx, hM / 2, -0.02, 0, 0, 0, 0.045, hM, 0.045));
-      mont.push(matriz(bx, hM / 2, -o.prof, 0, 0, 0, 0.045, hM, 0.045));
+      mont.push(matriz(bx, hM / 2, -0.02, 0, 0, 0, 0.05, hM, 0.04));
+      mont.push(matriz(bx, hM / 2, -o.prof, 0, 0, 0, 0.05, hM, 0.04));
     });
     const profs = [];
-    for (let zz = -0.58; zz > -o.prof + 0.15; zz -= 0.38) profs.push(zz);
-    colunas.forEach((c, ci) => {
-      const n = Math.max(1, c.ends ? c.ends.length : c.n);
-      const h = o.altura / n;
-      for (let i = 0; i <= n; i++) {
+    for (let zz = -0.6; zz > -o.prof + 0.2; zz -= 0.42) profs.push(zz);
+    const r = aleat(o.seed || 7);
+    colunas.forEach((c) => {
+      for (let i = 0; i <= o.niveis; i++) {
         const y = top - i * h;
-        vigas.push(matriz(c.x, y - 0.02, 0, 0, 0, 0, c.w, 0.045, 0.04));
-        vigas.push(matriz(c.x, y - 0.02 + o.prof * Math.tan(CFG.tilt), -o.prof, 0, 0, 0, c.w, 0.045, 0.04));
+        vigas.push(matriz(c.x, y - 0.02, 0, 0, 0, 0, c.w, 0.05, 0.035));
+        vigas.push(matriz(c.x, y - 0.02 + o.prof * Math.tan(CFG.tilt), -o.prof, 0, 0, 0, c.w, 0.05, 0.035));
       }
-      for (let i = 0; i < n; i++) {
-        const yb = top - (i + 1) * h;
+      for (let a = 0; a < o.niveis; a++) {
+        const yb = top - (a + 1) * h;
         trilhos.push(matriz(c.x, yb + (o.prof / 2) * Math.tan(CFG.tilt), -o.prof / 2, CFG.tilt, 0, 0, c.w, 0.012, o.prof));
-        const alto = h > 0.5;
-        const ht = alto ? Math.min(h * 0.6, 0.8) : h * 0.62, wt = c.w * 0.84, dt = alto ? 0.42 : 0.34;
+        const e = cinza ? null : c.ends[a];
+        const tipo = cinza ? (r() < 0.25 ? null : 'ABCF'[Math.floor(r() * 4)]) : e && e.dim;
+        if (!tipo) continue;
+        const [fw, fh] = CFG.caixaTipo[tipo] || [0.75, 0.6];
+        const wt = c.w * fw, ht = h * fh, dt = 0.38;
         const yc = (zz) => yb + 0.012 + ht / 2 - zz * Math.tan(CFG.tilt);
         profs.forEach((zz) => reservas.push(matriz(c.x, yc(zz), zz, CFG.tilt, 0, 0, wt, ht, dt)));
-        if (cinza) { totesCinza.push(matriz(c.x, yc(-0.2), -0.2, CFG.tilt, 0, 0, wt, ht, dt)); continue; }
-        const e = c.ends[i];
-        const tm = (alto ? M.caixaPapelao : M.tote).clone();
-        const tote = new THREE.Mesh(BOX1, tm);
-        tote.scale.set(wt, ht, dt);
-        tote.position.set(c.x, yc(-0.2), -0.2);
-        tote.rotation.x = CFG.tilt;
-        g.add(tote);
-        if (!alto) {
-          const off = ht / 2 + 0.02;
-          prodPorMat[(e.predio * 7 + e.andar * 3) % PRODUTOS.length].push(matriz(c.x, yc(-0.2) + off * Math.cos(CFG.tilt), -0.2 + off * Math.sin(CFG.tilt), CFG.tilt, 0, 0, wt * 0.8, 0.04, dt * 0.8));
-        }
-        e.tote = tote;
+        if (cinza) { caixas.push(matriz(c.x, yc(-0.2), -0.2, CFG.tilt, 0, 0, wt, ht, dt)); continue; }
+        const tm = M.caixaPapelao.clone();
+        const caixa = new THREE.Mesh(BOX1, tm);
+        caixa.scale.set(wt, ht, dt);
+        caixa.position.set(c.x, yc(-0.2), -0.2);
+        caixa.rotation.x = CFG.tilt;
+        g.add(caixa);
+        const off = ht / 2 + 0.02;
+        prodPorMat[(e.predio * 7 + e.andar * 3) % PRODUTOS.length].push(matriz(c.x, yc(-0.2) + off * Math.cos(CFG.tilt) - 0.03, -0.2 + off * Math.sin(CFG.tilt), CFG.tilt, 0, 0, wt * 0.8, 0.05, dt * 0.6));
+        etiquetas.push(matriz(c.x, yc(-0.2) - ht * 0.15, -0.2 + dt / 2 + 0.003, CFG.tilt, 0, 0, Math.min(0.14, wt * 0.6), Math.min(0.05, ht * 0.3), 1));
+        e.tote = caixa;
         e.toteMat = tm;
-        if (o.rotulos !== false) {
-          rotPorAndar[Math.min(7, e.andar)].push(matriz(c.x - c.w / 2 + 0.05, yb - 0.022, 0.024));
-        }
-        if (e.cat === 'alto_0a3') e.modulo = criarModulo('Q', g, c.x, yb - 0.034, 0.045, 0, rotEnd(e), 'alto');
+        rotPorAndar[Math.min(7, a)].push(matriz(c.x - c.w / 2 + 0.05, yb - 0.022, 0.024));
+        if (e.cat === 'alto_0a3') e.modulo = criarModulo('Q', g, c.x, yb - 0.036, 0.04, 0, rotEnd(e), 'alto');
       }
       if (!cinza) {
         const lb = placa(pad(c.predio, 3), Math.min(0.2, c.w - 0.06), 0.065, { fundo: '#ffffff', cor: '#1B2638' });
@@ -386,14 +397,17 @@
     g.add(instanciado(BOX1, cinza ? M.cinzaEstr : M.montante, mont, true));
     g.add(instanciado(BOX1, cinza ? M.cinzaViga : M.longarina, vigas, !cinza));
     g.add(instanciado(BOX1, M.trilho, trilhos, false));
-    g.add(instanciado(BOX1, cinza ? M.cinzaTote : M.tote, reservas, false));
-    if (cinza) g.add(instanciado(BOX1, M.cinzaTote, totesCinza, false));
-    rotPorAndar.forEach((ms, a) => { if (ms.length) g.add(instanciado(GEO_ROT, ROT_ANDAR[a], ms, false)); });
-    prodPorMat.forEach((ms, k) => { if (ms.length) g.add(instanciado(BOX1, PRODUTOS[k], ms, false)); });
+    g.add(instanciado(BOX1, cinza ? M.cinzaTote : M.caixaPapelao, reservas, false));
+    if (cinza) g.add(instanciado(BOX1, M.cinzaTote, caixas, false));
+    else {
+      g.add(instanciado(new THREE.PlaneGeometry(1, 1), M.etiqueta, etiquetas, false));
+      rotPorAndar.forEach((ms, a) => { if (ms.length) g.add(instanciado(GEO_ROT, ROT_ANDAR[a], ms, false)); });
+      prodPorMat.forEach((ms, k) => { if (ms.length) g.add(instanciado(BOX1, PRODUTOS[k], ms, false)); });
+    }
     const xs = colunas.map((c) => c.x);
-    g.userData = { top, xmin: Math.min(...xs) - colunas[0].w / 2, xmax: Math.max(...xs) + colunas[0].w / 2 };
+    g.userData = { top, h, xmin: Math.min(...xs) - colunas[0].w / 2, xmax: Math.max(...xs) + colunas[0].w / 2 };
     const header = caixaMesh(g.userData.xmax - g.userData.xmin + 0.06, 0.05, 0.05, cinza ? M.cinzaEstr : M.montante);
-    header.position.set((g.userData.xmin + g.userData.xmax) / 2, top + 0.53, -0.01);
+    header.position.set((g.userData.xmin + g.userData.xmax) / 2, top + 0.48, -0.01);
     g.add(header);
     return g;
   }
@@ -402,22 +416,54 @@
     g.position.set(x, 0, z);
     g.rotation.y = { '+z': 0, '-z': Math.PI, '-x': -Math.PI / 2, '+x': Math.PI / 2 }[normal];
   }
-  function colunasCinza(n, W, seed, nNiveis) {
-    const r = aleat(seed);
-    return Array.from({ length: n }, (_, i) => ({ x: (i + 0.5) * W, w: W, predio: 0, n: r() < 0.25 ? 2 : r() < 0.4 ? Math.ceil(nNiveis / 2) : nNiveis }));
+  const colunasVazias = (xs, W) => xs.map((x) => ({ x, w: W, predio: 0, ends: {} }));
+
+  // metades do alto giro de uma estação com centro em xc; local x = -mundo x (frente para -z)
+  function altoGiro(xc, porPredio, cinza, seed) {
+    const W = CFG.WA, hc = CFG.larguraCorredor / 2;
+    const xMundo = (p) => (p <= 5 ? xc - hc - CFG.meioAlto + (p - 0.5) * W : xc + hc + (p - 5.5) * W);
+    const opt = { base: CFG.baseAlto, altura: CFG.alturaAlto, niveis: CFG.niveisAlto, prof: CFG.profAlto, lado: 'alto', cinza, seed };
+    return [[1, 5], [6, 10]].map(([p1, p2]) => {
+      const cols = [];
+      for (let p = p1; p <= p2; p++) {
+        const ends = {};
+        if (!cinza) (porPredio[p] || []).forEach((e) => { ends[e.andar] = e; });
+        cols.push({ x: -xMundo(p), w: W, predio: p, ends });
+      }
+      const g = construirRack(cols, { ...opt, seed: (seed || 1) + p1 });
+      posicionar(g, 0, CFG.zAltoFace, '-z');
+      g.userData.xMundo = xMundo;
+      return g;
+    });
+  }
+  // lado do corredor: prédios em ordem a partir da entrada; normal '-x' = lado esquerdo (+x), '+x' = lado direito (-x)
+  function ladoCorredor(xFace, normal, predios, porPredio, cinza, seed, n) {
+    const sgn = normal === '-x' ? 1 : -1;
+    const cols = (cinza ? Array.from({ length: n }, (_, i) => i) : predios).map((p, i) => {
+      const ends = {};
+      if (!cinza) porPredio[p].forEach((e) => { ends[e.andar] = e; });
+      return { x: sgn * (i + 0.5) * CFG.WB, w: CFG.WB, predio: cinza ? 0 : p, ends };
+    });
+    const g = construirRack(cols, { base: CFG.baseBaixo, altura: CFG.alturaBaixo, niveis: CFG.niveisBaixo, prof: CFG.profBaixo, lado: 'baixo', cinza, seed });
+    posicionar(g, xFace, CFG.zFaces, normal);
+    return g;
   }
 
   // ======================================================================= ESTAÇÃO
+  let transf = null, faixaX = [-12, 12];
   function construirEstacao() {
     limpar(grpEst);
     clicaveis.length = 0;
     modulos = [];
     guias = {};
     const info = DADOS[S.est].info;
+    const est = +S.est;
     enderecos = DADOS[S.est].enderecos.map((a) => ({ end: a[0], predio: a[1], andar: a[2], cat: a[3], zona: a[4], dim: a[5], ordem: a[6] }));
     const porPredio = {};
     enderecos.forEach((e) => { (porPredio[e.predio] = porPredio[e.predio] || []).push(e); });
-    Object.values(porPredio).forEach((l) => l.sort((a, b) => a.andar - b.andar));
+    transf = transferenciaDe(S.est);
+    const sMin = Math.max(transf.p0, Math.min(transf.b, est - 1)), sMax = Math.min(transf.p1, Math.max(transf.b + 1, est + 1));
+    faixaX = [(sMin - est - 0.5) * CFG.passo - 3, (sMax - est + 0.5) * CFG.passo + 3];
 
     grpAlto = new THREE.Group();
     grpBaixo = new THREE.Group();
@@ -427,130 +473,109 @@
     grpAlto.add(cabosA);
     grpBaixo.add(cabosB);
     grpCabos.userData = { cabosA, cabosB };
+    const hc = CFG.larguraCorredor / 2;
 
-    // ---------------- ALTO GIRO (prédios 001–010, ao longo da Esteira 1)
-    const WA = CFG.WA, half = CFG.compAlto / 2;
-    const colsA = [];
-    for (let p = 1; p <= 10; p++) colsA.push({ x: -half + (p - 0.5) * WA, w: WA, predio: p, ends: porPredio[p] || [] });
-    const rackA = construirRack(colsA, { base: CFG.baseAlto, altura: CFG.alturaAlto, prof: CFG.profAlto, lado: 'alto' });
-    posicionar(rackA, 0, CFG.zAltoFace, '+z');
-    grpAlto.add(rackA);
-    const topA = rackA.userData.top;
+    // ---------------- ALTO GIRO da estação (001–005 | passagem | 006–010)
+    const [altoE, altoD] = altoGiro(0, porPredio, false);
+    grpAlto.add(altoE, altoD);
+    const topA = altoE.userData.top, hA = altoE.userData.h;
+    const xm = altoE.userData.xMundo;
+    // 4 displays E+Q nos andares 4 e 5 (1 por andar em cada lado), na longarina do andar
     const blocos = {};
-    [['AG-E', 1, 5, 'BLOCO ESQ.'], ['AG-D', 6, 10, 'BLOCO DIR.']].forEach(([id, p1, p2, nome]) => {
-      const cx = (colsA[p1 - 1].x + colsA[p2 - 1].x) / 2;
-      const pl = placa(`${nome} · ANDARES 4–5 · P${pad(p1, 3)}–P${pad(p2, 3)}`, 5 * WA - 0.08, 0.07, { fundo: '#2F5597', escala: 0.52 });
-      pl.position.set(cx, topA + 0.21, 0.03);
-      rackA.add(pl);
-      blocos[id] = criarModulo('EQ', rackA, cx, topA + 0.42, 0.06, 0.32, id, 'alto');
+    [['AG-E', altoE, 1, 5, 'esq.'], ['AG-D', altoD, 6, 10, 'dir.']].forEach(([id, rk, p1, p2, nome]) => {
+      const cxL = -(xm(p1) + xm(p2)) / 2;
+      [4, 5].forEach((a) => {
+        const yb = topA - (a + 1) * hA;
+        const m = criarModulo('EQ', rk, cxL, yb - 0.05, 0.05, 0, id + a, 'alto');
+        m.nome = `Alto giro ${nome} A${a}`;
+        blocos[id + a] = m;
+      });
+      const pl = placa(`ALTO GIRO · EST ${S.est} · P${pad(p1, 3)}–P${pad(p2, 3)}`, CFG.meioAlto - 0.05, 0.1, { escala: 0.5 });
+      pl.position.set(cxL, topA + 0.32, 0.02);
+      rk.add(pl);
+      for (let p = p1; p <= p2; p++) {
+        const no = caixaMesh(0.1, 0.07, 0.1, M.corpo);
+        no.position.set(-xm(p) + 0.12, topA + 0.08, -0.22);
+        rk.add(no);
+      }
     });
-    const sinalA = placa(`ALTO GIRO · ESTAÇÃO ${S.est} · prédios 001–010 · andar 0 em cima`, CFG.compAlto, 0.17, { escala: 0.5 });
-    sinalA.position.set(0, topA + 0.72, -0.01);
-    rackA.add(sinalA);
-    for (let p = 1; p <= 10; p++) {
-      const x = colsA[p - 1].x;
-      const no = caixaMesh(0.11, 0.07, 0.1, M.corpo);
-      no.position.set(x + 0.12, topA + 0.08, -0.22);
-      rackA.add(no);
-    }
-    // vizinhas do alto giro (cinza)
-    [-2, -1, 1, 2].forEach((k) => {
-      const g = construirRack(colunasCinza(10, WA, 31 + k * 7, 6).map((c) => ({ ...c, x: c.x - half })), { base: CFG.baseAlto, altura: CFG.alturaAlto, prof: CFG.profAlto, cinza: true });
-      posicionar(g, k * CFG.passo, CFG.zAltoFace, '+z');
-      grpAlto.add(g);
-      const pl = placa(`ALTO GIRO · ESTAÇÃO ${estVizinha(k)}`, 2.4, 0.15, { fundo: '#7f8995', escala: 0.55 });
-      pl.position.set(0, g.userData.top + 0.72, -0.01);
-      g.add(pl);
-    });
+    const portal = placa(`ESTAÇÃO ${S.est} · CORREDOR DO BAIXO GIRO`, CFG.larguraCorredor - 0.1, 0.13, { fundo: '#2F5597', escala: 0.45 });
+    portal.position.set(0, topA + 0.46, CFG.zAltoFace - 0.02);
+    portal.rotation.y = Math.PI;
+    grpAlto.add(portal);
+    const viga = caixaMesh(CFG.larguraCorredor + 0.1, 0.06, 0.06, M.montante);
+    viga.position.set(0, topA + 0.46, CFG.zAltoFace + 0.02);
+    grpAlto.add(viga);
 
-    // ---------------- BAIXO GIRO (corredor perpendicular, andar 0 em cima)
+    // ---------------- BAIXO GIRO (corredor)
     const baixos = enderecos.filter((e) => e.cat === 'baixo');
     const pb = [...new Set(baixos.map((e) => e.predio))].filter((p) => p !== 15);
     const esq = pb.filter((p) => p < CFG.predioVirada).sort((a, b) => a - b);
-    const dir = pb.filter((p) => p >= CFG.predioVirada).sort((a, b) => b - a);
-    const WB = CFG.WB, z0 = CFG.zCabeca + CFG.prof015;
+    const dir = (porPredio[15] ? [15] : []).concat(pb.filter((p) => p >= CFG.predioVirada).sort((a, b) => b - a));
     const nMax = Math.max(esq.length, dir.length);
-    const optB = { base: CFG.baseBaixo, altura: CFG.alturaBaixo, prof: CFG.profBaixo, lado: 'baixo' };
-    const xFaceE = CFG.larguraCorredor / 2, xFaceW = -CFG.larguraCorredor / 2;
-    // lado esquerdo (olhando da área de espera para o corredor) = +x, face voltada para -x
-    const colsE = esq.map((p, i) => ({ x: (i + 0.5) * WB, w: WB, predio: p, ends: porPredio[p] }));
-    const rackE = construirRack(colsE, optB);
-    posicionar(rackE, xFaceE, z0, '-x');
-    grpBaixo.add(rackE);
-    // lado direito = -x, face voltada para +x (x local negativo cresce para +z no mundo)
-    const colsW = dir.map((p, i) => ({ x: -(i + 0.5) * WB, w: WB, predio: p, ends: porPredio[p] }));
-    const rackW = construirRack(colsW, optB);
-    posicionar(rackW, xFaceW, z0, '+x');
-    grpBaixo.add(rackW);
+    const rackE = ladoCorredor(hc, '-x', esq, porPredio, false);
+    const rackW = ladoCorredor(-hc, '+x', dir, porPredio, false);
+    grpBaixo.add(rackE, rackW);
     const topB = rackE.userData.top;
-    // prédio 015 na cabeceira do bloco oeste, de frente para a área de espera
-    const cols015 = porPredio[15] ? [{ x: 0, w: CFG.larg015, predio: 15, ends: porPredio[15] }] : [];
-    let rack015 = null;
-    if (cols015.length) {
-      rack015 = construirRack(cols015, { base: CFG.baseBaixo, altura: CFG.alturaBaixo, prof: CFG.prof015, lado: 'baixo' });
-      posicionar(rack015, CFG.x015, CFG.zCabeca, '-z');
-      grpBaixo.add(rack015);
-      const pl = placa(`P015 (150–15${porPredio[15].length - 1}) · ZONA 1`, CFG.larg015, 0.09, { fundo: CORES_ZONA[0], escala: 0.5 });
-      pl.position.set(0, rack015.userData.top + 0.22, 0.03);
-      rack015.add(pl);
-    }
-    const sinalE = placa(`BAIXO GIRO · LADO ESQUERDO · P${pad(esq[0], 3)}–P${pad(esq[esq.length - 1], 3)}`, Math.min(esq.length * WB, 5), 0.17, { escala: 0.5 });
-    sinalE.position.set((esq.length * WB) / 2, topB + 0.72, -0.01);
+    const sinalE = placa(`BAIXO GIRO · LADO ESQUERDO · P${pad(esq[0], 3)}–P${pad(esq[esq.length - 1], 3)}`, Math.min(esq.length * CFG.WB, 5), 0.16, { escala: 0.5 });
+    sinalE.position.set((esq.length * CFG.WB) / 2, topB + 0.66, -0.01);
     rackE.add(sinalE);
-    const sinalW = placa(`BAIXO GIRO · LADO DIREITO · P${pad(dir[dir.length - 1], 3)}–P${pad(dir[0], 3)}`, Math.min(dir.length * WB, 5), 0.17, { escala: 0.5 });
-    sinalW.position.set(-(dir.length * WB) / 2, topB + 0.72, -0.01);
+    const sinalW = placa(`LADO DIREITO · P015, P${pad(dir[1] || 0, 3)} → P${pad(dir[dir.length - 1], 3)}`, Math.min(dir.length * CFG.WB, 5), 0.16, { escala: 0.5 });
+    sinalW.position.set(-(dir.length * CFG.WB) / 2, topB + 0.66, -0.01);
     rackW.add(sinalW);
-
-    // zonas: 1 módulo E+Q por zona, no lado onde estão seus prédios
     const zonasIds = [...new Set(baixos.map((e) => e.zona))].sort();
     const zonas = {};
     zonasIds.forEach((z, k) => {
-      const ps = [...new Set(baixos.filter((e) => e.zona === z).map((e) => e.predio))].filter((p) => p !== 15);
-      const ladoE = ps.filter((p) => esq.includes(p)).length >= ps.filter((p) => dir.includes(p)).length;
-      const cols = (ladoE ? colsE : colsW).filter((c) => ps.includes(c.predio));
+      const ps = [...new Set(baixos.filter((e) => e.zona === z).map((e) => e.predio))];
+      const nE = ps.filter((p) => esq.includes(p)).length, nW = ps.filter((p) => dir.includes(p) && p !== 15).length;
+      const ladoE = nE >= nW;
       const rack = ladoE ? rackE : rackW;
-      const x1 = Math.min(...cols.map((c) => c.x)) - WB / 2, x2 = Math.max(...cols.map((c) => c.x)) + WB / 2, cx = (x1 + x2) / 2;
+      const lista = ladoE ? esq : dir;
+      const idx = ps.filter((p) => lista.includes(p)).map((p) => lista.indexOf(p));
+      const sgn = ladoE ? 1 : -1;
+      const i1 = Math.min(...idx), i2 = Math.max(...idx);
+      const x1 = sgn * i1 * CFG.WB, x2 = sgn * (i2 + 1) * CFG.WB, cx = (x1 + x2) / 2, larg = Math.abs(x2 - x1);
       const cor = CORES_ZONA[k % CORES_ZONA.length];
-      const nomes = ps.sort((a, b) => a - b);
-      const txt = `ZONA ${k + 1} · ${baixos.some((e) => e.zona === z && e.predio === 15) ? 'P015 + ' : ''}P${pad(nomes[0], 3)}–P${pad(nomes[nomes.length - 1], 3)}`;
-      const pl = placa(txt, x2 - x1 - 0.06, 0.07, { fundo: cor, escala: 0.5 });
+      const nomes = ps.slice().sort((a, b) => a - b).filter((p) => p !== 15);
+      const txt = `ZONA ${k + 1} · ${ps.includes(15) ? 'P015 + ' : ''}P${pad(nomes[0], 3)}–P${pad(nomes[nomes.length - 1], 3)}`;
+      const pl = placa(txt, larg - 0.06, 0.07, { fundo: cor, escala: 0.5 });
       pl.position.set(cx, topB + 0.2, 0.03);
       rack.add(pl);
-      zonas[z] = criarModulo('EQ', rack, cx, topB + 0.42, 0.06, 0.32, z, 'baixo');
+      zonas[z] = criarModulo('EQ', rack, cx, topB + 0.4, 0.06, 0.32, z, 'baixo');
       zonas[z].cor = cor;
       zonas[z].nome = `Zona ${k + 1}`;
-      const faixa = new THREE.Mesh(new THREE.PlaneGeometry(x2 - x1 - 0.04, 0.2), mat(cor, { transparent: true, opacity: 0.55 }));
+      const faixa = new THREE.Mesh(new THREE.PlaneGeometry(larg - 0.04, 0.2), mat(cor, { transparent: true, opacity: 0.55 }));
       faixa.rotation.x = -Math.PI / 2;
       faixa.position.set(cx, 0.006, 0.13);
       rack.add(faixa);
+      if (ps.includes(15)) {
+        const f15 = new THREE.Mesh(new THREE.PlaneGeometry(CFG.WB - 0.04, 0.2), mat(cor, { transparent: true, opacity: 0.55 }));
+        f15.rotation.x = -Math.PI / 2;
+        f15.position.set(-0.5 * CFG.WB, 0.006, 0.13);
+        rackW.add(f15);
+      }
     });
 
-    // blocos vizinhos (cinza): costas dos nossos blocos e blocos seguintes
-    const nViz = nMax;
-    const blocoCinza = (xFace, normal, seed) => {
-      const sgn = normal === '-x' ? 1 : -1;
-      const g = construirRack(colunasCinza(nViz, WB, seed, 8).map((c) => ({ ...c, x: sgn * c.x })), { base: CFG.baseBaixo, altura: CFG.alturaBaixo, prof: CFG.profBaixo, cinza: true });
-      posicionar(g, xFace, z0, normal);
-      grpBaixo.add(g);
-      return g;
-    };
-    const P = CFG.passo, hc = CFG.larguraCorredor / 2;
-    blocoCinza(-hc - 2 * CFG.profBaixo, '-x', 11);   // costas do nosso lado direito = lado esquerdo da estação N-1
-    blocoCinza(hc + 2 * CFG.profBaixo, '+x', 12);    // costas do nosso lado esquerdo = lado direito da estação N+1
-    blocoCinza(-P - hc, '+x', 13);                   // lado direito da estação N-1
-    blocoCinza(P + hc, '-x', 14);                    // lado esquerdo da estação N+1
-    [[-1, -P + CFG.x015], [1, P + CFG.x015]].forEach(([k, x]) => {
-      const g = construirRack([{ x: 0, w: CFG.larg015, predio: 0, n: 4 }], { base: CFG.baseBaixo, altura: CFG.alturaBaixo, prof: CFG.prof015, cinza: true });
-      posicionar(g, x, CFG.zCabeca, '-z');
-      grpBaixo.add(g);
-      const pl = placa(`P015 · EST ${estVizinha(k)}`, CFG.larg015, 0.09, { fundo: '#7f8995', escala: 0.5 });
-      pl.position.set(0, g.userData.top + 0.22, 0.03);
-      g.add(pl);
-    });
-    const piso = (txt, x, cor) => { const t = textoPiso(txt, 2.6, 0.45, cor); t.position.set(x, 0.008, CFG.zCabeca - 0.62); grpEst.add(t); };
-    piso(`ESTAÇÃO ${S.est}`, 0.9, 'rgba(27,38,56,0.8)');
-    piso(`ESTAÇÃO ${estVizinha(-1)}`, -P + 0.9, 'rgba(91,102,117,0.55)');
-    piso(`ESTAÇÃO ${estVizinha(1)}`, P + 0.9, 'rgba(91,102,117,0.55)');
+    // ---------------- estações vizinhas (cinza)
+    for (let s = sMin; s <= sMax; s++) {
+      if (s === est) continue;
+      const xc = (s - est) * CFG.passo;
+      altoGiro(xc, {}, true, s * 3).forEach((g) => { g.position.x = 0; g.children.forEach(() => {}); grpAlto.add(g); });
+      grpBaixo.add(ladoCorredor(xc + hc, '-x', null, null, true, s * 5 + 1, nMax));
+      grpBaixo.add(ladoCorredor(xc - hc, '+x', null, null, true, s * 5 + 2, nMax));
+      const pl = placa(`ESTAÇÃO ${pad(s, 2)}`, 1.4, 0.13, { fundo: '#7f8995', escala: 0.55 });
+      pl.position.set(xc, CFG.baseAlto + CFG.alturaAlto + 0.46, CFG.zAltoFace - 0.03);
+      pl.rotation.y = Math.PI;
+      grpAlto.add(pl);
+      const t = textoPiso(`ESTAÇÃO ${pad(s, 2)}`, 2.4, 0.42, 'rgba(91,102,117,0.55)');
+      t.position.set(xc, 0.008, 0.25);
+      grpEst.add(t);
+    }
+    const tP = textoPiso(`ESTAÇÃO ${S.est}`, 2.4, 0.42, 'rgba(27,38,56,0.8)');
+    tP.position.set(-1.6, 0.008, 0.3);
+    grpEst.add(tP);
+
+    construirEsteiras();
 
     // ---------------- vínculo endereço → módulo, lado e posição de pega
     grpEst.updateMatrixWorld(true);
@@ -560,24 +585,66 @@
       else if (e.cat === 'baixo') e.modulo = zonas[e.zona];
       if (!e.tote) return;
       e.tote.getWorldPosition(wp);
-      e.wx = wp.x; e.wz = wp.z;
-      if (e.cat !== 'baixo') { e.lado = 'alto'; e.pega = { x: Math.max(-half + 0.2, Math.min(half - 0.2, wp.x)), z: CFG.zOperAlto, rot: Math.PI }; }
-      else if (e.predio === 15) { e.lado = 'cabeca'; e.pega = { x: wp.x, z: CFG.zCabeca - 0.42, rot: Math.PI }; }
+      if (e.cat !== 'baixo') { e.lado = 'alto'; e.pega = { x: wp.x, z: CFG.zOperAlto, rot: 0 }; }
       else if (esq.includes(e.predio)) { e.lado = 'esq'; e.pega = { x: 0.3, z: wp.z, rot: Math.PI / 2 }; }
       else { e.lado = 'dir'; e.pega = { x: -0.3, z: wp.z, rot: -Math.PI / 2 }; }
       e.guia = guias[(e.cat === 'baixo' ? 'baixo-' : 'alto-') + e.predio];
     });
 
-    construirConcentrador(topA, topB, z0 + nMax * WB);
+    construirConcentrador(topA, topB, CFG.zFaces + nMax * CFG.WB);
     construirB2();
     atualizarInfra();
     aplicarVisibilidade();
   }
 
+  // ---------------- esteira de transporte, esteira de separação e transferência
+  function construirEsteiras() {
+    const g = new THREE.Group();
+    grpEst.add(g);
+    const [x0, x1] = faixaX, L = x1 - x0, cx = (x0 + x1) / 2;
+    const transportador = (z, h, W) => {
+      [-1, 1].forEach((s) => {
+        const lat = caixaMesh(L, 0.09, 0.035, M.esteira);
+        lat.position.set(cx, h - 0.02, z + s * (W / 2 + 0.02));
+        g.add(lat);
+      });
+      const pernas = [], rol = [];
+      for (let x = x0; x <= x1; x += 1.6) [-1, 1].forEach((s) => pernas.push(matriz(x, (h - 0.05) / 2, z + s * (W / 2), 0, 0, 0, 0.05, h - 0.05, 0.05)));
+      g.add(instanciado(BOX1, M.esteira, pernas, true));
+      for (let x = x0; x <= x1; x += 0.085) rol.push(matriz(x, h - 0.012, z, Math.PI / 2, 0, 0, 1, 1, 1));
+      g.add(instanciado(new THREE.CylinderGeometry(0.022, 0.022, W, 10), M.rolete, rol, false));
+    };
+    transportador(CFG.zTransp, CFG.altTransp, CFG.largTransp);
+    transportador(CFG.zSep, CFG.altSep, CFG.largSep);
+    // transferência: ponte de roletes entre as esteiras + rolete direcionador na separação
+    const xt = transf.x;
+    const zA = CFG.zTransp + CFG.largTransp / 2, zB = CFG.zSep - CFG.largSep / 2;
+    const ponte = caixaMesh(0.6, 0.03, zB - zA + 0.1, mat('#2E8B57', { roughness: 0.5 }));
+    ponte.position.set(xt, CFG.altSep - 0.03, (zA + zB) / 2);
+    g.add(ponte);
+    const dir = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, CFG.largSep - 0.04, 16), mat('#F2A33A', { emissive: '#3a2400' }));
+    dir.rotation.x = Math.PI / 2;
+    dir.position.set(xt, CFG.altSep + 0.01, CFG.zSep);
+    g.add(dir);
+    grpEst.userData.direcionador = dir;
+    const st = transf.b;
+    const alc = st === transf.p0 ? `esquerda: ${pad(st, 2)} · direita: ${pad(st + 1, 2)} e ${pad(st + 2, 2)}` : `esquerda: ${pad(st - 1, 2)} e ${pad(st, 2)} · direita: ${pad(st + 1, 2)} e ${pad(st + 2, 2)}`;
+    const sp = sprite([`Transferência ${pad(st, 2)}|${pad(st + 1, 2)} · rolete direcionador`, alc], 1.7, { fundo: 'rgba(46,139,87,0.92)' });
+    sp.position.set(xt, 1.6, (zA + zB) / 2);
+    g.add(sp);
+    const e1 = sprite(['Esteira de transporte →', 'controlada pelo BHT'], 1.4, { fundo: 'rgba(46,58,79,0.88)' });
+    e1.position.set(x0 + 2.2, CFG.altTransp + 0.5, CFG.zTransp - 0.25);
+    g.add(e1);
+    const e2 = sprite(['Esteira de separação', 'bacia aguarda e é separada aqui'], 1.4, { fundo: 'rgba(46,58,79,0.88)' });
+    e2.position.set(-CFG.distFila - 1.3, 1.25, CFG.zSep + 0.1);
+    g.add(e2);
+  }
+
   function construirConcentrador(topA, topB, zFim) {
-    const xc = CFG.x015 - CFG.larg015 / 2 - 0.45, zc = 0.45;
+    const xc = CFG.larguraCorredor / 2 + CFG.meioAlto - 0.22, zc = 0.3;
     const g = new THREE.Group();
     g.position.set(xc, 1.45, zc);
+    g.rotation.y = Math.PI;
     grpEst.add(g);
     g.add(caixaMesh(0.36, 0.46, 0.2, M.gabinete));
     const grade = new THREE.Mesh(new THREE.CircleGeometry(0.075, 24), mat('#39424e', { roughness: 0.4 }));
@@ -604,51 +671,49 @@
     g.userData.leds = leds;
     grpEst.userData.concentrador = g;
     const poste = caixaMesh(0.06, 2.9, 0.06, M.montante);
-    poste.position.set(xc, 1.45, zc - 0.13);
+    poste.position.set(xc, 1.45, zc + 0.13);
     grpEst.add(poste);
 
     const { cabosA, cabosB } = grpCabos.userData;
-    const yT = 2.95;
-    const zA = CFG.zAltoFace - 0.08;
-    const half = CFG.compAlto / 2;
-    cabosA.add(cabo([[xc + 0.1, 1.68, zc - 0.05], [xc + 0.1, yT, zc - 0.05], [xc + 0.1, yT, zA], [-half, topA + 0.02, zA], [half, topA + 0.02, zA]], '#3A7BD5', 0.014));
+    const yT = 3.0, zA = CFG.zAltoFace + 0.06;
+    const hc = CFG.larguraCorredor / 2, xa = hc + CFG.meioAlto;
+    cabosA.add(cabo([[xc - 0.1, 1.68, zc + 0.05], [xc - 0.1, yT, zc + 0.05], [xc - 0.1, yT, zA], [xa, topA + 0.02, zA], [-xa, topA + 0.02, zA]], '#3A7BD5', 0.014));
     for (let p = 1; p <= 10; p++) {
-      const x = -half + (p - 0.5) * CFG.WA + 0.17;
+      const x = p <= 5 ? -hc - CFG.meioAlto + (p - 0.5) * CFG.WA + 0.15 : hc + (p - 5.5) * CFG.WA + 0.15;
       cabosA.add(cabo([[x, topA + 0.02, zA], [x, CFG.baseAlto - 0.03, zA]], '#3A7BD5', 0.006));
     }
     const busA = sprite(['Barramento alto giro', 'Cat5e + RJ45 · RS-485 + 12 V'], 1.1, { fundo: 'rgba(58,123,213,0.92)' });
-    busA.position.set(half + 0.4, topA + 0.35, zA);
+    busA.position.set(-xa + 0.5, topA + 0.75, zA);
     cabosA.add(busA);
-    // eletrocalha sobre o corredor
-    const calha = caixaMesh(0.2, 0.05, zFim - zc + 0.2, M.trilho);
-    calha.position.set(0, yT + 0.03, (zc + zFim) / 2);
+    const calha = caixaMesh(0.2, 0.05, zFim - zA + 0.2, M.trilho);
+    calha.position.set(0, yT + 0.03, (zA + zFim) / 2);
     cabosB.add(calha);
-    cabosB.add(cabo([[xc - 0.1, 1.68, zc - 0.05], [xc - 0.1, yT, zc - 0.05], [0, yT, zc - 0.05], [0, yT, zFim]], '#E67E22', 0.014));
+    cabosB.add(cabo([[xc + 0.1, 1.68, zc + 0.05], [xc + 0.1, yT, zc + 0.05], [0, yT, zc + 0.05], [0, yT, zFim]], '#E67E22', 0.014));
     const busB = sprite(['Barramento baixo giro', 'Cat5e + RJ45 · eletrocalha sobre o corredor'], 1.2, { fundo: 'rgba(230,126,34,0.92)' });
     busB.position.set(0, yT + 0.35, zFim - 0.6);
     cabosB.add(busB);
-    cabosA.add(cabo([[xc, 1.68, zc - 0.05], [xc, 3.75, zc - 0.05]], '#7F8C8D', 0.012));
+    cabosA.add(cabo([[xc, 1.68, zc + 0.05], [xc, 3.75, zc + 0.05]], '#7F8C8D', 0.012));
     const rede = sprite(['Ethernet · VLAN PTL', 'switch → Serviço PTL (API + MQTT + Sybase)'], 1.15, { fundo: 'rgba(46,58,79,0.92)' });
     rede.position.set(xc, 4.0, zc);
     cabosA.add(rede);
   }
 
-  // ---------------- B2: leitor fixo + painel LCD + botão FECHAR
+  // ---------------- B2: leitor fixo na esteira de separação + painel LCD + botão FECHAR
   let b2 = null;
   function construirB2() {
     const g = new THREE.Group();
     grpEst.add(g);
     const leitor = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.012, 0.3), mat('#20262f', { emissive: '#000000' }));
-    leitor.position.set(CFG.xPega, CFG.alturaEspera + 0.004, CFG.zEspera);
+    leitor.position.set(CFG.xPega, CFG.altSep + 0.004, CFG.zSep);
     g.add(leitor);
-    const xp = CFG.xPega + 0.75, zp = CFG.zEspera + 0.42;
+    const xp = CFG.xPega - 0.75, zp = CFG.zOperSep + 0.05;
     const poste = caixaMesh(0.05, 1.3, 0.05, M.montante);
     poste.position.set(xp, 0.65, zp);
     g.add(poste);
     const tc = texCanvas(512, 160);
     const lcd = new THREE.Group();
-    lcd.position.set(xp, 1.36, zp + 0.03);
-    lcd.rotation.x = -0.35;
+    lcd.position.set(xp, 1.36, zp - 0.03);
+    lcd.rotation.set(-0.35, Math.PI, 0, 'YXZ');
     g.add(lcd);
     lcd.add(caixaMesh(0.36, 0.17, 0.04, M.corpo));
     const tela = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.094), new THREE.MeshBasicMaterial({ map: tc.t }));
@@ -668,91 +733,34 @@
     desenharLCD();
   }
 
-  // ======================================================================= CENÁRIO FIXO: piso, Esteira 1, área de espera, transferências
+  // ======================================================================= CENÁRIO FIXO: piso
   (function cenario() {
-    const piso = new THREE.Mesh(new THREE.PlaneGeometry(70, 46), M.piso);
+    const piso = new THREE.Mesh(new THREE.PlaneGeometry(80, 50), M.piso);
     piso.rotation.x = -Math.PI / 2;
-    piso.position.z = 5;
+    piso.position.z = 6;
     piso.receiveShadow = true;
     scene.add(piso);
-    // faixas da área do operador
-    [[-0.2, 28], [CFG.zCabeca - 0.05, 28]].forEach(([z, L]) => {
-      const f = new THREE.Mesh(new THREE.PlaneGeometry(L, 0.05), M.amarelo);
+    [-0.45, CFG.zAltoFace - 0.08].forEach((z) => {
+      const f = new THREE.Mesh(new THREE.PlaneGeometry(40, 0.05), M.amarelo);
       f.rotation.x = -Math.PI / 2;
       f.position.set(0, 0.004, z);
       scene.add(f);
     });
-    const x0 = CFG.xIni, x1 = CFG.xFimEsteira, L = x1 - x0, cx = (x0 + x1) / 2;
-    // transportador ao longo de x
-    const transportador = (z, h, W) => {
-      [-1, 1].forEach((s) => {
-        const lat = caixaMesh(L, 0.09, 0.04, M.esteira);
-        lat.position.set(cx, h - 0.02, z + s * (W / 2 + 0.02));
-        scene.add(lat);
-      });
-      const pernas = [], rol = [];
-      for (let x = x0; x <= x1; x += 1.6) [-1, 1].forEach((s) => pernas.push(matriz(x, (h - 0.05) / 2, z + s * (W / 2), 0, 0, 0, 0.05, h - 0.05, 0.05)));
-      scene.add(instanciado(BOX1, M.esteira, pernas, true));
-      for (let x = x0; x <= x1; x += 0.085) rol.push(matriz(x, h - 0.012, z, Math.PI / 2, 0, 0, 1, 1, 1));
-      scene.add(instanciado(new THREE.CylinderGeometry(0.022, 0.022, W, 10), M.rolete, rol, false));
-    };
-    transportador(CFG.zEsteira1, CFG.alturaEsteira1, CFG.largEsteira1);
-    transportador(CFG.zEspera, CFG.alturaEspera, CFG.largEspera);
-    // transferências nos vãos entre estações: faixa oeste = entrada (desce), faixa leste = saída (sobe)
-    const zA = CFG.zEsteira1 + CFG.largEsteira1 / 2 + 0.02, zB = CFG.zEspera - CFG.largEspera / 2 - 0.02;
-    const rolT = [], latT = [];
-    const setas = [];
-    for (let k = -3; k <= 3; k++) {
-      const xv = k * CFG.passo + CFG.compAlto / 2 + CFG.larguraVao / 2;
-      [[-0.3, 'saida'], [0.3, 'entrada']].forEach(([dx, tipo]) => {
-        const x = xv + dx;
-        for (let z = zA; z <= zB; z += 0.085) rolT.push(matriz(x, CFG.alturaEspera - 0.012, z, 0, 0, Math.PI / 2, 1, 1, 1));
-        [-1, 1].forEach((s) => latT.push(matriz(x + s * 0.27, CFG.alturaEspera - 0.02, (zA + zB) / 2, 0, 0, 0, 0.03, 0.08, zB - zA)));
-        setas.push({ x, tipo });
-      });
-    }
-    scene.add(instanciado(new THREE.CylinderGeometry(0.02, 0.02, 0.5, 8), M.rolete, rolT, false));
-    scene.add(instanciado(BOX1, M.esteira, latT, true));
-    setas.forEach(({ x, tipo }) => {
-      const tc = texCanvas(128, 256);
-      const { ctx } = tc;
-      ctx.fillStyle = tipo === 'entrada' ? '#2E8B57' : '#E08E0B';
-      ctx.beginPath();
-      if (tipo === 'entrada') { ctx.moveTo(64, 250); ctx.lineTo(120, 170); ctx.lineTo(84, 170); ctx.lineTo(84, 6); ctx.lineTo(44, 6); ctx.lineTo(44, 170); ctx.lineTo(8, 170); }
-      else { ctx.moveTo(64, 6); ctx.lineTo(120, 86); ctx.lineTo(84, 86); ctx.lineTo(84, 250); ctx.lineTo(44, 250); ctx.lineTo(44, 86); ctx.lineTo(8, 86); }
-      ctx.fill();
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.44), new THREE.MeshBasicMaterial({ map: tc.t, transparent: true, depthWrite: false }));
-      m.rotation.x = -Math.PI / 2;
-      m.position.set(x, CFG.alturaEspera + 0.03, (zA + zB) / 2);
-      scene.add(m);
-    });
-    const e1 = sprite(['Esteira de transporte →', 'controlada pelo BHT'], 1.6, { fundo: 'rgba(46,58,79,0.88)' });
-    e1.position.set(-6.5, CFG.alturaEsteira1 + 0.55, CFG.zEsteira1 - 0.2);
-    scene.add(e1);
-    const ent = sprite(['Entrada', 'esteira → área de espera'], 0.95, { fundo: 'rgba(46,139,87,0.92)' });
-    ent.position.set(CFG.xEntrada, 1.45, (zA + zB) / 2);
-    scene.add(ent);
-    const sai = sprite(['Saída', 'bacia empurrada de volta à esteira'], 1.05, { fundo: 'rgba(224,142,11,0.92)' });
-    sai.position.set(CFG.xSaida, 1.45, (zA + zB) / 2);
-    scene.add(sai);
-    const esp = sprite(['Área de espera', 'bacias aguardando separação'], 1.0, { fundo: 'rgba(46,58,79,0.85)' });
-    esp.position.set(CFG.xFila - 0.2, 1.3, CFG.zEspera);
-    scene.add(esp);
   })();
 
   // ======================================================================= OPERADOR
-  const oper = { x: 0.35, z: CFG.zOperAlto, caminho: [], resolve: null, rot: Math.PI, anim: null, animT: 0, passo: 0 };
+  const oper = { x: 0.35, z: CFG.zOperSep, caminho: [], resolve: null, rot: Math.PI, anim: null, animT: 0, passo: 0 };
   const avatar = new THREE.Group();
   scene.add(avatar);
   (function montarAvatar() {
-    const pele = mat('#d9a679'), calca = mat('#2E3A4F'), colete = mat('#F2A33A'), camisa = mat('#34495E');
+    const pele = mat('#d9a679'), calca = mat('#16181c'), camisa = mat('#2E9E4F'), sapato = mat('#0b0b0d');
     const mkPerna = (s) => {
       const p = new THREE.Group();
       p.position.set(s * 0.09, 0.86, 0);
       const m = caixaMesh(0.12, 0.84, 0.14, calca);
       m.position.y = -0.42;
       p.add(m);
-      const pe = caixaMesh(0.12, 0.06, 0.22, mat('#1b1f26'));
+      const pe = caixaMesh(0.12, 0.06, 0.22, sapato);
       pe.position.set(0, -0.84, 0.04);
       p.add(pe);
       avatar.add(p);
@@ -762,16 +770,16 @@
     const tronco = caixaMesh(0.4, 0.6, 0.24, camisa);
     tronco.position.y = 1.18;
     avatar.add(tronco);
-    const vest = caixaMesh(0.42, 0.44, 0.26, colete);
-    vest.position.y = 1.22;
-    avatar.add(vest);
+    const gola = caixaMesh(0.16, 0.04, 0.2, mat('#1d6b35'));
+    gola.position.y = 1.48;
+    avatar.add(gola);
     const cabeca = new THREE.Mesh(new THREE.SphereGeometry(0.12, 18, 14), pele);
     cabeca.position.y = 1.62;
     cabeca.castShadow = true;
     avatar.add(cabeca);
-    const bone = new THREE.Mesh(new THREE.SphereGeometry(0.125, 18, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#2F5597'));
-    bone.position.y = 1.65;
-    avatar.add(bone);
+    const cabelo = new THREE.Mesh(new THREE.SphereGeometry(0.124, 18, 8, 0, Math.PI * 2, 0, Math.PI / 2.4), mat('#2b1d14'));
+    cabelo.position.y = 1.64;
+    avatar.add(cabelo);
     const mkBraco = (s) => {
       const b = new THREE.Group();
       b.position.set(s * 0.26, 1.44, 0);
@@ -798,9 +806,9 @@
     avatar.userData.pulseira = pulseira;
   })();
   // caminho que respeita o corredor (entra e sai pela boca do corredor)
-  const dentro = (p) => p.z > CFG.zCabeca - 0.1;
+  const dentro = (p) => p.z > CFG.zAltoFace - 0.1;
   function rota(de, para) {
-    const boca = { x: 0, z: CFG.zCabeca - 0.5 };
+    const boca = { x: 0, z: CFG.zOperAlto + 0.05 };
     const pts = [];
     if (dentro(de) && !dentro(para)) pts.push({ x: 0, z: de.z }, boca);
     else if (!dentro(de) && dentro(para)) pts.push(boca, { x: 0, z: para.z });
@@ -815,9 +823,12 @@
   }
 
   // ======================================================================= BACIAS
-  const yE1 = CFG.alturaEsteira1 + CFG.bacia.a / 2 + 0.01, yEsp = CFG.alturaEspera + CFG.bacia.a / 2 + 0.01;
-  const rotaEntrada = (xAlvo) => [[CFG.xEntrada, yE1, CFG.zEsteira1], [CFG.xEntrada, yEsp, CFG.zEspera], [xAlvo, yEsp, CFG.zEspera]];
-  const rotaSaida = () => [[CFG.xSaida, yEsp, CFG.zEspera], [CFG.xSaida, yE1, CFG.zEsteira1], [CFG.xFimEsteira, yE1, CFG.zEsteira1]];
+  const yT = CFG.altTransp + CFG.bacia.a / 2 + 0.01, yS = CFG.altSep + CFG.bacia.a / 2 + 0.01;
+  const xFila = () => Math.sign(transf.x || -1) * CFG.distFila;
+  // esteira de transporte → transferência → rolete direcionador → esteira de separação até a estação
+  const rotaEntrada = (xAlvo) => [[transf.x, yT, CFG.zTransp], [transf.x, yS, CFG.zSep], [xAlvo, yS, CFG.zSep]];
+  // operador empurra a bacia de volta para a esteira de transporte de onde ela estiver
+  const rotaSaida = (c) => [[c.g.position.x, yT, CFG.zTransp], [faixaX[1] + 1, yT, CFG.zTransp]];
   function gerarItens() {
     const n = Math.max(1, Math.min(enderecos.length, Math.round(S.itens * (0.6 + Math.random() * 0.8))));
     const altos = enderecos.filter((e) => e.cat !== 'baixo'), baixos = enderecos.filter((e) => e.cat === 'baixo');
@@ -834,12 +845,11 @@
     return itens;
   }
   function novaCaixa(xIni) {
-    const seg = DADOS[S.est].info.segmento;
     const id = 'CX' + pad(++seqCaixa, 6);
     const { c, a, l } = CFG.bacia;
     const g = new THREE.Group();
-    g.add(caixaMesh(c, a, l, mat(COR_SEG[seg] || '#1F6FB5', { roughness: 0.55 })));
-    const borda = caixaMesh(c + 0.02, 0.03, l + 0.02, mat('#163a5f'));
+    g.add(caixaMesh(c, a, l, mat(CFG.bacia.cor, { roughness: 0.55 })));
+    const borda = caixaMesh(c + 0.02, 0.03, l + 0.02, mat(CFG.bacia.borda));
     borda.position.y = a / 2;
     g.add(borda);
     const tc = texCanvas(256, 128);
@@ -851,35 +861,42 @@
     ctx.font = 'bold 30px Arial';
     ctx.textAlign = 'center';
     ctx.fillText(id, 128, 108);
-    const et = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.12), new THREE.MeshBasicMaterial({ map: tc.t }));
-    et.position.set(0, 0, l / 2 + 0.002);
-    g.add(et);
+    [1, -1].forEach((sd) => {
+      const et = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.12), new THREE.MeshBasicMaterial({ map: tc.t }));
+      et.position.set(0, 0, sd * (l / 2 + 0.002));
+      if (sd < 0) et.rotation.y = Math.PI;
+      g.add(et);
+    });
     const tag = new THREE.Mesh(new THREE.CircleGeometry(0.03, 20), mat('#7B4FA0'));
     tag.position.set(c / 2 - 0.08, -0.07, l / 2 + 0.002);
     g.add(tag);
     g.userData.tag = tag;
     tag.visible = S.modo !== 'A';
-    g.position.set(xIni, yE1, CFG.zEsteira1);
+    g.position.set(xIni, yT, CFG.zTransp);
     scene.add(g);
     const cx = { id, g, rota: [], vel: CFG.velEsteira, aoChegar: null, papel: 'fila', itens: gerarItens(), t0: 0, tag: 'E0' + pad((seqCaixa * 2654435761) % 0xffffff, 6).toUpperCase() };
     caixasCena.push(cx);
     return cx;
   }
   function mover(c, pontos, vel, aoChegar) { c.rota = pontos.map((p) => new THREE.Vector3(...p)); c.vel = vel; c.aoChegar = aoChegar || null; }
+  function logTransferencia(c) {
+    log('BHT', `Bacia ${c.id} desviada na transferência ${pad(transf.b, 2)}|${pad(transf.b + 1, 2)} → rolete para a ${transf.lado} → estação ${S.est}`);
+  }
   function reiniciarCaixas() {
     caixasCena.forEach((c) => scene.remove(c.g));
     caixasCena.length = 0;
-    atual = novaCaixa(CFG.xIni + 4);
+    atual = novaCaixa(Math.min(transf.x - 2, faixaX[0] + 2));
     atual.papel = 'atual';
     mover(atual, rotaEntrada(CFG.xPega), CFG.velEsteira, () => caixaChegou(atual));
-    fila = novaCaixa(CFG.xIni);
-    mover(fila, rotaEntrada(CFG.xFila), CFG.velEsteira);
+    logTransferencia(atual);
+    fila = novaCaixa(faixaX[0] - 1);
+    mover(fila, rotaEntrada(xFila()), CFG.velEsteira);
     estado = 'AGUARDANDO';
   }
   function caixaChegou(c) {
     if (c !== atual || estado !== 'AGUARDANDO') return;
     estado = 'NA_POSICAO';
-    log('BHT', `Bacia ${c.id} na área de espera da estação ${S.est} (${c.itens.length} itens nesta estação)`);
+    log('BHT', `Bacia ${c.id} na posição de separação da estação ${S.est} (${c.itens.length} itens nesta estação)`);
     if (S.modo === 'B2') esperar(0.8).then(() => { if (estado === 'NA_POSICAO' && S.modo === 'B2' && atual === c) leitura('leitor fixo'); });
     atualizarUI();
   }
@@ -927,7 +944,7 @@
       desenhar(m);
     });
     const blocos = Object.keys(grupos).filter((k) => k.startsWith('AG')).length, zonas = Object.keys(grupos).filter((k) => k.startsWith('BG')).length;
-    log('MQTT', `ptl/est${S.est}/cmd SEPARAR caixa=${atual.id} itens=${its.length} (Q:${q.length} · blocos:${blocos} · zonas:${zonas})`);
+    log('MQTT', `ptl/est${S.est}/cmd SEPARAR caixa=${atual.id} itens=${its.length} (Q:${q.length} · andares 4-5:${blocos} · zonas:${zonas})`);
     log('EVT', `ptl/est${S.est}/evt ACK ${q.length + blocos + zonas} display(s) aceso(s)`);
     atualizarDestaques();
     atualizarUI();
@@ -963,7 +980,7 @@
       log('SYB', `UPDATE ptl_caixa_item status='PENDENTE' (${p}) → vai para a conferência`, 'ERRO');
     }
     log('SYB', `UPDATE ptl_caixa_sessao status='FECHADA' tempo=${fmtT(dur)}`);
-    log('BHT', `Bacia ${atual.id} empurrada para a saída → volta à esteira de transporte`);
+    log('BHT', `Bacia ${atual.id} empurrada de volta à esteira de transporte → segue para a próxima estação do pedido`);
     K.caixas++;
     K.tempoTotal += dur;
     atual.duracao = dur;
@@ -972,18 +989,19 @@
     fechadaAte = simT + 1.6;
     const saindo = atual;
     saindo.papel = 'saindo';
-    mover(saindo, rotaSaida(), CFG.velEmpurre, () => { scene.remove(saindo.g); caixasCena.splice(caixasCena.indexOf(saindo), 1); });
+    mover(saindo, rotaSaida(saindo), CFG.velEmpurre, () => { scene.remove(saindo.g); caixasCena.splice(caixasCena.indexOf(saindo), 1); });
     atualizarDestaques();
     atualizarUI();
     esperar(0.8).then(() => {
       atual = fila;
       atual.papel = 'atual';
       const resto = atual.rota.map((v) => [v.x, v.y, v.z]);
-      if (resto.length) resto[resto.length - 1][0] = CFG.xPega; else resto.push([CFG.xPega, yEsp, CFG.zEspera]);
+      if (resto.length) resto[resto.length - 1][0] = CFG.xPega; else resto.push([CFG.xPega, yS, CFG.zSep]);
       const alvo = atual;
       mover(alvo, resto, CFG.velEsteira, () => caixaChegou(alvo));
-      fila = novaCaixa(CFG.xIni);
-      mover(fila, rotaEntrada(CFG.xFila), CFG.velEsteira);
+      logTransferencia(alvo);
+      fila = novaCaixa(faixaX[0] - 1);
+      mover(fila, rotaEntrada(xFila()), CFG.velEsteira);
       estado = 'AGUARDANDO';
       atualizarUI();
     });
@@ -1045,7 +1063,7 @@
       oper.resolve = r;
     });
   }
-  const posCaixa = () => ({ x: CFG.xPega + 0.35, z: CFG.zOperAlto });
+  const posCaixa = () => ({ x: CFG.xPega + 0.35, z: CFG.zOperSep });
 
   function proximoAlvo() {
     let melhor = null, dMin = 1e9;
@@ -1110,9 +1128,8 @@
         await esperar(0.6);
         if (ativo() && estado === 'PRONTA') {
           leitura();
-          oper.anim = 'pega'; oper.animT = 1.2;
-          await andarAte(CFG.xSaida - 0.45, CFG.zOperAlto);   // empurra a bacia até a saída
-          await esperar(0.3);
+          oper.anim = 'pega'; oper.animT = 1.0;           // empurra a bacia de volta à esteira de transporte
+          await esperar(1.0);
         }
         continue;
       }
@@ -1149,9 +1166,9 @@
     const ct = contagem();
     if (estado === 'FECHADA' || simT < fechadaAte) {
       const c = caixasCena.find((x) => x.papel === 'saindo');
-      return { cor: '#16A085', tit: 'Bacia fechada', corpo: `<div class="grande">✓</div><div class="media">${c ? c.id : ''}</div><div class="p">Tempo na estação ${c ? fmtT(c.duracao) : ''}${c && c.pend ? ` · ${c.pend} pendência(s) p/ conferência` : ''}</div>`, rod: 'Empurre a bacia para a saída' };
+      return { cor: '#16A085', tit: 'Bacia fechada', corpo: `<div class="grande">✓</div><div class="media">${c ? c.id : ''}</div><div class="p">Tempo na estação ${c ? fmtT(c.duracao) : ''}${c && c.pend ? ` · ${c.pend} pendência(s) p/ conferência` : ''}</div>`, rod: 'Empurre a bacia de volta à esteira' };
     }
-    if (estado === 'AGUARDANDO') return { cor: '#2F5597', tit: `PTL · Estação ${est}`, corpo: '<div class="media">Aguardando bacia</div><div class="p">A próxima bacia está vindo da área de espera</div>', rod: 'Leitura abre a bacia' };
+    if (estado === 'AGUARDANDO') return { cor: '#2F5597', tit: `PTL · Estação ${est}`, corpo: '<div class="media">Aguardando bacia</div><div class="p">A próxima bacia está vindo pela esteira de separação</div>', rod: 'Leitura abre a bacia' };
     if (estado === 'NA_POSICAO') return { cor: '#2F5597', tit: `PTL · Estação ${est}`, corpo: `<div class="media">Bacia na posição</div><div class="p">${S.modo === 'A' ? 'Aponte para a etiqueta e aperte o gatilho' : S.modo === 'B1' ? 'Aproxime a pulseira da tag da bacia' : 'Leitor fixo lendo a tag…'}</div>`, rod: 'Leitura abre a bacia' };
     if (estado === 'SEPARANDO') return { cor: '#2E8B57', tit: `Bacia ${atual.id}`, corpo: `<div class="p">Separando</div><div class="grande">${ok} / ${n}</div><div class="progresso"><i style="width:${(100 * ok) / n}%"></i></div><div class="lista"><div><span>Alto giro</span><b>${ct.alto}</b></div><div><span>Baixo giro</span><b>${ct.baixo}</b></div><div><span>Zonas ativas</span><b>${ct.zonas || '—'}</b></div></div>`, rod: 'Nova leitura fecha a bacia' };
     if (estado === 'PRONTA') return { cor: '#2E8B57', tit: 'Estação concluída', corpo: `<div class="grande">${n} / ${n}</div><div class="media">Todos os LEDs apagados</div><div class="p">Leia a etiqueta de novo para fechar</div>`, rod: 'Gatilho fecha a bacia' };
@@ -1161,7 +1178,7 @@
   function linhasLCD() {
     const n = atual ? atual.itens.length : 0, ok = n - pendentes();
     const id = atual ? atual.id : '';
-    if (estado === 'FECHADA' || simT < fechadaAte) { const c = caixasCena.find((x) => x.papel === 'saindo'); return ['BACIA FECHADA', c ? c.id : '', 'TEMPO ' + (c ? fmtT(c.duracao) : ''), 'EMPURRE P/ SAIDA']; }
+    if (estado === 'FECHADA' || simT < fechadaAte) { const c = caixasCena.find((x) => x.papel === 'saindo'); return ['BACIA FECHADA', c ? c.id : '', 'TEMPO ' + (c ? fmtT(c.duracao) : ''), 'EMPURRE P/ ESTEIRA']; }
     if (estado === 'AGUARDANDO') return [`PTL EST ${S.est}   B2 RFID`, 'AGUARDANDO BACIA', '', ''];
     if (estado === 'NA_POSICAO') return ['BACIA NA POSICAO', 'LENDO TAG...', '', ''];
     if (estado === 'SEPARANDO') { const ct = contagem(); return [`${id}  ${pad(ok, 2)}/${pad(n, 2)}`, `ZONAS: ${ct.zonas.replace(/, /g, ' ') || '-'}`, `ALTO ${ct.alto}  BAIXO ${ct.baixo}`, 'FECHAR=NOVA LEITURA']; }
@@ -1326,10 +1343,10 @@
 
   // ---------------- câmera
   const CAMS = {
-    geral: { p: [-3.6, 6.0, 6.2], t: [0.6, 0.8, -0.3] },
-    alto: { p: [0.3, 2.6, 5.2], t: [0, 1.25, -1.2], ocultar: 'baixo' },
-    baixo: { p: [0, 2.2, 0.55], t: [0, 1.15, 7.5] },
-    planta: { p: [0, 21, 3.15], t: [0, 0, 3.1] },
+    geral: { p: [-5.6, 6.4, -6.2], t: [0.4, 0.7, 1.8] },
+    planta: { planta: true },
+    alto: { p: [0.2, 2.5, -3.8], t: [0, 1.15, 1.0] },
+    baixo: { p: [0, 2.2, 0.85], t: [0, 1.1, 9.0] },
     operador: { seguir: true },
   };
   let camAnim = null;
@@ -1345,7 +1362,11 @@
     aplicarVisibilidade();
     controls.enabled = !c.seguir;
     if (c.seguir) { camAnim = null; return; }
-    const to = { p: new THREE.Vector3(...c.p), t: new THREE.Vector3(...c.t) };
+    let to;
+    if (c.planta) {
+      const xm = (faixaX[0] + faixaX[1]) / 2, zm = 3.6, alt = Math.max(20, (faixaX[1] - faixaX[0]) * 0.75);
+      to = { p: new THREE.Vector3(xm, alt, zm + 0.05), t: new THREE.Vector3(xm, 0, zm) };
+    } else to = { p: new THREE.Vector3(...c.p), t: new THREE.Vector3(...c.t) };
     if (imediato) { camera.position.copy(to.p); controls.target.copy(to.t); camAnim = null; return; }
     camAnim = { de: { p: camera.position.clone(), t: controls.target.clone() }, para: to, k: 0 };
   }

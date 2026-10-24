@@ -90,8 +90,8 @@ linhas = [
     ("", None),
     ("TERMOS", SUB),
     ("Módulo Q — display de QUANTIDADE (3 dígitos) + botão com LED, um por endereço de alto giro (andares 0 a 3).", PRETO),
-    ("Módulo E+Q — display de ENDEREÇO (8 dígitos) + QUANTIDADE (3 dígitos) + botão; usado nos 2 blocos de alto giro "
-     "dos andares 4-5 (esquerdo/direito) e em cada zona de baixo giro.", PRETO),
+    ("Módulo E+Q — display de ENDEREÇO (8 dígitos) + QUANTIDADE (3 dígitos) + botão; usado nos andares 4 e 5 do alto giro "
+     "(1 por andar em cada lado: 4 por estação) e em cada zona de baixo giro.", PRETO),
     ("Nó de coluna — microcontrolador por coluna (prédio) do alto giro que liga os Módulos Q daquela coluna ao barramento RS-485.", PRETO),
     ("Concentrador — controlador da estação (Ethernet cabeada), recebe a caixa do serviço PTL e comanda os barramentos.", PRETO),
     ("Zona de baixo giro — 1 display E+Q a cada 4 prédios do fundo (inclui prédio 015 na 1ª zona e prédios de esquina).", PRETO),
@@ -203,8 +203,8 @@ we.cell(row=LP + 2, column=1,
         value="Coluna D (Piloto) = quantidade de estações nas linhas de total. "
               "Fonte: wms_endereco (cd_esteira 1 e 2), exportado em 23/10/2026; rua 90 (Marketing/Almoxarifado) desconsiderada.").font = Font(name="Arial", size=9, italic=True)
 we.cell(row=LP + 3, column=1,
-        value="Regras: Alto giro = prédios 001-010; andares 4-5 viram 2 blocos E+Q (prédios 1-5 / 6-10). "
-              "Baixo giro = demais prédios (fundo, 015 e esquinas), 1 zona E+Q a cada 4 prédios.").font = Font(name="Arial", size=9, italic=True)
+        value="Regras: Alto giro = prédios 001-010; andares 4-5 com 4 displays E+Q por estação (A4 e A5 nos lados 001-005 e 006-010). "
+              "Baixo giro = demais prédios (corredor, 015 e esquinas), 1 zona E+Q a cada 4 prédios.").font = Font(name="Arial", size=9, italic=True)
 we.freeze_panes = "B2"
 
 

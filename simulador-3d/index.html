@@ -92,7 +92,7 @@
 
 <footer id="legenda">
   <span><i style="background:#2ecc71"></i>Módulo Q — alto giro, andares 0–3 (0 = de cima)</span>
-  <span><i style="background:#ff3b30"></i>Módulo E+Q — blocos 4–5 e zonas do baixo giro</span>
+  <span><i style="background:#ff3b30"></i>Módulo E+Q — andares 4–5 e zonas do baixo giro</span>
   <span><i style="background:#F2A33A"></i>LED guia de coluna</span>
   <span><i style="background:#3A7BD5"></i>Barramento alto giro</span>
   <span><i style="background:#E67E22"></i>Barramento baixo giro</span>
@@ -102,15 +102,15 @@
 <div id="ajuda" class="modal">
   <div class="caixaModal">
     <h2>Simulador 3D — estação de flow rack com pick-to-light</h2>
-    <p>Estação montada com os endereços reais da tabela <code>wms_endereco</code>, no layout da operação: a <b>esteira de transporte</b> traz a bacia, a <b>transferência</b> entre as estações leva a bacia para a <b>área de espera</b> em frente ao <b>alto giro</b> (prédios 001–010) e o <b>baixo giro</b> fica no corredor perpendicular: prédio 015 na cabeceira, 020–031 no lado esquerdo e 032 até o último no lado direito. O andar 0 é o de cima; a altura de cada endereço depende de quantos endereços o prédio tem.</p>
+    <p>Estação montada com os endereços reais da tabela <code>wms_endereco</code>, no layout da operação: a <b>esteira de transporte</b> e a <b>esteira de separação</b> correm lado a lado; a <b>transferência</b> (a cada 4 estações) passa a bacia para a separação e o <b>rolete direcionador</b> manda para 2 estações à esquerda ou 2 à direita. O operador fica entre a esteira de separação e o <b>alto giro</b>, atrás dele; no meio do alto giro está a entrada do <b>corredor do baixo giro</b> (020–031 à esquerda; 015 e 043 → 032 à direita). Prateleiras alinhadas, andar 0 em cima.</p>
     <ol>
-      <li><b>A bacia chega</b> da esteira de transporte pela transferência e para na área de espera.</li>
+      <li><b>A bacia chega</b> pela esteira de separação, vinda da transferência.</li>
       <li><b>Leitura abre a bacia:</b> gatilho do coletor (arquitetura A), tag lida pelo leitor fixo (B2) ou pela pulseira (B1).</li>
-      <li><b>Displays acendem:</b> no alto giro, todos os endereços da bacia com a quantidade; nos blocos dos andares 4–5 e nas zonas do baixo giro, um item por vez na ordem da rota.</li>
-      <li><b>Confirmação:</b> clique no botão verde do módulo. O display apaga ou passa ao próximo item da zona.</li>
-      <li><b>Nova leitura fecha a bacia</b>, que é empurrada de volta para a esteira de transporte. Com itens pendentes aparece um alerta; uma terceira leitura fecha e registra a pendência para a conferência.</li>
+      <li><b>Displays acendem:</b> no alto giro, todos os endereços dos andares 0–3 com a quantidade; nos 4 displays dos andares 4–5 e nas zonas do baixo giro, um item por vez na ordem da rota.</li>
+      <li><b>Confirmação:</b> clique no botão verde do módulo. O display apaga ou passa ao próximo item.</li>
+      <li><b>Nova leitura fecha a bacia</b>, e o operador a empurra de volta para a esteira de transporte. Com itens pendentes aparece um alerta; uma terceira leitura fecha e registra a pendência para a conferência.</li>
     </ol>
-    <p class="nota">As estações vizinhas aparecem em cinza. Medidas (largura de prédio, profundidade, corredor) são premissas até chegarem as medidas reais; ficam no bloco <code>CFG</code> de <code>sim.js</code>. Tempos e produtividade são simulados.</p>
+    <p class="nota">As estações vizinhas aparecem em cinza. Medidas são premissas até chegarem as medidas reais; ficam no bloco <code>CFG</code> de <code>sim.js</code>. Tempos e produtividade são simulados.</p>
     <button id="btnFecharAjuda" class="gatilho">Começar</button>
   </div>
 </div>
