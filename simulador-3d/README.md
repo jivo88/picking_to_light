@@ -2,8 +2,8 @@
 
 Estação completa montada com os endereços reais da tabela `wms_endereco` para as estações do
 piloto **05 (Medicamento)** e **27 (Perfumaria)**, no layout da operação: esteira de transporte e
-esteira de separação lado a lado (≈ 20 cm) passando por dentro do alto giro (por baixo do andar 3
-e por cima do andar 4), transferência a cada 4 estações com rolete direcionador, alto giro na
+esteira de separação lado a lado (≈ 20 cm): a de transporte por dentro do alto giro (por baixo do
+andar 3 e por cima do andar 4) e a de separação na frente, aberta; transferência a cada 4 estações com rolete direcionador, alto giro na
 frente do operador e corredor do baixo giro atrás dele (020–031 à esquerda; 015 e 043 → 032 à
 direita).
 Prateleiras alinhadas, andar 0 em cima; a caixa do endereço varia pelo tipo. Bacias verdes de
@@ -23,7 +23,7 @@ Parâmetros de URL úteis para a apresentação: `?auto` (operador automático),
 |---|---|
 | Alto giro, andares 0–3 | 1 módulo **Q** (3 dígitos + botão) por endereço; todos os itens da caixa acendem juntos |
 | Alto giro, andares 4–5 | 4 displays **E+Q** (A4 e A5 em cada lado, P001–P005 e P006–P010); um item por vez, na ordem da rota |
-| Baixo giro | Zonas de 4 prédios (prédio 015 na zona 1), 1 módulo **E+Q** por zona; um item por vez |
+| Baixo giro | 4 zonas por lado do corredor (E1–E4 e D1–D4, P015 na D1), display **E+Q** na altura dos olhos; um item por vez |
 | LED guia de coluna | Opcional; acende no prédio do item atual de cada bloco/zona |
 | Concentrador | Gabinete ventilado, Ethernet, 2 barramentos RS-485 + 12 V em Cat5e com RJ45 |
 | Abertura e fechamento | Arquitetura A: gatilho do coletor; B2: leitor NFC fixo + painel LCD + FECHAR; B1: pulseira |

@@ -1,10 +1,11 @@
 /* Simulador 3D — estação de flow rack com pick-to-light
  * Layout conforme a operação (desenho, fotos e explicações):
- *   o alto giro fica na frente do operador; a esteira de separação e a de transporte (≈ 20 cm entre elas)
- *   passam por dentro do alto giro, por baixo do andar 3 e por cima do andar 4;
+ *   o alto giro fica na frente do operador; a esteira de transporte passa por dentro dele (por baixo do
+ *   andar 3 e por cima do andar 4) e a esteira de separação fica na frente, aberta, ≈ 20 cm da de transporte;
  *   transferência a cada 4 estações com rolete direcionador (2 estações à esquerda, 2 à direita);
  *   o corredor do baixo giro fica atrás do operador, perpendicular às esteiras.
- *   Prateleiras alinhadas, andar 0 em cima; a caixa do endereço varia pelo tipo (A, B, C, F, N).
+ *   Prateleiras alinhadas, andar 0 em cima; a caixa do endereço varia pelo tipo (A, B, C, F, N), em geral pequena.
+ *   Baixo giro: 4 zonas por lado do corredor, display de endereço + quantidade na altura dos olhos.
  * Regras de funcionamento iguais às do documento técnico (Arquitetura A e B).
  * Medidas ficam em CFG e são premissas até chegarem as medidas reais. */
 (function () {
@@ -15,23 +16,26 @@
   // ======================================================================= CONFIGURAÇÃO
   const CFG = {
     // alto giro: na frente do operador; andares 0-3 acima das esteiras, 4-5 abaixo
-    WA: 0.56, profAlto: 1.75, zAltoFace: -0.3,
+    WA: 0.53, profAlto: 1.2, zAltoFace: -0.95,
     baseAlto: 0.25, hAltoBaixo: 0.3,            // andares 5 e 4 (de baixo para cima)
     yAltoCima: 1.38, hAltoCima: 0.29,           // andares 3, 2, 1, 0 (andar 0 em cima)
     // baixo giro: corredor perpendicular atrás do operador
-    WB: 0.6, baseBaixo: 0.25, alturaBaixo: 2.04, niveisBaixo: 8, profBaixo: 2.2,
+    WB: 0.6, baseBaixo: 0.25, alturaBaixo: 2.04, niveisBaixo: 8, profBaixo: 2.0,
+    yDisplayBaixo: 1.5,          // displays das zonas do baixo giro na altura dos olhos
     larguraCorredor: 1.5,
     predioVirada: 32,            // prédios < 32 no lado esquerdo do corredor; 015 e >= 32 no direito
     tilt: 0.1,
-    // esteiras dentro do alto giro, entre o andar 3 e o andar 4
-    zSep: -0.64, largSep: 0.55, altSep: 0.96,           // esteira de separação (lado do operador)
-    zTransp: -1.39, largTransp: 0.55, altTransp: 0.98,  // esteira de transporte (≈ 20 cm atrás)
+    // esteira de transporte por dentro do alto giro; esteira de separação na frente, aberta (≈ 20 cm entre elas)
+    zTransp: -1.29, largTransp: 0.55, altTransp: 0.98,
+    zSep: -0.535, largSep: 0.55, altSep: 0.92,
     zOperAlto: 0.12, zFaces: 1.35,
     xPega: 0.0, distFila: 1.45,
     velEsteira: 1.8, velEmpurre: 0.9, velOperador: 1.3,
     tempoPega: 1.6, tempoPorUnidade: 0.25, tempoDeposito: 0.5,
     bacia: { c: 0.56, a: 0.26, l: 0.4, cor: '#2E9E4F', borda: '#1d6b35' },   // bacia retornável verde, tamanho único
-    caixaTipo: { A: [0.9, 0.78], B: [0.8, 0.68], C: [0.72, 0.6], F: [0.58, 0.48], N: [0.86, 0.72] },
+    // caixa do endereço por tipo (fração da largura e da altura do vão) — em geral pequenas
+    caixaTipo: { A: [0.62, 0.62], B: [0.55, 0.56], C: [0.48, 0.52], F: [0.4, 0.46], N: [0.58, 0.6] },
+    fatorCaixaAlto: 1.35,
     segmentos: { Medicamento: [3, 22], Perfumaria: [26, 45] },
   };
   CFG.passo = 2 * CFG.profBaixo + CFG.larguraCorredor;          // distância entre estações
@@ -354,7 +358,7 @@
       mont.push(matriz(bx, hM / 2, -o.prof, 0, 0, 0, 0.05, hM, 0.04));
     });
     const profs = [];
-    for (let zz = -0.6; zz > -o.prof + 0.2; zz -= 0.42) profs.push(zz);
+    for (let zz = -0.55; zz > -o.prof + 0.2; zz -= 0.36) profs.push(zz);
     const ys = new Set();
     o.niveis.forEach((n) => { ys.add(Math.round(n.yb * 1000) / 1000); ys.add(Math.round((n.yb + n.h) * 1000) / 1000); });
     const r = aleat(o.seed || 7);
@@ -369,8 +373,9 @@
         const e = cinza ? null : c.ends[a];
         const tipo = cinza ? (r() < 0.25 ? null : 'ABCF'[Math.floor(r() * 4)]) : e && e.dim;
         if (!tipo) return;
-        const [fw, fh] = CFG.caixaTipo[tipo] || [0.75, 0.6];
-        const wt = c.w * fw, ht = h * fh, dt = 0.38;
+        const [fw0, fh0] = CFG.caixaTipo[tipo] || [0.5, 0.5];
+        const fa = o.lado === 'alto' ? CFG.fatorCaixaAlto : 1;
+        const wt = c.w * Math.min(0.92, fw0 * fa), ht = h * Math.min(0.8, fh0 * fa), dt = o.lado === 'alto' ? 0.38 : 0.3;
         const yc = (zz) => yb + 0.012 + ht / 2 - zz * Math.tan(CFG.tilt);
         profs.forEach((zz) => reservas.push(matriz(c.x, yc(zz), zz, CFG.tilt, 0, 0, wt, ht, dt)));
         if (cinza) { caixas.push(matriz(c.x, yc(-0.2), -0.2, CFG.tilt, 0, 0, wt, ht, dt)); return; }
@@ -493,7 +498,7 @@
       no.position.set(xm(p) + 0.14, topA + 0.08, -0.22);
       alto.add(no);
     }
-    const sinal = placa(`ALTO GIRO · ESTAÇÃO ${S.est} · P001–P010 · esteiras entre o andar 3 e o andar 4`, CFG.compAlto - 0.1, 0.16, { escala: 0.48 });
+    const sinal = placa(`ALTO GIRO · ESTAÇÃO ${S.est} · P001–P010 · esteira de transporte entre o andar 3 e o andar 4`, CFG.compAlto - 0.1, 0.16, { escala: 0.46 });
     sinal.position.set(0, topA + 0.66, -0.01);
     alto.add(sinal);
 
@@ -515,35 +520,36 @@
     rackW.add(sinalW);
     const zonasIds = [...new Set(baixos.map((e) => e.zona))].sort();
     const zonas = {};
+    const hB = CFG.alturaBaixo / CFG.niveisBaixo;
+    const yViga = CFG.baseBaixo + Math.round((CFG.yDisplayBaixo - CFG.baseBaixo) / hB) * hB;   // longarina mais perto da altura dos olhos
     zonasIds.forEach((z, k) => {
       const ps = [...new Set(baixos.filter((e) => e.zona === z).map((e) => e.predio))];
-      const nE = ps.filter((p) => esq.includes(p)).length, nW = ps.filter((p) => dir.includes(p) && p !== 15).length;
-      const ladoE = nE >= nW;
+      const ladoE = /-E\d/.test(z) || (!/-D\d/.test(z) && ps.filter((p) => esq.includes(p)).length >= ps.filter((p) => dir.includes(p)).length);
       const rack = ladoE ? rackE : rackW;
       const lista = ladoE ? esq : dir;
       const idx = ps.filter((p) => lista.includes(p)).map((p) => lista.indexOf(p));
+      if (!idx.length) return;
       const sgn = ladoE ? 1 : -1;
       const i1 = Math.min(...idx), i2 = Math.max(...idx);
       const x1 = sgn * i1 * CFG.WB, x2 = sgn * (i2 + 1) * CFG.WB, cx = (x1 + x2) / 2, larg = Math.abs(x2 - x1);
       const cor = CORES_ZONA[k % CORES_ZONA.length];
       const nomes = ps.slice().sort((a, b) => a - b).filter((p) => p !== 15);
-      const txt = `ZONA ${k + 1} · ${ps.includes(15) ? 'P015 + ' : ''}P${pad(nomes[0], 3)}–P${pad(nomes[nomes.length - 1], 3)}`;
+      const rotulo = z.replace('BG-', '');
+      const txt = `ZONA ${rotulo} · ${ps.includes(15) ? 'P015 + ' : ''}P${pad(nomes[0], 3)}–P${pad(nomes[nomes.length - 1], 3)}`;
       const pl = placa(txt, larg - 0.06, 0.07, { fundo: cor, escala: 0.5 });
       pl.position.set(cx, topB + 0.2, 0.03);
       rack.add(pl);
-      zonas[z] = criarModulo('EQ', rack, cx, topB + 0.4, 0.06, 0.32, z, 'baixo');
+      const m = criarModulo('EQ', rack, cx, yViga - 0.05, 0.06, 0, z, 'baixo');
+      const tarja = placa(rotulo, 0.09, 0.1, { fundo: cor, escala: 0.55 });
+      tarja.position.set(-0.32, 0, 0.019);
+      m.g.add(tarja);
+      zonas[z] = m;
       zonas[z].cor = cor;
-      zonas[z].nome = `Zona ${k + 1}`;
+      zonas[z].nome = `Zona ${rotulo}`;
       const faixa = new THREE.Mesh(new THREE.PlaneGeometry(larg - 0.04, 0.2), mat(cor, { transparent: true, opacity: 0.55 }));
       faixa.rotation.x = -Math.PI / 2;
       faixa.position.set(cx, 0.006, 0.13);
       rack.add(faixa);
-      if (ps.includes(15)) {
-        const f15 = new THREE.Mesh(new THREE.PlaneGeometry(CFG.WB - 0.04, 0.2), mat(cor, { transparent: true, opacity: 0.55 }));
-        f15.rotation.x = -Math.PI / 2;
-        f15.position.set(-0.5 * CFG.WB, 0.006, 0.13);
-        rackW.add(f15);
-      }
     });
 
     // ---------------- estações vizinhas (cinza)
@@ -591,7 +597,7 @@
     const g = new THREE.Group();
     grpEst.add(g);
     const [x0, x1] = faixaX, L = x1 - x0, cx = (x0 + x1) / 2;
-    const transportador = (z, h, W) => {
+    const transportador = (z, h, W, pernas) => {
       [-1, 1].forEach((s) => {
         const lat = caixaMesh(L, 0.09, 0.035, M.esteira);
         lat.position.set(cx, h - 0.02, z + s * (W / 2 + 0.02));
@@ -600,12 +606,16 @@
       const base = caixaMesh(L, 0.03, W, M.esteira);
       base.position.set(cx, h - 0.08, z);
       g.add(base);
-      const rol = [];
+      const rol = [], pr = [];
       for (let x = x0; x <= x1; x += 0.085) rol.push(matriz(x, h - 0.012, z, Math.PI / 2, 0, 0, 1, 1, 1));
       g.add(instanciado(new THREE.CylinderGeometry(0.022, 0.022, W, 10), M.rolete, rol, false));
+      if (pernas) {
+        for (let x = x0; x <= x1; x += 1.5) [-1, 1].forEach((s) => pr.push(matriz(x, (h - 0.08) / 2, z + s * (W / 2), 0, 0, 0, 0.045, h - 0.08, 0.045)));
+        g.add(instanciado(BOX1, M.esteira, pr, true));
+      }
     };
-    transportador(CFG.zSep, CFG.altSep, CFG.largSep);
-    transportador(CFG.zTransp, CFG.altTransp, CFG.largTransp);
+    transportador(CFG.zSep, CFG.altSep, CFG.largSep, true);
+    transportador(CFG.zTransp, CFG.altTransp, CFG.largTransp, false);
     const xt = transf.x;
     const zA = CFG.zTransp + CFG.largTransp / 2, zB = CFG.zSep - CFG.largSep / 2;
     const ponte = caixaMesh(0.6, 0.03, zB - zA + 0.1, mat('#2E8B57', { roughness: 0.5 }));
@@ -620,7 +630,7 @@
     const sp = sprite([`Transferência ${pad(st, 2)}|${pad(st + 1, 2)} · rolete direcionador`, alc], 1.7, { fundo: 'rgba(46,139,87,0.92)' });
     sp.position.set(xt, 3.25, CFG.zSep);
     g.add(sp);
-    const e1 = sprite(['Esteiras passam por dentro do alto giro', 'separação (frente) · transporte (atrás) · entre andar 3 e 4'], 1.9, { fundo: 'rgba(46,58,79,0.88)' });
+    const e1 = sprite(['Separação (frente, aberta) · transporte (por dentro do alto giro)', '≈ 20 cm entre elas · transporte entre o andar 3 e o andar 4'], 2.1, { fundo: 'rgba(46,58,79,0.88)' });
     e1.position.set(x0 + 2.6, 3.25, CFG.zSep);
     g.add(e1);
   }
@@ -693,8 +703,12 @@
     g.add(leitor);
     const tc = texCanvas(512, 160);
     const lcd = new THREE.Group();
-    lcd.position.set(CFG.xPega - 0.75, CFG.yAltoCima - 0.16, CFG.zAltoFace + 0.08);
-    lcd.rotation.x = -0.2;
+    const xp = CFG.xPega - 0.8, zp = CFG.zSep + CFG.largSep / 2 + 0.08;
+    const poste = caixaMesh(0.05, 1.25, 0.05, M.montante);
+    poste.position.set(xp, 0.62, zp);
+    g.add(poste);
+    lcd.position.set(xp, 1.3, zp + 0.03);
+    lcd.rotation.x = -0.3;
     g.add(lcd);
     lcd.add(caixaMesh(0.36, 0.17, 0.04, M.corpo));
     const tela = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.094), new THREE.MeshBasicMaterial({ map: tc.t }));

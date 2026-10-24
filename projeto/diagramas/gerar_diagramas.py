@@ -180,9 +180,17 @@ def d_sequencia():
 
 
 # ---------------------------------------------------------------- D4 layout estacao 05 (elevações, prateleiras alinhadas, andar 0 em cima)
-ZCOR = ["#E3F1E8", "#DEE6F2", "#FCE8CC", "#EFE7F6", "#FDE2E2", "#E0F2F1", "#F3F5F8"]
-ZBOR = [VD, AZ2, "#D68910", RX, "#C0392B", "#138D90", CZ]
+ZCOR = ["#E3F1E8", "#DEE6F2", "#FCE8CC", "#EFE7F6", "#FDE2E2", "#E0F2F1", "#F1E6D8", "#FBE3D2"]
+ZBOR = [VD, AZ2, "#D68910", RX, "#C0392B", "#138D90", "#8E6C3A", "#D35400"]
 DIM = {"A": (0.9, 0.78), "B": (0.8, 0.68), "C": (0.72, 0.6), "F": (0.58, 0.48), "N": (0.86, 0.72)}
+
+
+ZORD = ["E1", "E2", "E3", "E4", "D1", "D2", "D3", "D4"]
+
+
+def _zidx(zona):
+    z = zona.split("-")[1]
+    return ZORD.index(z) if z in ZORD else len(ZORD)
 
 
 def _por_predio(ends):
@@ -221,7 +229,7 @@ def d_layout():
     w, h = 1500, 540
     c = []
     pp = _por_predio(END05)
-    zid = lambda e: int(e["zona"].split("-")[1]) - 1
+    zid = lambda e: _zidx(e["zona"])
     # ---- alto giro
     ax, ay, cw, hl = 70, 140, 38, 30
     band = 46
@@ -240,7 +248,7 @@ def d_layout():
     c.append(f"<rect x='{ax}' y='{ay+4*hl+6}' width='{larg-3}' height='{band-12}' rx='3' fill='#D5DAE0' stroke='{CZ}'/>")
     for x_ in range(ax + 6, ax + larg - 6, 9):
         c.append(f"<line x1='{x_}' y1='{ay+4*hl+8}' x2='{x_}' y2='{ay+4*hl+band-8}' stroke='#BCC4CC'/>")
-    c.append(f"<text x='{ax+larg/2}' y='{ay+4*hl+band/2+4}' text-anchor='middle' font-size='11' font-weight='700' fill='{AZ}' {FONT}>esteira de separação (frente) + transporte (atrás)</text>")
+    c.append(f"<text x='{ax+larg/2}' y='{ay+4*hl+band/2+4}' text-anchor='middle' font-size='11' font-weight='700' fill='{AZ}' {FONT}>esteira de transporte (por dentro) · separação aberta na frente</text>")
     for p in range(1, 11):
         x = ax + (p - 1) * cw + (14 if p > 5 else 0)
         ends = pp.get(p, {})
@@ -254,7 +262,7 @@ def d_layout():
             c.append(f"<rect x='{x+18}' y='{yy}' width='{5*cw-50}' height='12' rx='3' fill='#111' stroke='{cor}' stroke-width='1.5'/>"
                      f"<text x='{x+18+(5*cw-50)/2}' y='{yy+9.5}' text-anchor='middle' font-size='8.5' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>E+Q A{an}</text>")
     ly0 = yb + 2 * hl + 38
-    c.append(f"<text x='{ax}' y='{ly0}' font-size='12.5' {FONT}>As esteiras passam por baixo do andar 3 e por cima do andar 4.</text>")
+    c.append(f"<text x='{ax}' y='{ly0}' font-size='12.5' {FONT}>A esteira de transporte passa por baixo do andar 3 e por cima do andar 4.</text>")
     c.append(f"<rect x='{ax}' y='{ly0+14}' width='16' height='16' rx='3' fill='{VD2}' stroke='{VD}'/><text x='{ax+24}' y='{ly0+27}' font-size='12.5' {FONT}>Andares 0–3: Módulo Q por endereço — 29</text>")
     c.append(f"<rect x='{ax}' y='{ly0+38}' width='16' height='16' rx='3' fill='#D6E4F7' stroke='{AZ2}'/><text x='{ax+24}' y='{ly0+51}' font-size='12.5' {FONT}>Andares 4–5: 20 endereços em 4 displays E+Q</text>")
     # ---- baixo giro
@@ -265,7 +273,7 @@ def d_layout():
 
     def cor_b(e):
         z = zid(e)
-        return ZCOR[z % 7], ZBOR[z % 7]
+        return ZCOR[z % 8], ZBOR[z % 8]
 
     def lado(x0, preds, titulo):
         c.append(f"<text x='{x0}' y='{by-70}' font-size='16' font-weight='700' fill='{AZ}' {FONT}>{titulo}</text>")
@@ -280,15 +288,16 @@ def d_layout():
         for z, xps in zonas.items():
             xs = [q for q, _ in xps]
             x1, x2 = min(xs), max(xs) + bw - 3
-            if x2 - x1 > 60:
-                _disp(c, x1, by - 46, x2 - x1, f"P{xps[0][1]:03d} A2", "1", ZBOR[z % 7])
-            c.append(f"<text x='{(x1+x2)/2}' y='{by-8}' text-anchor='middle' font-size='10.5' font-weight='700' fill='{ZBOR[z%7]}' {FONT}>ZONA {z+1}</text>")
+            yv = by + 2 * bhl - 7
+            c.append(f"<rect x='{x1+3}' y='{yv}' width='{x2-x1-6}' height='14' rx='3' fill='#111' stroke='{ZBOR[z % 8]}' stroke-width='1.5'/>"
+                     f"<text x='{(x1+x2)/2}' y='{yv+10.5}' text-anchor='middle' font-size='8.5' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>P{xps[-1][1]:03d} A2 · 1</text>")
+            c.append(f"<text x='{(x1+x2)/2}' y='{by-8}' text-anchor='middle' font-size='10.5' font-weight='700' fill='{ZBOR[z%8]}' {FONT}>ZONA {ZORD[z] if z < 8 else ''}</text>")
         c.append(f"<text x='{x0}' y='{by+8*bhl+36}' font-size='11.5' fill='{CZ}' {FONT}>← entrada do corredor                         fundo →</text>")
     lado(560, esq, "BAIXO GIRO — lado esquerdo (P020–P031)")
     lado(980, dirt, "Lado direito (P015, P043 → P032)")
     ly = by + 8 * bhl + 62
-    c.append(f"<text x='560' y='{ly}' font-size='12.5' {FONT}>• Prateleiras alinhadas, andar 0 em cima. A caixa do endereço muda de tamanho pelo tipo (A, B, C, F, N); andar sem endereço fica vazio.</text>")
-    c.append(f"<text x='560' y='{ly+22}' font-size='12.5' {FONT}>• 160 endereços em 6 zonas de 4 prédios; 1 display E+Q por zona. P015 (150–153) abre o lado direito e entra na Zona 1.</text>")
+    c.append(f"<text x='560' y='{ly}' font-size='12.5' {FONT}>• Prateleiras alinhadas, andar 0 em cima, profundidade ≈ 2 m. Caixas de endereço em geral pequenas (tipo A, B, C, F, N); andar sem endereço fica vazio.</text>")
+    c.append(f"<text x='560' y='{ly+22}' font-size='12.5' {FONT}>• 160 endereços em 8 zonas (4 por lado); display de endereço + quantidade na altura dos olhos (≈ 1,5 m). P015 (150–153) entra na zona D1.</text>")
     return svg(w, h, "\n".join(c), "Elevações da estação 05 (Medicamento) — 209 endereços reais de wms_endereco")
 
 
@@ -296,8 +305,8 @@ def d_layout():
 def d_planta():
     W, H = 1500, 760
     s = 46
-    P, hc, pb = 5.9, 0.75, 2.2
-    zF, zFace, zBack = 1.35, -0.3, -2.05
+    P, hc, pb = 5.5, 0.75, 2.0
+    zF, zFace, zBack = 1.35, -0.93, -2.05
     est0, est1 = 3, 6
     xa = (est0 - 5 - 0.5) * P - 0.3
     X = lambda x: 30 + (x - xa) * s
@@ -359,14 +368,14 @@ def d_planta():
         r(xc - hc - pb, zF, xc - hc, zF + L, fill, bor)
         r(xc + hc, zF, xc + hc + pb, zF + L, fill, bor)
         t(xc - 1.9, 1.1, f"ESTAÇÃO {st:02d}", 12, AZ if nosso else CZ, 700)
-    zid = lambda p: int(next(iter(pp[p].values()))["zona"].split("-")[1]) - 1
+    zid = lambda p: _zidx(next(iter(pp[p].values()))["zona"])
     for i, p in enumerate(esq):
         z = zid(p)
-        r(hc, zF + i * 0.6, hc + 0.35, zF + (i + 1) * 0.6, ZBOR[z % 7], "#fff")
+        r(hc, zF + i * 0.6, hc + 0.35, zF + (i + 1) * 0.6, ZBOR[z % 8], "#fff")
         t(hc + 0.55, zF + i * 0.6 + 0.4, f"{p:03d}", 9.5, CZ, 400, "start")
     for i, p in enumerate(dirt):
         z = zid(p)
-        r(-hc - 0.35, zF + i * 0.6, -hc, zF + (i + 1) * 0.6, ZBOR[z % 7], "#fff")
+        r(-hc - 0.35, zF + i * 0.6, -hc, zF + (i + 1) * 0.6, ZBOR[z % 8], "#fff")
         t(-hc - 0.55, zF + i * 0.6 + 0.4, f"{p:03d}", 9.5, CZ, 400, "end")
     t(hc + 1.6, zF + L / 2, "LADO ESQUERDO · P020–P031", 11.5, AZ, 700, rot=90)
     t(-hc - 1.6, zF + L / 2, "LADO DIREITO · P015, P043 → P032", 11.5, AZ, 700, rot=-90)
@@ -376,17 +385,17 @@ def d_planta():
     t(2.58, 0.85, "concentrador", 9.5, VD, 700)
     # legenda
     lx, ly = 1180, 110
-    itens = [("#DEE6F2", AZ2, "Estação 05 (piloto)"), ("#EEF0F3", "#AAB2BC", "Estações vizinhas"), ("#C9D0D8", CZ, "Esteiras (dentro do alto giro)"),
+    itens = [("#DEE6F2", AZ2, "Estação 05 (piloto)"), ("#EEF0F3", "#AAB2BC", "Estações vizinhas"), ("#C9D0D8", CZ, "Esteiras (transporte por dentro do alto giro)"),
              ("#E3F1E8", VD, "Transferência"), (AM, "#9a6413", "Rolete direcionador"), ("#2E9E4F", "#1d6b35", "Bacia (verde, tamanho único)")]
     for i, (f, b_, txt) in enumerate(itens):
         c.append(f"<rect x='{lx}' y='{ly+i*28}' width='20' height='20' rx='3' fill='{f}' stroke='{b_}' stroke-width='1.6'/><text x='{lx+30}' y='{ly+i*28+15}' font-size='12.5' {FONT}>{txt}</text>")
     ty = ly + len(itens) * 28 + 26
     linhas = ["Regras da transferência", "Cada transferência atende até 4 estações:", "2 à esquerda e 2 à direita do vão.",
               "Ex.: 11|12 → 10, 11 · 12, 13.", "Ponta: 03|04 → 03 · 04, 05.", "", "A bacia só entra onde o pedido tem", "itens; depois volta à esteira de",
-              "transporte (ex.: começa na 03 e só", "continua na 07 → não entra na 04/05).", "", "As esteiras passam por dentro do alto", "giro: por baixo do andar 3 e por cima", "do andar 4.", "", "Medidas aproximadas, sem escala."]
+              "transporte (ex.: começa na 03 e só", "continua na 07 → não entra na 04/05).", "", "A de transporte passa por dentro do alto", "giro (entre o andar 3 e o 4); a de", "separação fica na frente, aberta.", "", "Medidas aproximadas, sem escala."]
     for i, l in enumerate(linhas):
         c.append(f"<text x='{lx}' y='{ty+i*21}' font-size='{13.5 if i==0 else 12.2}' font-weight='{700 if i==0 else 400}' fill='{AZ if i==0 else "#1c2430"}' {FONT}>{l}</text>")
-    return svg(W, H, "\n".join(c), "Planta da estação 05 e vizinhas — alto giro com as esteiras por dentro, operador e corredor do baixo giro")
+    return svg(W, H, "\n".join(c), "Planta da estação 05 e vizinhas — alto giro com a esteira de transporte por dentro, separação na frente e corredor do baixo giro")
 
 
 # ---------------------------------------------------------------- D5 cabeamento

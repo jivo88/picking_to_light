@@ -145,15 +145,15 @@ c.push(H1("3. Levantamento físico (tabela wms_endereco)"));
 c.push(R("A tabela **wms_endereco** (esteiras 1 e 2, exportada em 23/10/2026) tem **7.981 endereços** em **40 ruas — cada rua é uma estação**. A rua 90 (Marketing/Almoxarifado, 2 endereços) foi desconsiderada. Formato do endereço: bairro (1) + rua (2) + prédio (3) + andar (1) + apartamento (1), por exemplo **0050230A** = rua 05, prédio 023, andar 0."));
 c.push(H2("3.1 Estrutura de uma estação"));
 c.push(tabela(["Área", "Prédios", "Andares", "Uso proposto"], [
-  ["Alto giro (na frente do operador; esteiras passam por dentro)", "001 a 010", "0 a 3 (acima das esteiras)", "1 display de quantidade (Módulo Q) por endereço"],
+  ["Alto giro (na frente do operador; esteira de transporte por dentro)", "001 a 010", "0 a 3 (acima das esteiras)", "1 display de quantidade (Módulo Q) por endereço"],
   ["Alto giro (níveis de baixo)", "001 a 010", "4 e 5 (abaixo das esteiras)", "4 displays de endereço + quantidade por estação: um por andar (A4 e A5) em cada lado (prédios 001-005 e 006-010), como no sistema atual"],
   ["Início do lado direito do corredor (\"150-153\")", "015", "0 a 3 (esquinas de Medicamento: até 7)", "Entram na zona 1 do baixo giro"],
-  ["Baixo giro (corredor perpendicular)", "Lado esquerdo: 020/022-031 · lado direito: 032 até o último", "0 a 7 (de cima)", "Zonas de 4 prédios, cada uma com 1 display de endereço + quantidade"],
+  ["Baixo giro (corredor perpendicular)", "Lado esquerdo: 020/022-031 · lado direito: 032 até o último", "0 a 7 (de cima)", "4 zonas por lado do corredor (≈ 3 prédios cada), cada uma com 1 display de endereço + 1 de quantidade na altura dos olhos"],
   ["Esquinas", "060-063 (Med.) / 060-071 (Perf.)", "0 a 7", "Zonas adicionais de baixo giro (+1 em Medicamento, +3 em Perfumaria)"],
 ], [2.2, 1.6, 1.7, 4]));
 c.push(R("O campo **nr_ordem_separacao_flow** indica a ordem de percurso das seções. Nas estações 10 e 16 a ordem é invertida (estações espelhadas) — a rota de cada zona respeita esse campo, depois prédio e andar."));
 c.push(H2("3.2 Disposição física"));
-c.push(R("O **alto giro** fica na frente do operador. A **esteira de separação** e a **esteira de transporte** correm lado a lado (cerca de 20 cm entre elas) e passam **por dentro do alto giro, por baixo do andar 3 e por cima do andar 4**: a separação do lado do operador e a de transporte atrás. O **corredor do baixo giro** fica atrás do operador, perpendicular às esteiras. As prateleiras são alinhadas (mesmos níveis em toda a estante)."));
+c.push(R("O **alto giro** fica na frente do operador. A **esteira de transporte** passa **por dentro do alto giro, por baixo do andar 3 e por cima do andar 4**; a **esteira de separação** fica na frente da estante, aberta, cerca de 20 cm à frente da de transporte, com os endereços logo acima e abaixo dela. O **corredor do baixo giro** fica atrás do operador, perpendicular às esteiras. As prateleiras são alinhadas (mesmos níveis em toda a estante)."));
 [
   "**Transferência:** cada transferência alimenta até 4 estações. A bacia passa da esteira de transporte para a de separação e, na zona de espera, um **rolete direcionador** manda a bacia para a esquerda (2 estações) ou para a direita (2 estações). Ex.: transferência entre 11 e 12 atende 10 e 11 (esquerda) e 12 e 13 (direita). Nas pontas, a transferência entre 3 e 4 atende 3 (esquerda) ou 4 e 5 (direita); na Perfumaria, entre 26 e 27 atende 26 ou 27 e 28.",
   "**Pedido:** a bacia só entra nas estações em que o pedido tem itens. Se o pedido começa na 3 e continua só na 7, depois da 3 a bacia volta à esteira de transporte e não entra na 4 nem na 5.",
@@ -165,23 +165,28 @@ c.push(R("O **alto giro** fica na frente do operador. A **esteira de separação
   "Os blocos do baixo giro são de costas: cada bloco tem um lado de uma estação e o outro lado da estação vizinha.",
   "**O andar 0 é o de cima.** As prateleiras são alinhadas; o que muda de tamanho é a caixa do endereço, conforme o tipo (A, B, C, F, N). Andar que o prédio não usa fica vazio. As bacias que percorrem as esteiras têm tamanho único.",
 ].forEach((x) => c.push(B(x)));
-c.push(...img("planta_estacao", 640, 324, "Figura 1 — Planta da estação 05 e das vizinhas: alto giro com as esteiras por dentro, transferência, operador e corredor do baixo giro (sem escala)"));
-c.push(...img("layout_estacao", 640, 230, "Figura 2 — Elevações da estação 05 com os 209 endereços reais (andar 0 em cima) e as 6 zonas do baixo giro"));
+c.push(...img("planta_estacao", 640, 324, "Figura 1 — Planta da estação 05 e das vizinhas: alto giro com a esteira de transporte por dentro, esteira de separação, transferência, operador e corredor do baixo giro (sem escala)"));
+c.push(...img("layout_estacao", 640, 230, "Figura 2 — Elevações da estação 05 com os 209 endereços reais (andar 0 em cima) e as 8 zonas do baixo giro (4 por lado)"));
 c.push(H2("3.3 Totais por tipo de estação"));
 c.push(tabela(["Tipo", "Estações", "Alto giro 0-3", "Alto giro 4-5", "Baixo giro", "Zonas baixo giro"], [
-  ["Medicamento comum", "04-08, 11-14, 17-21 (14)", "29", "10 a 20", "156-160", "6"],
-  ["Medicamento esquina", "09, 10, 15, 16", "29", "10 a 20", "188-192", "7"],
-  ["Medicamento ponta", "03 / 22", "29", "20 / 10", "82 / 4", "3 / 1"],
-  ["Perfumaria comum", "27-31, 34-37, 40-44 (14)", "35", "7 a 15", "131", "6"],
-  ["Perfumaria esquina", "32, 33, 38, 39", "35", "9 a 15", "227-230", "9"],
-  ["Perfumaria ponta", "26 / 45", "35", "13 / 15", "128 / 131", "6"],
+  ["Medicamento comum", "04-08, 11-14, 17-21 (14)", "29", "10 a 20", "156-160", "8"],
+  ["Medicamento esquina", "09, 10, 15, 16", "29", "10 a 20", "188-192", "9"],
+  ["Medicamento ponta", "03 / 22", "29", "20 / 10", "82 / 4", "4 / 1"],
+  ["Perfumaria comum", "27-31, 34-37, 40-44 (14)", "35", "7 a 15", "131", "8"],
+  ["Perfumaria esquina", "32, 33, 38, 39", "35", "9 a 15", "227-230", "11"],
+  ["Perfumaria ponta", "26 / 45", "35", "13 / 15", "128 / 131", "8"],
   ["**TOTAL (40 estações)**", "", fmt(tot.alto_0a3), fmt(tot.alto_45), fmt(tot.baixo), fmt(tot.zonas_baixo)],
 ], [2.2, 2.6, 1.2, 1.2, 1.2, 1.3]));
 c.push(nota("**Divergências com os números informados (para conferência):** Perfumaria esquina tem 227-230 endereços de baixo giro na tabela (informado: 203); a estação 26 tem 48 endereços de alto giro (informado: 49); Medicamento tem 20 estações na tabela (informado: 21). A planilha de orçamento usa a tabela, mas **todos os números são editáveis** na aba Estações."));
 c.push(H2("3.4 Zoneamento do baixo giro"));
-c.push(R("Regra inicial: **1 zona a cada 4 prédios** do baixo giro, com todas as zonas que têm itens trabalhando ao mesmo tempo. Cada zona mostra **um item por vez**, na ordem da rota; o botão confirma e o display passa para o próximo item da zona. Com 4 prédios × 8 andares, cada zona tem 20 a 32 endereços — o display mostra prédio e andar (ex.: **P031 A2**), suficiente para localizar a posição em poucos segundos."));
-c.push(B("Opcional de baixo custo: **LED guia** no topo de cada prédio do baixo giro, que acende a coluna do item atual da zona (≈ R$ 1.000 para toda a operação)."));
-c.push(B("O tamanho da zona é parâmetro do sistema (3, 4 ou 6 prédios) e pode ser ajustado no piloto conforme a produtividade medida."));
+c.push(R("Para ficar visual e ergonômico, cada lado do corredor tem **4 zonas** (cerca de 3 prédios cada), e cada zona tem **1 display de endereço + 1 de quantidade + botão**, preso na longarina **na altura dos olhos (≈ 1,5 m)**, no meio da zona. Assim, olhando um lado do corredor, o operador vê **8 displays** (4 de endereço e 4 de quantidade). Cada zona mostra **um item por vez**, na ordem da rota; o botão confirma e o display passa para o próximo item da zona. Todas as zonas com itens trabalham ao mesmo tempo."));
+[
+  "Estação comum: lado esquerdo 020-031 em 4 zonas (E1 a E4) e lado direito 015 + 043 → 032 em 4 zonas (D1 a D4): **8 zonas por estação**. Esquinas mantêm zonas extras de 4 prédios (060-063 / 060-071).",
+  "Com 3 prédios por zona, cada zona tem até 24 endereços; o display mostra prédio e andar (ex.: **P031 A2**).",
+  "Profundidade do baixo giro ≈ 2 m; as caixas dos endereços são, em geral, pequenas.",
+  "Opcional de baixo custo: **LED guia** no topo de cada prédio, que acende a coluna do item atual da zona (≈ R$ 1.000 para toda a operação).",
+  "O número de zonas por lado é parâmetro do sistema e pode ser ajustado no piloto conforme a produtividade medida.",
+].forEach((x) => c.push(B(x)));
 
 // 4 REQUISITOS
 c.push(H1("4. Requisitos"));
@@ -264,7 +269,7 @@ c.push(H2("6.3 Comparativo A × B"));
 c.push(tabela(["Critério", "A — Coletor", "B — RFID (B2)"], [
   ["Equipamento de leitura", "Coletores MovFast já existentes", "Leitor fixo por estação + tag por caixa"],
   ["Ação do operador para abrir/fechar", "Apontar e apertar o gatilho (2×)", "Colocar a caixa na posição (abre); nova leitura/botão (fecha)"],
-  ["Custo de hardware (40 estações)*", "R$ 270 mil", "R$ 293 mil"],
+  ["Custo de hardware (40 estações)*", "R$ 284 mil", "R$ 308 mil"],
   ["Custo recorrente", "Nenhum novo", "Tags para caixas novas/danificadas"],
   ["Riscos", "Disponibilidade e bateria dos coletores; Wi-Fi", "Posição de leitura da caixa; frota de tags"],
   ["Prazo", "Menor (reaproveita coletores)", "Maior (tags, cadastro, mecânica)"],
@@ -364,7 +369,7 @@ c.push(H2("9.1 Quantidades"));
 c.push(tabela(["Item", "Por estação comum (Med.)", "Piloto (05 + 27)", "Operação completa"], [
   ["Módulos Q (alto giro 0-3)", "29", "64", fmt(tot.alto_0a3)],
   ["Nós de coluna", "10", "20", "400"],
-  ["Módulos E+Q (andares 4-5 + zonas)", "4 + 6 = 10", "20", fmt(tot.blocos_alto_45 + tot.zonas_baixo)],
+  ["Módulos E+Q (andares 4-5 + zonas)", "4 + 8 = 12", "24", fmt(tot.blocos_alto_45 + tot.zonas_baixo)],
   ["Concentradores", "1", "2", "40"],
   ["Reserva técnica", "—", "+10%", "+10%"],
 ], [2.6, 1.6, 1.4, 1.6], { direita: [1, 2, 3] }));
@@ -387,7 +392,7 @@ c.push(R("Exemplo de cálculo: 10 m de Cat5e (24 AWG ≈ 0,084 Ω/m por condutor
 c.push(tabela(["Critério", "12 V (recomendado)", "5 V"], [
   ["Queda de tensão em cabos longos", "Tolerada pelos reguladores locais", "Crítica: exige cabos de força extras e várias injeções"],
   ["Componentes", "+1 regulador por nó/módulo (≈ R$ 8)", "Sem reguladores"],
-  ["Custo de peças (operação completa)", "≈ R$ 199 mil", "≈ R$ 197 mil (economia nos reguladores compensada pelo cabo de força)"],
+  ["Custo de peças (operação completa)", "≈ R$ 211 mil", "≈ R$ 208 mil (economia nos reguladores compensada pelo cabo de força)"],
   ["Manutenção", "Baixa: um único cabo por trecho", "Maior: mais pontos de conexão de energia"],
   ["Recomendação", "**Adotar**", "Apenas para trechos curtos"],
 ], [2, 2.4, 2.4]));
@@ -422,13 +427,13 @@ c.push(H1("11. Operação e manutenção"));
 c.push(H1("12. Orçamento (resumo)"));
 c.push(R("Valores de hardware calculados na planilha **Orcamento_PTL.xlsx** com preços cotados em lojas brasileiras em 23/10/2026; itens sem preço público estão marcados como estimativa a cotar. Câmbio US$ 1 = R$ 5,04; fator de importação 1,9 (estimativa)."));
 c.push(tabela(["Cenário", "Piloto (05 + 27)", "Operação completa", "Por estação"], [
-  ["A — interna, só peças (12 V)", "R$ 10.994", "R$ 199.239", "R$ 4.981"],
-  ["A — interna, só peças (5 V)", "R$ 10.873", "R$ 196.956", "R$ 4.924"],
-  ["A — interna, peças + mão de obra", "R$ 14.566", "R$ 269.764", "R$ 6.744"],
-  ["A — terceiros T1 (placa própria via EMS)", "R$ 32.808", "R$ 347.860", "R$ 8.697"],
-  ["A — terceiros T2 (PTL comercial importado)", "R$ 43.196", "R$ 852.330", "R$ 21.308"],
-  ["B1 — RFID com pulseira", "R$ 15.896", "R$ 294.206", "R$ 7.355"],
-  ["B2 — RFID com leitor fixo", "R$ 15.738", "R$ 293.220", "R$ 7.330"],
+  ["A — interna, só peças (12 V)", "R$ 11.668", "R$ 210.829", "R$ 5.271"],
+  ["A — interna, só peças (5 V)", "R$ 11.508", "R$ 207.866", "R$ 5.197"],
+  ["A — interna, peças + mão de obra", "R$ 15.415", "R$ 284.323", "R$ 7.108"],
+  ["A — terceiros T1 (placa própria via EMS)", "R$ 34.027", "R$ 368.696", "R$ 9.217"],
+  ["A — terceiros T2 (PTL comercial importado)", "R$ 46.363", "R$ 906.305", "R$ 22.658"],
+  ["B1 — RFID com pulseira", "R$ 16.745", "R$ 308.765", "R$ 7.719"],
+  ["B2 — RFID com leitor fixo", "R$ 16.588", "R$ 307.779", "R$ 7.694"],
 ], [3, 1.5, 1.7, 1.3], { direita: [1, 2, 3] }));
 c.push(R("**Software (desenvolvimento interno, estimativa):** Arquitetura A ≈ 1.080 h; Arquitetura B ≈ 1.000 h. Na planilha, o custo é calculado a R$ 60/h (premissa ajustável)."));
 c.push(R("**Mão de obra interna:** custo-hora de técnico de R$ 34,93 (salário médio de R$ 2.846,84 — salario.com.br, CBO 313215, out/2026 — × 2,0 de encargos ÷ 163 h)."));
@@ -482,9 +487,9 @@ c.push(tabela(["Rua", "Segmento", "Tipo", "Total", "Alto 0-3", "Alto 4-5", "Baix
 c.push(H1("Anexo B — Glossário"));
 c.push(tabela(["Termo", "Significado"], [
   ["Pick-to-light (PTL)", "Separação guiada por luz: displays indicam onde e quanto pegar."],
-  ["Alto giro / baixo giro", "Endereços com muita / pouca saída. Alto giro na frente do operador (prédios 001-010), com as esteiras passando por dentro entre os andares 3 e 4; baixo giro no corredor atrás do operador."],
+  ["Alto giro / baixo giro", "Endereços com muita / pouca saída. Alto giro na frente do operador (prédios 001-010), com a esteira de transporte passando por dentro entre os andares 3 e 4; baixo giro no corredor atrás do operador."],
   ["Andar", "Nível do prédio; o andar 0 é o de cima."],
-  ["Esteira de separação", "Esteira paralela à de transporte (≈ 20 cm entre elas), dentro do alto giro, onde a bacia fica durante a separação."],
+  ["Esteira de separação", "Esteira aberta na frente do alto giro, ≈ 20 cm da de transporte, onde a bacia fica durante a separação."],
   ["Transferência", "Desvio da esteira de transporte para a de separação; com o rolete direcionador atende até 4 estações."],
   ["Concentrador", "Controlador da estação, ligado à rede e aos barramentos de displays."],
   ["Módulo Q / E+Q", "Display de quantidade / display de endereço + quantidade, ambos com botão de confirmação."],

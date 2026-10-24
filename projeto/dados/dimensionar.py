@@ -2,7 +2,6 @@
 import json, sys, collections as C
 
 ARQ = sys.argv[1]
-PREDIOS_POR_ZONA = 4          # baixo giro: 1 display (endereco+qtd) a cada 4 predios
 
 rows = list(json.load(open(ARQ, encoding="utf-8")).values())[0]
 rows = [r for r in rows if r["cd_rua"] != "90"]          # desconsiderar Marketing/Almoxarifado
@@ -13,6 +12,38 @@ def categoria(r):
         return "alto_45" if a in (4, 5) else "alto_0a3"
     return "baixo"                                         # predio 015, fundo e esquinas
 
+ZONAS_POR_LADO = 4            # baixo giro: 4 zonas por lado do corredor (1 display de endereco + 1 de quantidade cada)
+PREDIO_VIRADA = 32            # predios < 32 no lado esquerdo do corredor; 015 e >= 32 no lado direito
+
+
+def dividir(predios, n):
+    """Divide a lista de predios (na ordem a partir da entrada do corredor) em ate n zonas contiguas."""
+    n = min(n, len(predios))
+    out, i = [], 0
+    for k in range(n):
+        tam = len(predios) // n + (1 if k < len(predios) % n else 0)
+        out.append(predios[i:i + tam])
+        i += tam
+    return out
+
+
+ZONA_PREDIO = {}              # (rua, predio) -> zona do baixo giro
+
+
+def montar_zonas(rua, rs):
+    pb = sorted({int(r["cd_predio"]) for r in rs if 10 < int(r["cd_predio"]) < 60 and int(r["cd_predio"]) != 15})
+    esq = [p for p in pb if p < PREDIO_VIRADA]
+    dir_ = sorted([p for p in pb if p >= PREDIO_VIRADA], reverse=True)       # a partir da entrada
+    for k, grupo in enumerate(dividir(esq, ZONAS_POR_LADO)):
+        for p in grupo:
+            ZONA_PREDIO[(rua, p)] = "BG-E%d" % (k + 1)
+    for k, grupo in enumerate(dividir(dir_, ZONAS_POR_LADO)):
+        for p in grupo:
+            ZONA_PREDIO[(rua, p)] = "BG-D%d" % (k + 1)
+    # predio 015 fica no inicio do lado direito: entra na 1a zona do lado direito (ou do esquerdo, se nao houver)
+    ZONA_PREDIO[(rua, 15)] = "BG-D1" if dir_ else "BG-E1"
+
+
 def zona(r):
     p = int(r["cd_predio"])
     if p <= 10:
@@ -20,18 +51,18 @@ def zona(r):
         if a in (4, 5):
             return ("AG-E" if p <= 5 else "AG-D") + str(a)  # alto giro 4-5: 1 display E+Q por andar e por lado
         return None                                         # alto giro 0-3: display proprio
-    if p < 20:
-        return "BG-01"                                      # predio 015 entra na 1a zona do fundo
     if p >= 60:
-        return "BG-X%02d" % ((p - 60) // PREDIOS_POR_ZONA + 1)  # esquina
-    base = 20 if r["cd_esteira"] == 2 else 22
-    return "BG-%02d" % ((p - base) // PREDIOS_POR_ZONA + 1)
+        return "BG-X%02d" % ((p - 60) // 4 + 1)            # esquina: zonas de 4 predios
+    return ZONA_PREDIO[(r["cd_rua"], p)]
+
 
 estacoes = {}
 por_rua = C.defaultdict(list)
 for r in rows:
     por_rua[r["cd_rua"]].append(r)
 
+for rua, rs in sorted(por_rua.items()):
+    montar_zonas(rua, rs)
 for rua, rs in sorted(por_rua.items()):
     seg = "Medicamento" if rs[0]["cd_esteira"] == 2 else "Perfumaria"
     cat = C.Counter(categoria(r) for r in rs)
@@ -45,7 +76,7 @@ for rua, rs in sorted(por_rua.items()):
     estacoes[rua] = {
         "rua": rua, "segmento": seg, "tipo": tipo, "total": len(rs),
         "alto_0a3": cat["alto_0a3"], "alto_45": cat["alto_45"], "baixo": cat["baixo"],
-        "blocos_alto_45": len([z for z in zonas if z.startswith("AG")]),
+        "blocos_alto_45": 4 if cat["alto_45"] else 0,   # A4 e A5 em cada lado (display fixo no lado)
         "zonas_baixo": len(zonas_bg),
         "zonas": dict(sorted(zonas.items())),
     }
