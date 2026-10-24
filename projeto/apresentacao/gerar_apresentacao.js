@@ -153,7 +153,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     [ic.barcode, "1. Lê a etiqueta", "O operador aperta o gatilho do coletor na etiqueta da caixa. A caixa abre na estação."],
     [ic.luz, "2. Displays acendem", "Alto giro: todos os endereços com a quantidade. Baixo giro: endereço + quantidade por zona."],
     [ic.mao, "3. Pega e confirma", "Pega a quantidade e aperta o botão. O display apaga ou passa ao próximo item da zona."],
-    [ic.ok, "4. Lê de novo e fecha", "Com todos apagados, nova leitura fecha a caixa, registra no Sybase e ela segue."],
+    [ic.ok, "4. Lê de novo e fecha", "Com todos apagados, nova leitura fecha, registra no Sybase e a bacia volta à esteira."],
   ];
   passos.forEach(([img, t1, t2], i) => {
     const x = 0.6 + i * 3.1;
@@ -225,15 +225,21 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   // ================================================================ SECAO ESTACAO
   pres.addSection({ title: "A estação" });
   s = pres.addSlide({ masterName: "SECAO", sectionTitle: "A estação" });
-  s.addText("A estação: frente de alto giro e fundo de baixo giro", { placeholder: "title" });
-  s.addText("Layout desenhado com os endereços reais da tabela wms_endereco", { placeholder: "body" });
+  s.addText("A estação: alto giro na esteira, baixo giro no corredor", { placeholder: "title" });
+  s.addText("Layout conforme o desenho da operação, com os endereços reais da tabela wms_endereco", { placeholder: "body" });
+
+  // ================================================================ 10a PLANTA
+  s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "A estação" });
+  titulo(s, "A bacia entra pela transferência, é separada e volta à esteira");
+  imagem(s, BASE + "/diagramas/planta_estacao.png", 0.5, 1.25, 12.3, 5.6);
+  s.addNotes("Planta conforme o desenho enviado pela operação. Lado esquerdo do corredor: prédios 020-031; lado direito: 032 até o último; prédio 015 (150-153) na cabeceira. Os blocos do baixo giro são de costas entre estações vizinhas. Medidas a confirmar com as fotos.");
 
   // ================================================================ 10 LAYOUT
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "A estação" });
-  titulo(s, "Cada endereço de alto giro tem display; o baixo giro é atendido por zonas");
-  imagem(s, BASE + "/diagramas/layout_estacao.png", 0.5, 1.3, 12.3, 4.6);
+  titulo(s, "Andar 0 em cima; cada endereço de alto giro tem display e o baixo giro usa zonas");
+  imagem(s, BASE + "/diagramas/layout_estacao.png", 0.5, 1.4, 12.3, 4.4);
   const leg = [
-    [C.accent2, "Alto giro, andares 0-3", "1 display de quantidade por endereço (29 a 35 por estação)"],
+    [C.accent2, "Alto giro, andares 0-3 (de cima)", "1 display de quantidade por endereço (29 a 35 por estação)"],
     [C.accent3, "Alto giro, andares 4-5", "2 blocos por estação (esq./dir.) com endereço + quantidade"],
     [C.accent1, "Baixo giro", "1 display de endereço + quantidade a cada 4 prédios (6 a 9 zonas)"],
   ];
@@ -242,7 +248,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     s.addShape(pres.shapes.OVAL, { x, y: 6.15, w: 0.28, h: 0.28, fill: { color: cor }, line: { color: cor } });
     s.addText([{ text: a + ": ", options: { bold: true, color: C.text1 } }, { text: b, options: { color: C.accent6 } }], { x: x + 0.4, y: 6.0, w: 3.6, h: 0.65, fontSize: 12, margin: 0, valign: "middle", isTextBox: true });
   });
-  s.addNotes("Estação 05: 209 endereços. 49 de alto giro (29 com display próprio + 20 nos blocos dos andares 4-5) e 160 de baixo giro em 6 zonas. O tamanho da zona é parâmetro e será ajustado no piloto.");
+  s.addNotes("A altura de cada endereço depende de quantos endereços o prédio tem. Estação 05: 209 endereços. 49 de alto giro (29 com display próprio + 20 nos blocos dos andares 4-5) e 160 de baixo giro em 6 zonas. O tamanho da zona é parâmetro e será ajustado no piloto.");
 
   // ================================================================ 11 DISPLAYS E CABEAMENTO
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "A estação" });
@@ -398,11 +404,11 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 0.5, y: 1.3, w: 8.6, h: 5.2, rectRadius: 0.1, fill: { color: C.background2 }, line: { color: C.background2 } });
   }
   const roteiro = [
-    "Caixa chega pela esteira",
+    "Bacia entra pela transferência",
     "Leitura no coletor virtual (ou modo RFID)",
-    "Frente e fundo acendem com os endereços reais",
+    "Alto giro e zonas acendem (endereços reais)",
     "Confirmação nos botões; zonas avançam",
-    "Nova leitura fecha a caixa",
+    "Nova leitura fecha; bacia volta à esteira",
     "Painel mostra tempo e produtividade",
   ];
   circuloIcone(s, ic.cubo, 9.4, 1.4, 0.6, C.accent1);

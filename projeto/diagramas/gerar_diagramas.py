@@ -95,16 +95,16 @@ def d_arq(rfid=False):
     c.append(f"<text x='30' y='418' font-size='13' font-weight='700' fill='{VD}' {FONT}>ESTAÇÃO (× 40) — REDE CABEADA</text>")
     c.append(caixa(420, 430, 400, 150, "Concentrador da estação", [
         "RP2040 + Ethernet W5500 (cabo, VLAN PTL)",
-        "2 barramentos RS-485 (frente e fundo)",
+        "2 barramentos RS-485 (alto e baixo giro)",
         "Fonte 12 V Mean Well + gabinete ventilado",
         "Guarda o estado da caixa se a rede cair"] + (["B2: leitor NFC + painel LCD"] if rfid else []), VD, VD2))
     c.append(seta(620, 360, 620, 430, "MQTT (ptl/est/cmd · evt)", dupla=True))
-    c.append(caixa(30, 610, 380, 130, "Frente — alto giro", [
+    c.append(caixa(30, 610, 380, 130, "Alto giro (ao longo da esteira)", [
         "Andares 0-3: Módulo Q por endereço",
         "  (quantidade 3 díg. + botão com LED)",
         "Nó de coluna por prédio (1 a 10)",
         "Andares 4-5: 2 blocos E+Q (esq./dir.)"], VD))
-    c.append(caixa(470, 610, 360, 130, "Fundo — baixo giro", [
+    c.append(caixa(470, 610, 360, 130, "Baixo giro (corredor)", [
         "Zonas de 4 prédios (6 a 9 por estação)",
         "1 Módulo E+Q por zona:",
         "  endereço 8 díg. + quantidade + botão",
@@ -179,88 +179,210 @@ def d_sequencia():
     return svg(w, h, "\n".join(c), "Sequência de operação — Arquitetura A")
 
 
-# ---------------------------------------------------------------- D4 layout estacao 05
-def d_layout():
-    w, h = 1500, 660
-    c = []
-    cel = 34
-    # frente
-    fx, fy = 60, 170
-    c.append(f"<text x='{fx}' y='{fy-100}' font-size='16' font-weight='700' fill='{AZ}' {FONT}>FRENTE — alto giro (prédios 001-010)</text>")
-    frente = [e for e in END05 if e["predio"] <= 10]
-    for a in range(0, 6):
-        yy = fy + (5 - a) * (cel + 6)
-        c.append(f"<text x='{fx-10}' y='{yy+22}' text-anchor='end' font-size='12' fill='{CZ}' {FONT}>A{a}</text>")
-    for p in range(1, 11):
-        c.append(f"<text x='{fx+(p-1)*(cel+6)+cel/2}' y='{fy+6*(cel+6)+14}' text-anchor='middle' font-size='12' fill='{CZ}' {FONT}>{p:03d}</text>")
-    for e in frente:
-        x = fx + (e["predio"] - 1) * (cel + 6)
-        y = fy + (5 - e["andar"]) * (cel + 6)
-        if e["andar"] <= 3:
-            c.append(f"<rect x='{x}' y='{y}' width='{cel}' height='{cel}' rx='4' fill='{VD2}' stroke='{VD}'/>"
-                     f"<rect x='{x+5}' y='{y+6}' width='{cel-10}' height='12' rx='2' fill='#111'/>"
-                     f"<text x='{x+cel/2}' y='{y+16}' text-anchor='middle' font-size='9' fill='#ff4b3a' font-weight='700' {FONT}>12</text>"
-                     f"<circle cx='{x+cel/2}' cy='{y+26}' r='4' fill='{AM}'/>")
-        else:
-            cor = "#D6E4F7" if e["predio"] <= 5 else "#FCE8CC"
-            c.append(f"<rect x='{x}' y='{y}' width='{cel}' height='{cel}' rx='4' fill='{cor}' stroke='{AZ2 if e['predio']<=5 else AM}'/>")
-    # blocos 4-5 displays
-    for lado, (p0, cor, rot) in enumerate(((1, AZ2, "BLOCO E (A4-A5)"), (6, AM, "BLOCO D (A4-A5)"))):
-        x = fx + (p0 - 1) * (cel + 6)
-        y = fy - 22
-        c.append(f"<rect x='{x}' y='{y-36}' width='{5*(cel+6)-6}' height='30' rx='5' fill='#111' stroke='{cor}' stroke-width='2'/>"
-                 f"<text x='{x+10}' y='{y-16}' font-size='13' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>P004 A5</text>"
-                 f"<text x='{x+5*(cel+6)-16}' y='{y-16}' text-anchor='end' font-size='13' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>3</text>")
-        c.append(f"<text x='{x+(5*(cel+6))/2}' y='{y+2}' text-anchor='middle' font-size='10.5' fill='{cor}' font-weight='700' {FONT}>{rot}</text>")
-    # legenda frente
-    ly = fy + 6 * (cel + 6) + 40
-    c.append(f"<rect x='{fx}' y='{ly}' width='18' height='18' rx='3' fill='{VD2}' stroke='{VD}'/><text x='{fx+26}' y='{ly+14}' font-size='12.5' {FONT}>Andares 0-3: Módulo Q (quantidade + botão) — 29 endereços</text>")
-    c.append(f"<rect x='{fx}' y='{ly+26}' width='18' height='18' rx='3' fill='#D6E4F7' stroke='{AZ2}'/><text x='{fx+26}' y='{ly+40}' font-size='12.5' {FONT}>Andares 4-5: bloco E/D com 1 display E+Q cada — 20 endereços</text>")
-    c.append(f"<text x='{fx}' y='{ly+74}' font-size='12.5' fill='{CZ}' {FONT}>10 nós de coluna (1 por prédio) ligam os Módulos Q ao barramento da frente</text>")
+# ---------------------------------------------------------------- D4 layout estacao 05 (elevações, andar 0 em cima)
+ZCOR = ["#E3F1E8", "#DEE6F2", "#FCE8CC", "#EFE7F6", "#FDE2E2", "#E0F2F1", "#F3F5F8"]
+ZBOR = [VD, AZ2, "#D68910", RX, "#C0392B", "#138D90", CZ]
 
-    # fundo
-    bx, by = 520, 170
-    cw = 34
-    c.append(f"<text x='{bx}' y='{by-100}' font-size='16' font-weight='700' fill='{AZ}' {FONT}>FUNDO — baixo giro (prédios 015, 020-043) — zonas de 4 prédios</text>")
-    fundo = [e for e in END05 if e["predio"] >= 15]
-    predios = sorted({e["predio"] for e in fundo})
-    pos = {p: i for i, p in enumerate(predios)}
-    cores = ["#E3F1E8", "#DEE6F2", "#FCE8CC", "#EFE7F6", "#E0F2F1", "#FDE2E2", "#F3F5F8"]
-    bordas = [VD, AZ2, AM, RX, "#00897B", "#C62828", CZ]
-    for a in range(0, 8):
-        yy = by + (7 - a) * 30
-        c.append(f"<text x='{bx-8}' y='{yy+19}' text-anchor='end' font-size='12' fill='{CZ}' {FONT}>A{a}</text>")
-    zonas_x = {}
-    for e in fundo:
-        i = pos[e["predio"]]
-        x = bx + i * cw
-        y = by + (7 - e["andar"]) * 30
-        z = int(e["zona"].split("-")[1]) - 1
-        zonas_x.setdefault(z, []).append(x)
-        c.append(f"<rect x='{x}' y='{y}' width='{cw-4}' height='26' rx='3' fill='{cores[z % 7]}' stroke='{bordas[z % 7]}'/>")
-    for p, i in pos.items():
-        c.append(f"<text x='{bx+i*cw+cw/2-2}' y='{by+8*30+14}' text-anchor='middle' font-size='10.5' fill='{CZ}' {FONT}>{p:03d}</text>")
-    for z, xs_ in sorted(zonas_x.items()):
-        x0, x1 = min(xs_), max(xs_) + cw - 4
-        c.append(f"<rect x='{x0}' y='{by-62}' width='{x1-x0}' height='28' rx='5' fill='#111' stroke='{bordas[z % 7]}' stroke-width='2'/>"
-                 f"<text x='{x0+8}' y='{by-43}' font-size='12' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>P0{23+z*4 if z<5 else 41} A2</text>"
-                 f"<text x='{x1-8}' y='{by-43}' text-anchor='end' font-size='12' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>2</text>"
-                 f"<text x='{(x0+x1)/2}' y='{by-12}' text-anchor='middle' font-size='10.5' font-weight='700' fill='{bordas[z % 7]}' {FONT}>ZONA {z+1}</text>")
-    ly = by + 8 * 30 + 40
-    c.append(f"<text x='{bx}' y='{ly}' font-size='12.5' {FONT}>• 160 endereços (andares 0-7) em 6 zonas; 1 display E+Q por zona mostra o endereço e a quantidade do próximo item da rota.</text>")
-    c.append(f"<text x='{bx}' y='{ly+22}' font-size='12.5' {FONT}>• Prédio 015 (3-4 posições) entra na Zona 1. Todas as zonas com itens trabalham ao mesmo tempo; o operador confirma no botão da zona.</text>")
-    c.append(f"<text x='{bx}' y='{ly+44}' font-size='12.5' {FONT}>• Opcional: LED guia no topo de cada prédio indica a coluna do item da zona.</text>")
-    c.append(f"<text x='{bx}' y='{ly+66}' font-size='12.5' fill='{CZ}' {FONT}>Esquinas: + 1 zona (Medicamento, prédios 060-063) ou + 3 zonas (Perfumaria, prédios 060-071).</text>")
-    return svg(w, h, "\n".join(c), "Layout da estação 05 (Medicamento, comum) — 209 endereços reais de wms_endereco")
+
+def _por_predio(ends):
+    d = {}
+    for e in ends:
+        d.setdefault(e["predio"], []).append(e)
+    for v in d.values():
+        v.sort(key=lambda e: e["andar"])
+    return d
+
+
+def _coluna(c, x, y, w, alt, lista, cor_fn, rot=True):
+    n = max(1, len(lista))
+    h = alt / n
+    for i, e in enumerate(lista):
+        f, b = cor_fn(e)
+        yy = y + i * h
+        c.append(f"<rect x='{x}' y='{yy+1}' width='{w-3}' height='{h-2}' rx='3' fill='{f}' stroke='{b}'/>")
+        if rot and h >= 16:
+            c.append(f"<text x='{x+(w-3)/2}' y='{yy+h/2+4}' text-anchor='middle' font-size='10' fill='{CZ}' {FONT}>A{e['andar']}</text>")
+
+
+def d_layout():
+    w, h = 1500, 500
+    c = []
+    pp = _por_predio(END05)
+    zid = lambda e: int(e["zona"].split("-")[1]) - 1
+    # ---- alto giro
+    ax, ay, cw, alt = 60, 190, 40, 216
+    c.append(f"<text x='{ax}' y='{ay-112}' font-size='16' font-weight='700' fill='{AZ}' {FONT}>ALTO GIRO — prédios 001–010 (ao longo da esteira)</text>")
+
+    def cor_a(e):
+        if e["andar"] <= 3:
+            return VD2, VD
+        return ("#D6E4F7", AZ2) if e["predio"] <= 5 else ("#FCE8CC", AM)
+    for p in range(1, 11):
+        x = ax + (p - 1) * cw
+        _coluna(c, x, ay, cw, alt, pp.get(p, []), cor_a)
+        c.append(f"<text x='{x+cw/2-1}' y='{ay+alt+16}' text-anchor='middle' font-size='11' fill='{CZ}' {FONT}>{p:03d}</text>")
+    for p0, cor, rot in ((1, AZ2, "BLOCO E (A4–A5)"), (6, AM, "BLOCO D (A4–A5)")):
+        x = ax + (p0 - 1) * cw
+        c.append(f"<rect x='{x}' y='{ay-58}' width='{5*cw-6}' height='28' rx='5' fill='#111' stroke='{cor}' stroke-width='2'/>"
+                 f"<text x='{x+8}' y='{ay-39}' font-size='12' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>P00{p0+2} A5</text>"
+                 f"<text x='{x+5*cw-16}' y='{ay-39}' text-anchor='end' font-size='12' fill='#39d36a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>3</text>"
+                 f"<text x='{x+(5*cw)/2}' y='{ay-12}' text-anchor='middle' font-size='10.5' fill='{cor}' font-weight='700' {FONT}>{rot}</text>")
+    c.append(f"<text x='{ax-8}' y='{ay+10}' text-anchor='end' font-size='10.5' fill='{CZ}' {FONT}>topo</text>"
+             f"<text x='{ax-8}' y='{ay+alt}' text-anchor='end' font-size='10.5' fill='{CZ}' {FONT}>piso</text>")
+    ly = ay + alt + 44
+    c.append(f"<rect x='{ax}' y='{ly}' width='16' height='16' rx='3' fill='{VD2}' stroke='{VD}'/><text x='{ax+24}' y='{ly+13}' font-size='12.5' {FONT}>Andares 0–3 (de cima): Módulo Q por endereço — 29</text>")
+    c.append(f"<rect x='{ax}' y='{ly+24}' width='16' height='16' rx='3' fill='#D6E4F7' stroke='{AZ2}'/><text x='{ax+24}' y='{ly+37}' font-size='12.5' {FONT}>Andares 4–5 (de baixo): blocos E/D — 20</text>")
+    # ---- baixo giro
+    bpred = sorted({e["predio"] for e in END05 if e["cat"] == "baixo" and e["predio"] != 15})
+    esq = [p for p in bpred if p < 32]
+    dirt = sorted([p for p in bpred if p >= 32], reverse=True)
+    by, bw, balt = 190, 32, 240
+
+    def cor_b(e):
+        z = zid(e)
+        return ZCOR[z % 7], ZBOR[z % 7]
+
+    def lado(x0, preds, titulo):
+        c.append(f"<text x='{x0}' y='{by-112}' font-size='16' font-weight='700' fill='{AZ}' {FONT}>{titulo}</text>")
+        zonas = {}
+        for i, p in enumerate(preds):
+            x = x0 + i * bw
+            _coluna(c, x, by, bw, balt, pp[p], cor_b)
+            c.append(f"<text x='{x+bw/2-1}' y='{by+balt+16}' text-anchor='middle' font-size='10.5' fill='{CZ}' {FONT}>{p:03d}</text>")
+            zonas.setdefault(zid(pp[p][0]), []).append((x, p))
+        for z, xps in zonas.items():
+            xs = [a for a, _ in xps]
+            p1 = xps[0][1]
+            x1, x2 = min(xs), max(xs) + bw - 3
+            c.append(f"<rect x='{x1}' y='{by-58}' width='{x2-x1}' height='28' rx='5' fill='#111' stroke='{ZBOR[z%7]}' stroke-width='2'/>"
+                     f"<text x='{(x1+x2)/2}' y='{by-12}' text-anchor='middle' font-size='10.5' font-weight='700' fill='{ZBOR[z%7]}' {FONT}>ZONA {z+1}</text>"
+                     f"<text x='{x1+6}' y='{by-39}' font-size='11' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>P{p1:03d} A2</text>")
+        c.append(f"<text x='{x0}' y='{by+balt+36}' font-size='11.5' fill='{CZ}' {FONT}>← cabeceira (perto da área de espera)          fundo do corredor →</text>")
+    lado(560, esq, "BAIXO GIRO — lado esquerdo (P020–P031)")
+    # 015
+    x15 = 560 + len(esq) * bw + 40
+    c.append(f"<text x='{x15}' y='{by-112}' font-size='16' font-weight='700' fill='{AZ}' {FONT}>P015</text>")
+    _coluna(c, x15, by, 46, balt, pp.get(15, []), cor_b)
+    c.append(f"<text x='{x15+22}' y='{by+balt+16}' text-anchor='middle' font-size='10.5' fill='{CZ}' {FONT}>150–153</text>")
+    lado(x15 + 80, dirt, "Lado direito (P043 → P032)")
+    ly = by + balt + 64
+    c.append(f"<text x='560' y='{ly}' font-size='12.5' {FONT}>• Andar 0 é o de cima. A altura de cada endereço = altura do prédio ÷ número de endereços do prédio (ex.: P021 tem 8; P022 tem 2, com o dobro da altura).</text>")
+    c.append(f"<text x='560' y='{ly+22}' font-size='12.5' {FONT}>• 160 endereços em 6 zonas de 4 prédios; 1 display E+Q por zona mostra o endereço e a quantidade do próximo item da rota.</text>")
+    c.append(f"<text x='560' y='{ly+44}' font-size='12.5' {FONT}>• P015 (na cabeceira do corredor) entra na Zona 1. Opcional: LED guia no topo de cada prédio.</text>")
+    return svg(w, h, "\n".join(c), "Elevações da estação 05 (Medicamento) — 209 endereços reais de wms_endereco")
+
+
+# ---------------------------------------------------------------- D4b planta da estação
+def d_planta():
+    W, H = 1500, 800
+    s, X0, Y0 = 50, 520, 80
+    P, hc, pb, half, vao = 5.9, 0.75, 2.2, 2.35, 1.2
+    zc, z0 = 1.2, 2.2
+    pp = _por_predio(END05)
+    bpred = sorted({e["predio"] for e in END05 if e["cat"] == "baixo" and e["predio"] != 15})
+    esq = [p for p in bpred if p < 32]
+    dirt = sorted([p for p in bpred if p >= 32], reverse=True)
+    L = max(len(esq), len(dirt)) * 0.6
+    X = lambda x: X0 + x * s
+    Y = lambda z: Y0 + (z + 3.3) * s
+    c = []
+
+    def r(x1, z1, x2, z2, fill, stroke=CZ, extra=""):
+        c.append(f"<rect x='{X(min(x1,x2))}' y='{Y(min(z1,z2))}' width='{abs(x2-x1)*s}' height='{abs(z2-z1)*s}' fill='{fill}' stroke='{stroke}' stroke-width='1.4' {extra}/>")
+
+    def t(x, z, txt, size=12, cor="#1c2430", peso=400, anchor="middle", rot=None):
+        tr = f"transform='rotate({rot} {X(x)} {Y(z)})'" if rot else ""
+        c.append(f"<text x='{X(x)}' y='{Y(z)}' text-anchor='{anchor}' font-size='{size}' font-weight='{peso}' fill='{cor}' {tr} {FONT}>{txt}</text>")
+    xmin, xmax = -9.6, 9.6
+    # esteira de transporte
+    r(xmin, -3.05, xmax, -2.45, "#D5DAE0")
+    for x in [xmin + i * 0.3 for i in range(int((xmax - xmin) / 0.3))]:
+        c.append(f"<line x1='{X(x)}' y1='{Y(-3.05)}' x2='{X(x)}' y2='{Y(-2.45)}' stroke='#B8C0C8'/>")
+    t(-6.8, -2.62, "ESTEIRA DE TRANSPORTE  →", 13, AZ, 700)
+    # alto giro
+    for k in (-1, 0, 1):
+        nosso = k == 0
+        r(k * P - half, -2.10, k * P + half, -0.95, "#DEE6F2" if nosso else "#EEF0F3", AZ2 if nosso else "#AAB2BC")
+        est = f"{5+k:02d}"
+        t(k * P, -1.42, f"ALTO GIRO · EST {est}", 13 if nosso else 11.5, AZ if nosso else CZ, 700)
+        if nosso:
+            t(0, -1.12, "prédios 001–010 · andar 0 em cima", 11, CZ)
+    # transferências
+    for xv in (-P - half - vao / 2, -half - vao / 2, half + vao / 2, P + half + vao / 2):
+        for dx, cor, sobe in ((-0.3, AM, True), (0.3, VD, False)):
+            x = xv + dx
+            r(x - 0.25, -2.45, x + 0.25, -0.80, "#F6F7F9", cor)
+            y1, y2 = (Y(-0.95), Y(-2.3)) if sobe else (Y(-2.3), Y(-0.95))
+            c.append(f"<line x1='{X(x)}' y1='{y1}' x2='{X(x)}' y2='{y2}' stroke='{cor}' stroke-width='3' marker-end='url(#fim)'/>")
+    t(-2.65, -3.2, "entrada ↓", 11, VD, 700)
+    t(2.65, -3.2, "saída ↑", 11, "#B9770E", 700)
+    # área de espera
+    r(xmin, -0.795, xmax, -0.245, "#F3F5F8")
+    t(-6.6, -0.43, "ÁREA DE ESPERA (bacias aguardando)", 11.5, CZ, 700)
+    for x, cor in ((0, "#1F6FB5"), (-1.45, "#1F6FB5")):
+        r(x - 0.3, -0.72, x + 0.3, -0.32, cor, "#163a5f")
+    t(0, -0.85, "pega", 10, CZ)
+    t(-1.45, -0.85, "fila", 10, CZ)
+    # operador
+    c.append(f"<line x1='{X(xmin)}' y1='{Y(-0.2)}' x2='{X(xmax)}' y2='{Y(-0.2)}' stroke='#F4C430' stroke-width='3'/>")
+    c.append(f"<circle cx='{X(0.35)}' cy='{Y(0.1)}' r='9' fill='{AM}' stroke='#9a6413'/>")
+    t(0.35, 0.55, "operador", 10.5, CZ)
+    # concentrador
+    r(-3.03, 0.35, -2.67, 0.55, VD, "#1d5e3a")
+    t(-2.85, 0.95, "concentrador", 10, VD, 700)
+    # blocos do baixo giro
+    for k in (-1, 0, 1):
+        xc = k * P
+        for x1, x2, face in ((xc - hc - pb, xc - hc, "W"), (xc + hc, xc + hc + pb, "E")):
+            nosso = k == 0
+            r(x1, z0, x2, z0 + L, "#DEE6F2" if nosso else "#EEF0F3", AZ2 if nosso else "#AAB2BC")
+        r(xc - 1.85 - 0.55, zc, xc - 1.85 + 0.55, z0, "#E3F1E8" if k == 0 else "#EEF0F3", VD if k == 0 else "#AAB2BC")
+        t(xc - 1.85, 1.75, "P015", 11 if k == 0 else 10, VD if k == 0 else CZ, 700)
+        t(xc - 1.85, 2.05, "150–153", 9.5, CZ)
+        t(xc, 0.98, f"ESTAÇÃO {5+k:02d}", 12, AZ if k == 0 else CZ, 700)
+    # costas cinzas dos nossos blocos
+    for x1, x2 in ((-hc - 2 * pb, -hc - pb), (hc + pb, hc + 2 * pb)):
+        r(x1, z0, x2, z0 + L, "#EEF0F3", "#AAB2BC")
+    # zonas nos lados da estação 05
+    zid = lambda p: int(pp[p][0]["zona"].split("-")[1]) - 1
+    for i, p in enumerate(esq):
+        z = zid(p)
+        r(hc, z0 + i * 0.6, hc + 0.35, z0 + (i + 1) * 0.6, ZBOR[z % 7], "#fff")
+        t(hc + 0.6, z0 + i * 0.6 + 0.4, f"{p:03d}", 9.5, CZ, 400, "start")
+    for i, p in enumerate(dirt):
+        z = zid(p)
+        r(-hc - 0.35, z0 + i * 0.6, -hc, z0 + (i + 1) * 0.6, ZBOR[z % 7], "#fff")
+        t(-hc - 0.6, z0 + i * 0.6 + 0.4, f"{p:03d}", 9.5, CZ, 400, "end")
+    t(hc + 1.55, z0 + L / 2, "LADO ESQUERDO · P020–P031", 12, AZ, 700, rot=90)
+    t(-hc - 1.55, z0 + L / 2, "LADO DIREITO · P043 → P032", 12, AZ, 700, rot=-90)
+    # rota em U
+    pts = [(0.15, 0.7), (0.25, z0 + 0.2), (0.25, z0 + L - 0.25), (-0.25, z0 + L - 0.25), (-0.25, z0 + 0.2)]
+    c.append("<polyline points='" + " ".join(f"{X(x)},{Y(z)}" for x, z in pts) + f"' fill='none' stroke='{AM}' stroke-width='3' stroke-dasharray='7 6' marker-end='url(#fim)'/>")
+    t(0, z0 + L + 0.45, "rota em U: 020 → 031, volta 032 → 043", 11, "#B9770E", 700)
+    # norte
+    c.append(f"<text x='{X(xmax)-10}' y='{Y(-3.05)-12}' text-anchor='end' font-size='11' fill='{CZ}' {FONT}>vista de cima · estações vizinhas em cinza</text>")
+    # legenda
+    lx, ly = 1110, 120
+    itens = [("#DEE6F2", AZ2, "Estação 05 (piloto)"), ("#EEF0F3", "#AAB2BC", "Estações vizinhas"), ("#E3F1E8", VD, "Prédio 015 (cabeceira, zona 1)"),
+             ("#F6F7F9", VD, "Transferência de entrada"), ("#F6F7F9", AM, "Saída: bacia empurrada à esteira"), ("#1F6FB5", "#163a5f", "Bacia (tamanho único)")]
+    for i, (f, b, txt) in enumerate(itens):
+        c.append(f"<rect x='{lx}' y='{ly+i*30}' width='20' height='20' rx='3' fill='{f}' stroke='{b}' stroke-width='1.6'/><text x='{lx+30}' y='{ly+i*30+15}' font-size='12.5' {FONT}>{txt}</text>")
+    ty = ly + len(itens) * 30 + 30
+    linhas = ["Fluxo da bacia", "1. Vem pela esteira de transporte.", "2. Entra pela transferência do vão oeste.", "3. Espera na área em frente ao alto giro.",
+              "4. Leitura abre; alto giro e zonas acendem.", "5. Nova leitura fecha.", "6. Operador empurra para a saída (vão leste),", "    que devolve a bacia à esteira."]
+    for i, l in enumerate(linhas):
+        c.append(f"<text x='{lx}' y='{ty+i*22}' font-size='{14 if i==0 else 12.5}' font-weight='{700 if i==0 else 400}' fill='{AZ if i==0 else "#1c2430"}' {FONT}>{l}</text>")
+    c.append(f"<text x='{lx}' y='{ty+len(linhas)*22+24}' font-size='11.5' fill='{CZ}' {FONT}>Medidas aproximadas, sem escala exata.</text>")
+    return svg(W, H, "\n".join(c), "Planta da estação 05 e vizinhas — posição da esteira, alto giro, área de espera e corredor do baixo giro")
 
 
 # ---------------------------------------------------------------- D5 cabeamento
 def d_cabeamento():
     w, h = 1400, 600
     c = []
-    c.append(caixa(40, 230, 250, 150, "Concentrador", ["RP2040 + W5500", "Porta A: barramento frente", "Porta B: barramento fundo", "Fonte 12 V no gabinete"], VD, VD2))
+    c.append(caixa(40, 230, 250, 150, "Concentrador", ["RP2040 + W5500", "Porta A: barramento alto giro", "Porta B: barramento baixo giro", "Fonte 12 V no gabinete"], VD, VD2))
     # barramento frente
-    c.append(f"<text x='330' y='90' font-size='14' font-weight='700' fill='{AZ}' {FONT}>Barramento FRENTE (RS-485 + 12 V em cabo Cat5e, RJ45)</text>")
+    c.append(f"<text x='330' y='90' font-size='14' font-weight='700' fill='{AZ}' {FONT}>Barramento ALTO GIRO (RS-485 + 12 V em cabo Cat5e, RJ45)</text>")
     xs = [340, 470, 600, 730, 860]
     for i, x in enumerate(xs):
         c.append(f"<rect x='{x}' y='110' width='100' height='54' rx='8' fill='{VD2}' stroke='{VD}' stroke-width='2'/>"
@@ -283,7 +405,7 @@ def d_cabeamento():
              f"<text x='1016' y='278' font-size='12.5' {FONT}>Par 4: reserva (sinal de falha / futuro)</text>"
              f"<text x='1016' y='298' font-size='12.5' fill='{CZ}' {FONT}>Módulo Q → nó: cabo curto RJ45 (troca em 1 min)</text>")
     # fundo
-    c.append(f"<text x='330' y='400' font-size='14' font-weight='700' fill='{AZ}' {FONT}>Barramento FUNDO — 1 Módulo E+Q por zona, em cadeia (entra/sai RJ45)</text>")
+    c.append(f"<text x='330' y='400' font-size='14' font-weight='700' fill='{AZ}' {FONT}>Barramento BAIXO GIRO — 1 Módulo E+Q por zona, em cadeia (eletrocalha sobre o corredor)</text>")
     for i in range(6):
         x = 340 + i * 160
         c.append(f"<rect x='{x}' y='420' width='136' height='70' rx='8' fill='#fff' stroke='{AZ2}' stroke-width='2'/>"
@@ -359,7 +481,7 @@ def d_modulos():
              f"<text x='855' y='228' text-anchor='middle' font-size='13' fill='#cbd5e1' {FONT}>quantidade</text>")
     c.append(f"<text x='460' y='290' font-size='12.5' {FONT}>• Mostra o PRÓXIMO item da zona, na ordem da rota</text>"
              f"<text x='460' y='312' font-size='12.5' {FONT}>• Botão confirma e passa para o próximo; apaga quando a zona termina</text>"
-             f"<text x='460' y='334' font-size='12.5' {FONT}>• Entrada e saída RJ45 (cadeia no barramento do fundo)</text>")
+             f"<text x='460' y='334' font-size='12.5' {FONT}>• Entrada e saída RJ45 (cadeia no barramento do baixo giro)</text>")
     # gabinete
     c.append(f"<text x='1080' y='80' font-size='16' font-weight='700' fill='{AZ}' {FONT}>Gabinete do concentrador</text>")
     c.append(f"<rect x='1080' y='100' width='260' height='240' rx='12' fill='#e9edf3' stroke='{CZ}' stroke-width='2'/>"
@@ -368,7 +490,7 @@ def d_modulos():
              f"<circle cx='1290' cy='160' r='30' fill='#cfd6e0' stroke='{CZ}'/><text x='1290' y='165' text-anchor='middle' font-size='11' {FONT}>cooler</text>"
              f"<rect x='1250' y='210' width='70' height='14' rx='3' fill='#b6bec9'/><rect x='1250' y='230' width='70' height='14' rx='3' fill='#b6bec9'/>"
              f"<text x='1285' y='265' text-anchor='middle' font-size='11' fill='{CZ}' {FONT}>filtro</text>"
-             f"<rect x='1100' y='280' width='220' height='40' rx='6' fill='#fff' stroke='{CZ}'/><text x='1210' y='305' text-anchor='middle' font-size='11.5' {FONT}>RJ45: rede · frente · fundo</text>")
+             f"<rect x='1100' y='280' width='220' height='40' rx='6' fill='#fff' stroke='{CZ}'/><text x='1210' y='305' text-anchor='middle' font-size='11.5' {FONT}>RJ45: rede · alto · baixo giro</text>")
     c.append(f"<text x='1080' y='366' font-size='12.5' {FONT}>• IP54 com filtro e cooler 12 V</text>"
              f"<text x='1080' y='388' font-size='12.5' {FONT}>• Trilho DIN, disjuntor 2 A</text>")
     return svg(w, h, "\n".join(c), "Módulos e gabinete")
@@ -380,6 +502,7 @@ def main():
         "arquitetura_b": d_arq(True),
         "sequencia": d_sequencia(),
         "layout_estacao": d_layout(),
+        "planta_estacao": d_planta(),
         "cabeamento": d_cabeamento(),
         "telas_coletor": d_telas(),
         "modulos": d_modulos(),

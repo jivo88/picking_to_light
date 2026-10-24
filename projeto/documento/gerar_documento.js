@@ -115,7 +115,7 @@ c.push(H2("1.1 Dentro do escopo"));
   "Serviço PTL (servidor) integrado ao Sybase ASE e à API do sistema BHT, com painel de monitoramento para gestão e TI.",
   "Dois caminhos de produção: **interna** (equipe própria) e **terceiros** (placas montadas por fábrica ou sistema comercial importado).",
   "Orçamento do **piloto** (estações 05 e 27) e da **operação completa** (40 estações), em 12 V e 5 V.",
-  "Simulador 3D de uma estação completa (frente e fundo) para demonstração.",
+  "Simulador 3D de uma estação completa (alto giro, área de espera e corredor do baixo giro, com as vizinhas) para demonstração.",
 ].forEach((x) => c.push(B(x)));
 c.push(H2("1.2 Fora do escopo (nesta fase)"));
 [
@@ -145,15 +145,24 @@ c.push(H1("3. Levantamento físico (tabela wms_endereco)"));
 c.push(R("A tabela **wms_endereco** (esteiras 1 e 2, exportada em 23/10/2026) tem **7.981 endereços** em **40 ruas — cada rua é uma estação**. A rua 90 (Marketing/Almoxarifado, 2 endereços) foi desconsiderada. Formato do endereço: bairro (1) + rua (2) + prédio (3) + andar (1) + apartamento (1), por exemplo **0050230A** = rua 05, prédio 023, andar 0."));
 c.push(H2("3.1 Estrutura de uma estação"));
 c.push(tabela(["Área", "Prédios", "Andares", "Uso proposto"], [
-  ["Frente — alto giro", "001 a 010", "0 a 3", "1 display de quantidade (Módulo Q) por endereço"],
-  ["Frente — alto giro (alto)", "001 a 010", "4 e 5", "2 blocos por estação (esquerdo: prédios 1-5; direito: 6-10), cada um com 1 display de endereço + quantidade"],
-  ["Posições tipo \"N\"", "015", "0 a 3 (esquinas de Medicamento: até 7)", "Entram na zona 1 do baixo giro"],
-  ["Fundo — baixo giro", "020-043 (Med.) / 022-045 (Perf.)", "0 a 7", "Zonas de 4 prédios, cada uma com 1 display de endereço + quantidade"],
+  ["Alto giro (ao longo da esteira de transporte)", "001 a 010", "0 a 3 (de cima)", "1 display de quantidade (Módulo Q) por endereço"],
+  ["Alto giro (níveis de baixo)", "001 a 010", "4 e 5", "2 blocos por estação (esquerdo: prédios 1-5; direito: 6-10), cada um com 1 display de endereço + quantidade"],
+  ["Cabeceira do corredor (\"150-153\")", "015", "0 a 3 (esquinas de Medicamento: até 7)", "Entram na zona 1 do baixo giro"],
+  ["Baixo giro (corredor perpendicular)", "Lado esquerdo: 020/022-031 · lado direito: 032 até o último", "0 a 7 (de cima)", "Zonas de 4 prédios, cada uma com 1 display de endereço + quantidade"],
   ["Esquinas", "060-063 (Med.) / 060-071 (Perf.)", "0 a 7", "Zonas adicionais de baixo giro (+1 em Medicamento, +3 em Perfumaria)"],
 ], [2.2, 1.6, 1.7, 4]));
 c.push(R("O campo **nr_ordem_separacao_flow** indica a ordem de percurso das seções. Nas estações 10 e 16 a ordem é invertida (estações espelhadas) — a rota de cada zona respeita esse campo, depois prédio e andar."));
-c.push(...img("layout_estacao", 640, 282, "Figura 1 — Estação 05 com os 209 endereços reais: frente (alto giro) e fundo (baixo giro) com as 6 zonas"));
-c.push(H2("3.2 Totais por tipo de estação"));
+c.push(H2("3.2 Disposição física"));
+c.push(R("A **esteira de transporte** passa atrás do **alto giro** de todas as estações. Entre uma estação e outra há um vão com duas **transferências**: a da direita traz a bacia da esteira para a **área de espera** da estação seguinte; a da esquerda devolve a bacia separada para a esteira. A área de espera fica em frente ao alto giro, e o operador trabalha entre ela e a entrada do **corredor do baixo giro**, perpendicular à esteira."));
+[
+  "No corredor, olhando a partir da área de espera: **lado esquerdo** com os prédios 020 (ou 022) a 031 (\"210 a 310\") e **lado direito** do 032 até o último (\"320 em diante\"). A rota é em U: desce pelo lado esquerdo e volta pelo direito.",
+  "O **prédio 015** (\"150 a 153\") fica na cabeceira do bloco à direita da entrada do corredor, de frente para o operador.",
+  "Os blocos do baixo giro são de costas: cada bloco tem um lado de uma estação e o outro lado da estação vizinha.",
+  "**O andar 0 é o de cima.** A altura de cada endereço depende de quantos endereços o prédio tem (prédio com 8 endereços = 8 níveis; com 2 endereços = 2 níveis com o dobro da altura). As bacias têm tamanho único.",
+].forEach((x) => c.push(B(x)));
+c.push(...img("planta_estacao", 640, 341, "Figura 1 — Planta da estação 05 e das vizinhas, conforme o desenho da operação (sem escala)"));
+c.push(...img("layout_estacao", 640, 213, "Figura 2 — Elevações da estação 05 com os 209 endereços reais (andar 0 em cima) e as 6 zonas do baixo giro"));
+c.push(H2("3.3 Totais por tipo de estação"));
 c.push(tabela(["Tipo", "Estações", "Alto giro 0-3", "Alto giro 4-5", "Baixo giro", "Zonas baixo giro"], [
   ["Medicamento comum", "04-08, 11-14, 17-21 (14)", "29", "10 a 20", "156-160", "6"],
   ["Medicamento esquina", "09, 10, 15, 16", "29", "10 a 20", "188-192", "7"],
@@ -164,9 +173,9 @@ c.push(tabela(["Tipo", "Estações", "Alto giro 0-3", "Alto giro 4-5", "Baixo gi
   ["**TOTAL (40 estações)**", "", fmt(tot.alto_0a3), fmt(tot.alto_45), fmt(tot.baixo), fmt(tot.zonas_baixo)],
 ], [2.2, 2.6, 1.2, 1.2, 1.2, 1.3]));
 c.push(nota("**Divergências com os números informados (para conferência):** Perfumaria esquina tem 227-230 endereços de baixo giro na tabela (informado: 203); a estação 26 tem 48 endereços de alto giro (informado: 49); Medicamento tem 20 estações na tabela (informado: 21). A planilha de orçamento usa a tabela, mas **todos os números são editáveis** na aba Estações."));
-c.push(H2("3.3 Zoneamento do baixo giro"));
-c.push(R("Regra inicial: **1 zona a cada 4 prédios** do fundo, com todas as zonas que têm itens trabalhando ao mesmo tempo. Cada zona mostra **um item por vez**, na ordem da rota; o botão confirma e o display passa para o próximo item da zona. Com 4 prédios × 8 andares, cada zona tem 20 a 32 endereços — o display mostra prédio e andar (ex.: **P031 A2**), suficiente para localizar a posição em poucos segundos."));
-c.push(B("Opcional de baixo custo: **LED guia** no topo de cada prédio do fundo, que acende a coluna do item atual da zona (≈ R$ 1.000 para toda a operação)."));
+c.push(H2("3.4 Zoneamento do baixo giro"));
+c.push(R("Regra inicial: **1 zona a cada 4 prédios** do baixo giro, com todas as zonas que têm itens trabalhando ao mesmo tempo. Cada zona mostra **um item por vez**, na ordem da rota; o botão confirma e o display passa para o próximo item da zona. Com 4 prédios × 8 andares, cada zona tem 20 a 32 endereços — o display mostra prédio e andar (ex.: **P031 A2**), suficiente para localizar a posição em poucos segundos."));
+c.push(B("Opcional de baixo custo: **LED guia** no topo de cada prédio do baixo giro, que acende a coluna do item atual da zona (≈ R$ 1.000 para toda a operação)."));
 c.push(B("O tamanho da zona é parâmetro do sistema (3, 4 ou 6 prédios) e pode ser ajustado no piloto conforme a produtividade medida."));
 
 // 4 REQUISITOS
@@ -195,7 +204,7 @@ c.push(tabela(["Código", "Requisito não funcional"], [
 
 // 5 ARQUITETURA A
 c.push(H1("5. Arquitetura A — Coletor + concentrador + displays"));
-c.push(...img("arquitetura_a", 640, 347, "Figura 2 — Visão geral da Arquitetura A"));
+c.push(...img("arquitetura_a", 640, 347, "Figura 3 — Visão geral da Arquitetura A"));
 c.push(H2("5.1 Componentes"));
 c.push(tabela(["Componente", "Responsabilidade", "Tecnologia proposta"], [
   ["Serviço PTL", "Abre/fecha caixas, consulta itens, divide por estação/área/zona, ordena pela rota, envia comandos, recebe confirmações, grava log, alimenta o painel.", "Serviço em VM (Linux ou Windows) com API REST; linguagem a definir pela TI (Java, .NET ou Node). Driver jConnect/ODBC para Sybase."],
@@ -218,24 +227,24 @@ c.push(tabela(["Critério", "A1 — App Android próprio", "A2 — Tela do WMS n
   ["Recomendação", "**Recomendada** para a operação", "Alternativa rápida para o piloto, se o app atrasar"],
 ], [1.4, 2.4, 2.4]));
 c.push(H2("5.3 Fluxo de operação"));
-c.push(...img("sequencia", 640, 375, "Figura 3 — Sequência de mensagens de uma caixa na estação"));
+c.push(...img("sequencia", 640, 375, "Figura 4 — Sequência de mensagens de uma caixa na estação"));
 [
-  "A caixa chega à estação pela esteira (controle do sistema BHT).",
+  "A bacia chega pela esteira de transporte e entra na área de espera da estação pela transferência (controle do sistema BHT).",
   "O operador aponta o coletor para a etiqueta e aperta o gatilho: a leitura **abre** a caixa na estação.",
   "O Serviço PTL busca os itens da caixa (Sybase/API), filtra os endereços daquela estação, separa em alto giro, blocos 4-5 e zonas, e ordena pela rota.",
   "O concentrador acende todos os displays de alto giro com a quantidade e o primeiro item de cada bloco/zona.",
   "O operador pega a quantidade e aperta o botão; o display apaga (alto giro) ou passa ao próximo item (bloco/zona). O coletor mostra o progresso.",
-  "Ao apagar o último display, o coletor mostra **Estação concluída**. O operador lê a etiqueta de novo: a caixa **fecha**, o Serviço PTL grava a sessão e (se validado) avisa o BHT, e a caixa segue.",
+  "Ao apagar o último display, o coletor mostra **Estação concluída**. O operador lê a etiqueta de novo: a caixa **fecha**, o Serviço PTL grava a sessão e (se validado) avisa o BHT, e o operador empurra a bacia para a transferência de saída, que a devolve à esteira de transporte.",
 ].forEach((x) => c.push(N(x)));
 
 // 6 ARQUITETURA B
 c.push(H1("6. Arquitetura B — Identificação por RFID"));
 c.push(R("A Arquitetura B mantém **toda a infraestrutura de displays, concentradores e Serviço PTL** da Arquitetura A e troca apenas a forma de identificar a caixa: cada caixa retornável recebe uma **tag NFC (13,56 MHz) fixa**, e a leitura acontece sem o coletor."));
-c.push(...img("arquitetura_b", 640, 347, "Figura 4 — Visão geral da Arquitetura B"));
+c.push(...img("arquitetura_b", 640, 347, "Figura 5 — Visão geral da Arquitetura B"));
 c.push(H2("6.1 Opções de leitura"));
 c.push(tabela(["Opção", "Como funciona", "Prós", "Contras"], [
   ["B1 — Pulseira NFC", "Leitor no pulso (ESP32-C3 + PN532 + bateria). O operador encosta o pulso na tag da caixa para abrir e para fechar.", "Mãos livres; leitura em < 1 s; baixo custo por unidade (≈ R$ 130).", "Pode atrapalhar o operador; bateria e carga diária; higiene/conforto."],
-  ["B2 — Leitor fixo na estação", "Leitor NFC sob a posição onde a caixa para, ligado ao concentrador. Painel LCD mostra caixa e itens restantes; fechar com nova leitura ou botão FECHAR.", "Nada no corpo do operador; sem bateria; abre automaticamente.", "Exige posição de parada definida para a caixa; instalação mecânica na esteira."],
+  ["B2 — Leitor fixo na estação", "Leitor NFC sob a posição de pega da área de espera, ligado ao concentrador. Painel LCD mostra caixa e itens restantes; fechar com nova leitura ou botão FECHAR.", "Nada no corpo do operador; sem bateria; abre automaticamente.", "Exige posição de parada definida para a caixa; instalação mecânica na esteira."],
   ["B3 — Produtos de mercado", "Leitores de pulso comerciais (em geral UHF, ex.: FEIG HyWEAR ≈ US$ 997) ou leitores HF industriais.", "Robustez e garantia.", "Custo muito maior; UHF lê de longe (risco de ler a caixa vizinha) e exige tags UHF."],
 ], [1.2, 2.6, 1.8, 1.8], { size: 17 }));
 c.push(nota("**Recomendação para a Arquitetura B:** opção **B2 (leitor fixo)**, porque atende à preocupação de que a pulseira atrapalhe o operador e elimina bateria. B1 fica como alternativa para estações onde a caixa não tenha posição fixa."));
@@ -294,9 +303,9 @@ c.push(tabela(["Situação", "Comportamento do sistema"], [
 // 8 INTERFACES
 c.push(H1("8. Interfaces"));
 c.push(H2("8.1 Telas do coletor (A1)"));
-c.push(...img("telas_coletor", 640, 302, "Figura 5 — Telas do app PTL: espera, separação, conclusão e alerta"));
+c.push(...img("telas_coletor", 640, 302, "Figura 6 — Telas do app PTL: espera, separação, conclusão e alerta"));
 c.push(H2("8.2 Displays"));
-c.push(...img("modulos", 640, 215, "Figura 6 — Módulo Q, Módulo E+Q e gabinete do concentrador"));
+c.push(...img("modulos", 640, 215, "Figura 7 — Módulo Q, Módulo E+Q e gabinete do concentrador"));
 [
   "**Formato do endereço no display de 8 dígitos:** \"P031 A2\" (prédio 031, andar 2); a rua não aparece porque é a própria estação.",
   "**Displays de 0,56\" (14 mm)** de altura de dígito para leitura a 2-3 m; cor vermelha (melhor contraste em 7 segmentos).",
@@ -321,7 +330,7 @@ c.push(tabela(["Tópico", "Mensagem (JSON)"], [
 ], [1.6, 5.4]));
 c.push(H2("8.5 Barramento RS-485 (concentrador ↔ nós e módulos)"));
 [
-  "Dois barramentos por estação (frente e fundo), 38.400 bps, protocolo mestre-escravo com endereço de 1 byte por dispositivo (dip switch ou gravado na instalação).",
+  "Dois barramentos por estação (alto giro e baixo giro), 38.400 bps, protocolo mestre-escravo com endereço de 1 byte por dispositivo (dip switch ou gravado na instalação).",
   "Comandos: MOSTRAR (endereço, quantidade, modo), APAGAR, PISCAR, LER_BOTOES, AUTO_TESTE. O concentrador consulta todos os dispositivos a cada 50 ms.",
   "Terminação de 120 Ω nas pontas e polarização no concentrador; cabo Cat5e com par trançado para o sinal.",
 ].forEach((x) => c.push(B(x)));
@@ -355,7 +364,7 @@ c.push(tabela(["Item", "Por estação comum (Med.)", "Piloto (05 + 27)", "Opera�
   ["Reserva técnica", "—", "+10%", "+10%"],
 ], [2.6, 1.6, 1.4, 1.6], { direita: [1, 2, 3] }));
 c.push(H2("9.2 Cabeamento — foco em manutenção"));
-c.push(...img("cabeamento", 640, 274, "Figura 7 — Topologia de cabeamento: barramento da frente com nós de coluna e do fundo com módulos em cadeia"));
+c.push(...img("cabeamento", 640, 274, "Figura 8 — Topologia de cabeamento: barramento do alto giro com nós de coluna e do baixo giro com módulos em cadeia (eletrocalha sobre o corredor)"));
 [
   "**Cabo Cat5e com RJ45** em todos os trechos: par 1 RS-485, par 2 +12 V, par 3 GND, par 4 reserva.",
   "**Sem fio contínuo atrás das plaquinhas:** cada trecho é um cabo curto com conector; trocar um módulo = desconectar dois RJ45 e encaixar o reserva.",
@@ -468,7 +477,9 @@ c.push(tabela(["Rua", "Segmento", "Tipo", "Total", "Alto 0-3", "Alto 4-5", "Baix
 c.push(H1("Anexo B — Glossário"));
 c.push(tabela(["Termo", "Significado"], [
   ["Pick-to-light (PTL)", "Separação guiada por luz: displays indicam onde e quanto pegar."],
-  ["Alto giro / baixo giro", "Endereços com muita / pouca saída. Alto giro na frente (prédios 1-10), baixo giro no fundo."],
+  ["Alto giro / baixo giro", "Endereços com muita / pouca saída. Alto giro ao longo da esteira de transporte (prédios 001-010); baixo giro no corredor perpendicular."],
+  ["Andar", "Nível do prédio; o andar 0 é o de cima."],
+  ["Área de espera", "Trecho em frente ao alto giro onde as bacias aguardam a separação."],
   ["Concentrador", "Controlador da estação, ligado à rede e aos barramentos de displays."],
   ["Módulo Q / E+Q", "Display de quantidade / display de endereço + quantidade, ambos com botão de confirmação."],
   ["Nó de coluna", "Placa que liga os Módulos Q de um prédio do alto giro ao barramento."],
