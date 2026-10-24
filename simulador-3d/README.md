@@ -2,9 +2,10 @@
 
 Estação completa montada com os endereços reais da tabela `wms_endereco` para as estações do
 piloto **05 (Medicamento)** e **27 (Perfumaria)**, no layout da operação: esteira de transporte e
-esteira de separação lado a lado (≈ 20 cm), transferência a cada 4 estações com rolete
-direcionador, operador entre a esteira de separação e o alto giro (atrás dele) e corredor do baixo
-giro entrando pelo meio do alto giro (020–031 à esquerda; 015 e 043 → 032 à direita).
+esteira de separação lado a lado (≈ 20 cm) passando por dentro do alto giro (por baixo do andar 3
+e por cima do andar 4), transferência a cada 4 estações com rolete direcionador, alto giro na
+frente do operador e corredor do baixo giro atrás dele (020–031 à esquerda; 015 e 043 → 032 à
+direita).
 Prateleiras alinhadas, andar 0 em cima; a caixa do endereço varia pelo tipo. Bacias verdes de
 tamanho único; operador com uniforme verde. Estações vizinhas em cinza.
 

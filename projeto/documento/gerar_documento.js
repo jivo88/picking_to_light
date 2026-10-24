@@ -145,15 +145,15 @@ c.push(H1("3. Levantamento físico (tabela wms_endereco)"));
 c.push(R("A tabela **wms_endereco** (esteiras 1 e 2, exportada em 23/10/2026) tem **7.981 endereços** em **40 ruas — cada rua é uma estação**. A rua 90 (Marketing/Almoxarifado, 2 endereços) foi desconsiderada. Formato do endereço: bairro (1) + rua (2) + prédio (3) + andar (1) + apartamento (1), por exemplo **0050230A** = rua 05, prédio 023, andar 0."));
 c.push(H2("3.1 Estrutura de uma estação"));
 c.push(tabela(["Área", "Prédios", "Andares", "Uso proposto"], [
-  ["Alto giro (atrás do operador, de frente para as esteiras)", "001 a 010", "0 a 3 (de cima)", "1 display de quantidade (Módulo Q) por endereço"],
-  ["Alto giro (níveis de baixo)", "001 a 010", "4 e 5", "4 displays de endereço + quantidade por estação: um por andar (A4 e A5) em cada lado (prédios 001-005 e 006-010), como no sistema atual"],
+  ["Alto giro (na frente do operador; esteiras passam por dentro)", "001 a 010", "0 a 3 (acima das esteiras)", "1 display de quantidade (Módulo Q) por endereço"],
+  ["Alto giro (níveis de baixo)", "001 a 010", "4 e 5 (abaixo das esteiras)", "4 displays de endereço + quantidade por estação: um por andar (A4 e A5) em cada lado (prédios 001-005 e 006-010), como no sistema atual"],
   ["Início do lado direito do corredor (\"150-153\")", "015", "0 a 3 (esquinas de Medicamento: até 7)", "Entram na zona 1 do baixo giro"],
   ["Baixo giro (corredor perpendicular)", "Lado esquerdo: 020/022-031 · lado direito: 032 até o último", "0 a 7 (de cima)", "Zonas de 4 prédios, cada uma com 1 display de endereço + quantidade"],
   ["Esquinas", "060-063 (Med.) / 060-071 (Perf.)", "0 a 7", "Zonas adicionais de baixo giro (+1 em Medicamento, +3 em Perfumaria)"],
 ], [2.2, 1.6, 1.7, 4]));
 c.push(R("O campo **nr_ordem_separacao_flow** indica a ordem de percurso das seções. Nas estações 10 e 16 a ordem é invertida (estações espelhadas) — a rota de cada zona respeita esse campo, depois prédio e andar."));
 c.push(H2("3.2 Disposição física"));
-c.push(R("A **esteira de transporte** e a **esteira de separação** correm lado a lado, com cerca de 20 cm entre elas. O operador fica entre a esteira de separação e o **alto giro**, que fica atrás dele, de frente para as esteiras; no meio do alto giro há a passagem para o **corredor do baixo giro**, perpendicular às esteiras. As prateleiras são alinhadas (mesmos níveis em toda a estante)."));
+c.push(R("O **alto giro** fica na frente do operador. A **esteira de separação** e a **esteira de transporte** correm lado a lado (cerca de 20 cm entre elas) e passam **por dentro do alto giro, por baixo do andar 3 e por cima do andar 4**: a separação do lado do operador e a de transporte atrás. O **corredor do baixo giro** fica atrás do operador, perpendicular às esteiras. As prateleiras são alinhadas (mesmos níveis em toda a estante)."));
 [
   "**Transferência:** cada transferência alimenta até 4 estações. A bacia passa da esteira de transporte para a de separação e, na zona de espera, um **rolete direcionador** manda a bacia para a esquerda (2 estações) ou para a direita (2 estações). Ex.: transferência entre 11 e 12 atende 10 e 11 (esquerda) e 12 e 13 (direita). Nas pontas, a transferência entre 3 e 4 atende 3 (esquerda) ou 4 e 5 (direita); na Perfumaria, entre 26 e 27 atende 26 ou 27 e 28.",
   "**Pedido:** a bacia só entra nas estações em que o pedido tem itens. Se o pedido começa na 3 e continua só na 7, depois da 3 a bacia volta à esteira de transporte e não entra na 4 nem na 5.",
@@ -165,7 +165,7 @@ c.push(R("A **esteira de transporte** e a **esteira de separação** correm lado
   "Os blocos do baixo giro são de costas: cada bloco tem um lado de uma estação e o outro lado da estação vizinha.",
   "**O andar 0 é o de cima.** As prateleiras são alinhadas; o que muda de tamanho é a caixa do endereço, conforme o tipo (A, B, C, F, N). Andar que o prédio não usa fica vazio. As bacias que percorrem as esteiras têm tamanho único.",
 ].forEach((x) => c.push(B(x)));
-c.push(...img("planta_estacao", 640, 324, "Figura 1 — Planta da estação 05 e das vizinhas: esteiras, transferência, alto giro e corredor do baixo giro (sem escala)"));
+c.push(...img("planta_estacao", 640, 324, "Figura 1 — Planta da estação 05 e das vizinhas: alto giro com as esteiras por dentro, transferência, operador e corredor do baixo giro (sem escala)"));
 c.push(...img("layout_estacao", 640, 230, "Figura 2 — Elevações da estação 05 com os 209 endereços reais (andar 0 em cima) e as 6 zonas do baixo giro"));
 c.push(H2("3.3 Totais por tipo de estação"));
 c.push(tabela(["Tipo", "Estações", "Alto giro 0-3", "Alto giro 4-5", "Baixo giro", "Zonas baixo giro"], [
@@ -482,9 +482,9 @@ c.push(tabela(["Rua", "Segmento", "Tipo", "Total", "Alto 0-3", "Alto 4-5", "Baix
 c.push(H1("Anexo B — Glossário"));
 c.push(tabela(["Termo", "Significado"], [
   ["Pick-to-light (PTL)", "Separação guiada por luz: displays indicam onde e quanto pegar."],
-  ["Alto giro / baixo giro", "Endereços com muita / pouca saída. Alto giro atrás do operador, de frente para as esteiras (prédios 001-010); baixo giro no corredor perpendicular."],
+  ["Alto giro / baixo giro", "Endereços com muita / pouca saída. Alto giro na frente do operador (prédios 001-010), com as esteiras passando por dentro entre os andares 3 e 4; baixo giro no corredor atrás do operador."],
   ["Andar", "Nível do prédio; o andar 0 é o de cima."],
-  ["Esteira de separação", "Esteira paralela à de transporte (≈ 20 cm entre elas) onde a bacia fica durante a separação."],
+  ["Esteira de separação", "Esteira paralela à de transporte (≈ 20 cm entre elas), dentro do alto giro, onde a bacia fica durante a separação."],
   ["Transferência", "Desvio da esteira de transporte para a de separação; com o rolete direcionador atende até 4 estações."],
   ["Concentrador", "Controlador da estação, ligado à rede e aos barramentos de displays."],
   ["Módulo Q / E+Q", "Display de quantidade / display de endereço + quantidade, ambos com botão de confirmação."],

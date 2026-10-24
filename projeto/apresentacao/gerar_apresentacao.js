@@ -232,7 +232,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "A estação" });
   titulo(s, "Uma transferência atende 4 estações; a bacia volta à esteira de qualquer ponto");
   imagem(s, BASE + "/diagramas/planta_estacao.png", 0.5, 1.25, 12.3, 5.6);
-  s.addNotes("Esteira de transporte e de separação lado a lado (≈ 20 cm). A transferência passa a bacia para a separação e o rolete direcionador manda para 2 estações à esquerda ou 2 à direita (ex.: entre 11 e 12 atende 10 a 13; na ponta, entre 3 e 4 atende 3, 4 e 5). A bacia só entra nas estações com itens do pedido. Alto giro atrás do operador; corredor do baixo giro com 020-031 à esquerda e 015 + 043 a 032 à direita.");
+  s.addNotes("Esteira de transporte e de separação lado a lado (≈ 20 cm). A transferência passa a bacia para a separação e o rolete direcionador manda para 2 estações à esquerda ou 2 à direita (ex.: entre 11 e 12 atende 10 a 13; na ponta, entre 3 e 4 atende 3, 4 e 5). A bacia só entra nas estações com itens do pedido. Alto giro na frente do operador, com as esteiras passando por dentro (por baixo do andar 3 e por cima do andar 4); corredor do baixo giro atrás do operador, com 020-031 à esquerda e 015 + 043 a 032 à direita.");
 
   // ================================================================ 10 LAYOUT
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "A estação" });

@@ -99,7 +99,7 @@ def d_arq(rfid=False):
         "Fonte 12 V Mean Well + gabinete ventilado",
         "Guarda o estado da caixa se a rede cair"] + (["B2: leitor NFC + painel LCD"] if rfid else []), VD, VD2))
     c.append(seta(620, 360, 620, 430, "MQTT (ptl/est/cmd · evt)", dupla=True))
-    c.append(caixa(30, 610, 380, 130, "Alto giro (atrás do operador)", [
+    c.append(caixa(30, 610, 380, 130, "Alto giro (na frente do operador)", [
         "Andares 0-3: Módulo Q por endereço",
         "  (quantidade 3 díg. + botão com LED)",
         "Nó de coluna por prédio (1 a 10)",
@@ -223,27 +223,40 @@ def d_layout():
     pp = _por_predio(END05)
     zid = lambda e: int(e["zona"].split("-")[1]) - 1
     # ---- alto giro
-    ax, ay, cw, hl = 70, 150, 38, 34
-    c.append(f"<text x='{ax}' y='{ay-70}' font-size='16' font-weight='700' fill='{AZ}' {FONT}>ALTO GIRO — prédios 001–010 (atrás do operador)</text>")
+    ax, ay, cw, hl = 70, 140, 38, 30
+    band = 46
+    yb = ay + 4 * hl + band
+    c.append(f"<text x='{ax}' y='{ay-62}' font-size='16' font-weight='700' fill='{AZ}' {FONT}>ALTO GIRO — prédios 001–010 (na frente do operador)</text>")
 
     def cor_a(e):
         if e["andar"] <= 3:
             return VD2, VD
         return ("#D6E4F7", AZ2) if e["predio"] <= 5 else ("#FCE8CC", AM)
-    _rotulos_andar(c, ax, ay, hl, 6)
+    for a_ in range(4):
+        c.append(f"<text x='{ax-6}' y='{ay+a_*hl+hl/2+4}' text-anchor='end' font-size='10.5' fill='{CZ}' {FONT}>A{a_}</text>")
+    for k_, a_ in enumerate((4, 5)):
+        c.append(f"<text x='{ax-6}' y='{yb+k_*hl+hl/2+4}' text-anchor='end' font-size='10.5' fill='{CZ}' {FONT}>A{a_}</text>")
+    larg = 10 * cw + 14
+    c.append(f"<rect x='{ax}' y='{ay+4*hl+6}' width='{larg-3}' height='{band-12}' rx='3' fill='#D5DAE0' stroke='{CZ}'/>")
+    for x_ in range(ax + 6, ax + larg - 6, 9):
+        c.append(f"<line x1='{x_}' y1='{ay+4*hl+8}' x2='{x_}' y2='{ay+4*hl+band-8}' stroke='#BCC4CC'/>")
+    c.append(f"<text x='{ax+larg/2}' y='{ay+4*hl+band/2+4}' text-anchor='middle' font-size='11' font-weight='700' fill='{AZ}' {FONT}>esteira de separação (frente) + transporte (atrás)</text>")
     for p in range(1, 11):
         x = ax + (p - 1) * cw + (14 if p > 5 else 0)
-        _coluna(c, x, ay, cw, hl, 6, pp.get(p, {}), cor_a)
-        c.append(f"<text x='{x+cw/2-1}' y='{ay+6*hl+16}' text-anchor='middle' font-size='11' fill='{CZ}' {FONT}>{p:03d}</text>")
+        ends = pp.get(p, {})
+        _coluna(c, x, ay, cw, hl, 4, {a_: e for a_, e in ends.items() if a_ <= 3}, cor_a)
+        _coluna(c, x, yb, cw, hl, 2, {a_ - 4: e for a_, e in ends.items() if a_ >= 4}, cor_a)
+        c.append(f"<text x='{x+cw/2-1}' y='{yb+2*hl+16}' text-anchor='middle' font-size='11' fill='{CZ}' {FONT}>{p:03d}</text>")
     for k, (p0, cor) in enumerate(((1, AZ2), (6, AM))):
         x = ax + (p0 - 1) * cw + (14 if p0 > 5 else 0)
-        for an in (4, 5):
-            yy = ay + (an + 1) * hl - 6
+        for j_, an in enumerate((4, 5)):
+            yy = yb + (j_ + 1) * hl - 6
             c.append(f"<rect x='{x+18}' y='{yy}' width='{5*cw-50}' height='12' rx='3' fill='#111' stroke='{cor}' stroke-width='1.5'/>"
                      f"<text x='{x+18+(5*cw-50)/2}' y='{yy+9.5}' text-anchor='middle' font-size='8.5' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>E+Q A{an}</text>")
-    c.append(f"<text x='{ax}' y='{ay+6*hl+38}' font-size='12.5' {FONT}>4 displays E+Q (A4 e A5 em cada lado), na longarina do andar.</text>")
-    c.append(f"<rect x='{ax}' y='{ay+6*hl+52}' width='16' height='16' rx='3' fill='{VD2}' stroke='{VD}'/><text x='{ax+24}' y='{ay+6*hl+65}' font-size='12.5' {FONT}>Andares 0–3 (de cima): Módulo Q por endereço — 29</text>")
-    c.append(f"<rect x='{ax}' y='{ay+6*hl+76}' width='16' height='16' rx='3' fill='#D6E4F7' stroke='{AZ2}'/><text x='{ax+24}' y='{ay+6*hl+89}' font-size='12.5' {FONT}>Andares 4–5: 20 endereços em 4 displays E+Q</text>")
+    ly0 = yb + 2 * hl + 38
+    c.append(f"<text x='{ax}' y='{ly0}' font-size='12.5' {FONT}>As esteiras passam por baixo do andar 3 e por cima do andar 4.</text>")
+    c.append(f"<rect x='{ax}' y='{ly0+14}' width='16' height='16' rx='3' fill='{VD2}' stroke='{VD}'/><text x='{ax+24}' y='{ly0+27}' font-size='12.5' {FONT}>Andares 0–3: Módulo Q por endereço — 29</text>")
+    c.append(f"<rect x='{ax}' y='{ly0+38}' width='16' height='16' rx='3' fill='#D6E4F7' stroke='{AZ2}'/><text x='{ax+24}' y='{ly0+51}' font-size='12.5' {FONT}>Andares 4–5: 20 endereços em 4 displays E+Q</text>")
     # ---- baixo giro
     bpred = sorted({e["predio"] for e in END05 if e["cat"] == "baixo" and e["predio"] != 15})
     esq = [p for p in bpred if p < 32]
@@ -284,11 +297,11 @@ def d_planta():
     W, H = 1500, 760
     s = 46
     P, hc, pb = 5.9, 0.75, 2.2
-    zA0, zA1 = 0.7, 1.85
+    zF, zFace, zBack = 1.35, -0.3, -2.05
     est0, est1 = 3, 6
     xa = (est0 - 5 - 0.5) * P - 0.3
     X = lambda x: 30 + (x - xa) * s
-    Y = lambda z: 92 + (z + 2.15) * s
+    Y = lambda z: 100 + (z + 2.3) * s
     pp = _por_predio(END05)
     bpred = sorted({e["predio"] for e in END05 if e["cat"] == "baixo" and e["predio"] != 15})
     esq = [p for p in bpred if p < 32]
@@ -297,8 +310,8 @@ def d_planta():
     xb = (est1 - 5 + 0.5) * P + 0.3
     c = []
 
-    def r(x1, z1, x2, z2, fill, stroke=CZ, sw=1.4):
-        c.append(f"<rect x='{X(min(x1,x2))}' y='{Y(min(z1,z2))}' width='{abs(x2-x1)*s}' height='{abs(z2-z1)*s}' fill='{fill}' stroke='{stroke}' stroke-width='{sw}'/>")
+    def r(x1, z1, x2, z2, fill, stroke=CZ, sw=1.4, op=1):
+        c.append(f"<rect x='{X(min(x1,x2))}' y='{Y(min(z1,z2))}' width='{abs(x2-x1)*s}' height='{abs(z2-z1)*s}' fill='{fill}' fill-opacity='{op}' stroke='{stroke}' stroke-width='{sw}'/>")
 
     def t(x, z, txt, size=12, cor="#1c2430", peso=400, anchor="middle", rot=None):
         tr = f"transform='rotate({rot} {X(x)} {Y(z)})'" if rot else ""
@@ -306,79 +319,74 @@ def d_planta():
 
     def seta(x1, z1, x2, z2, cor, larg=3):
         c.append(f"<line x1='{X(x1)}' y1='{Y(z1)}' x2='{X(x2)}' y2='{Y(z2)}' stroke='{cor}' stroke-width='{larg}' marker-end='url(#fim)'/>")
-    # esteiras
-    for z1, z2, nome in ((-1.825, -1.275, "ESTEIRA DE TRANSPORTE  →"), (-1.075, -0.525, "ESTEIRA DE SEPARAÇÃO")):
-        r(xa, z1, xb, z2, "#D5DAE0")
+    # alto giro (faixa de estantes) por estação
+    for st in range(est0, est1 + 1):
+        xc = (st - 5) * P
+        nosso = st == 5
+        r(xc - 2.8, zBack, xc + 2.8, zFace, "#DEE6F2" if nosso else "#EEF0F3", AZ2 if nosso else "#AAB2BC", 1.8 if nosso else 1.2)
+    # esteiras por dentro do alto giro
+    for z1, z2, nome in ((-1.665, -1.115, "ESTEIRA DE TRANSPORTE  →"), (-0.915, -0.365, "ESTEIRA DE SEPARAÇÃO")):
+        r(xa, z1, xb, z2, "#C9D0D8", CZ, 1.2, 0.85)
         x = xa
         while x < xb:
-            c.append(f"<line x1='{X(x)}' y1='{Y(z1)}' x2='{X(x)}' y2='{Y(z2)}' stroke='#BCC4CC'/>")
+            c.append(f"<line x1='{X(x)}' y1='{Y(z1)}' x2='{X(x)}' y2='{Y(z2)}' stroke='#AEB7C1'/>")
             x += 0.3
-        t(xa + 0.6, (z1 + z2) / 2 + 0.1, nome, 12, AZ, 700, "start")
-    t(xa + 5.2, -1.13, "≈ 20 cm entre as esteiras", 10, CZ, 400, "start")
-    # transferência 3|4 com rolete direcionador
+        t(xa + 0.6, (z1 + z2) / 2 + 0.1, nome, 11.5, AZ, 700, "start")
+    # transferência 03|04
     xt = (3.5 - 5) * P
-    r(xt - 0.35, -1.29, xt + 0.35, -1.06, "#E3F1E8", VD)
-    seta(xt, -1.75, xt, -0.95, VD)
-    c.append(f"<circle cx='{X(xt)}' cy='{Y(-0.8)}' r='7' fill='{AM}' stroke='#9a6413'/>")
-    seta(xt - 0.25, -0.8, xt - 1.6, -0.8, "#B9770E", 2.5)
-    seta(xt + 0.25, -0.8, xt + 1.6, -0.8, "#B9770E", 2.5)
-    t(xt, -2.0, "transferência 03|04", 11, VD, 700)
-    # alcance da transferência
-    yb = 0.38
+    r(xt - 0.3, -1.115, xt + 0.3, -0.915, "#E3F1E8", VD)
+    seta(xt, -1.5, xt, -0.75, VD)
+    c.append(f"<circle cx='{X(xt)}' cy='{Y(-0.64)}' r='7' fill='{AM}' stroke='#9a6413'/>")
+    seta(xt - 0.25, -0.64, xt - 1.6, -0.64, "#B9770E", 2.5)
+    seta(xt + 0.25, -0.64, xt + 1.6, -0.64, "#B9770E", 2.5)
     for s0, s1, txt in ((3, 3, "esquerda: 03"), (4, 5, "direita: 04 e 05")):
         x1, x2 = (s0 - 5 - 0.5) * P + 0.15, (s1 - 5 + 0.5) * P - 0.15
-        c.append(f"<path d='M{X(x1)},{Y(-0.42)} L{X(x1)},{Y(-0.34)} L{X(x2)},{Y(-0.34)} L{X(x2)},{Y(-0.42)}' fill='none' stroke='#B9770E' stroke-width='1.6'/>")
-        t((x1 + x2) / 2, -0.1, txt, 10.5, "#B9770E", 700)
+        c.append(f"<path d='M{X(x1)},{Y(-0.22)} L{X(x1)},{Y(-0.12)} L{X(x2)},{Y(-0.12)} L{X(x2)},{Y(-0.22)}' fill='none' stroke='#B9770E' stroke-width='1.6'/>")
+        t((x1 + x2) / 2, 0.18, txt, 10.5, "#B9770E", 700)
+    t(xt, -2.42, "transferência 03|04 · rolete direcionador", 11, VD, 700)
     # bacia na estação 05 e empurrão de volta
-    r(-0.3, -1.0, 0.3, -0.6, "#2E9E4F", "#1d6b35")
-    seta(0.45, -0.75, 0.45, -1.5, "#C0392B", 2.5)
-    t(0.75, -1.98, "empurra de volta (de qualquer ponto)", 10.5, "#C0392B", 700, "start")
-    # estações
+    r(-0.3, -0.84, 0.3, -0.44, "#2E9E4F", "#1d6b35")
+    seta(0.45, -0.6, 0.45, -1.35, "#C0392B", 2.5)
+    t(0.75, -2.42, "empurra de volta à esteira de transporte (de qualquer ponto)", 10.5, "#C0392B", 700, "start")
+    # operador e corredor
+    c.append(f"<line x1='{X(xa)}' y1='{Y(-0.2)}' x2='{X(xb)}' y2='{Y(-0.2)}' stroke='#F4C430' stroke-width='3'/>")
+    c.append(f"<circle cx='{X(0.35)}' cy='{Y(0.35)}' r='9' fill='#2E9E4F' stroke='#111'/>")
+    t(0.35, 0.85, "operador", 10.5, CZ)
     for st in range(est0, est1 + 1):
         xc = (st - 5) * P
         nosso = st == 5
         fill, bor = ("#DEE6F2", AZ2) if nosso else ("#EEF0F3", "#AAB2BC")
-        r(xc - 2.95, zA0, xc - hc, zA1, fill, bor)
-        r(xc + hc, zA0, xc + 2.95, zA1, fill, bor)
-        t(xc - 1.85, 1.2, "ALTO GIRO" if nosso else "alto giro", 10.5 if nosso else 10, AZ if nosso else CZ, 700)
-        t(xc + 1.85, 1.2, "ALTO GIRO" if nosso else "alto giro", 10.5 if nosso else 10, AZ if nosso else CZ, 700)
-        if nosso:
-            t(xc - 1.85, 1.55, "001–005", 10.5, AZ)
-            t(xc + 1.85, 1.55, "006–010", 10.5, AZ)
-        t(xc, 0.45, f"ESTAÇÃO {st:02d}", 12, AZ if nosso else CZ, 700)
-        r(xc - 2.95, zA1 + 0.15, xc - hc, zA1 + 0.15 + L, fill, bor)
-        r(xc + hc, zA1 + 0.15, xc + 2.95, zA1 + 0.15 + L, fill, bor)
-    # zonas e prédios da estação 05
+        r(xc - hc - pb, zF, xc - hc, zF + L, fill, bor)
+        r(xc + hc, zF, xc + hc + pb, zF + L, fill, bor)
+        t(xc - 1.9, 1.1, f"ESTAÇÃO {st:02d}", 12, AZ if nosso else CZ, 700)
     zid = lambda p: int(next(iter(pp[p].values()))["zona"].split("-")[1]) - 1
-    z0 = zA1 + 0.15
     for i, p in enumerate(esq):
         z = zid(p)
-        r(hc, z0 + i * 0.6, hc + 0.35, z0 + (i + 1) * 0.6, ZBOR[z % 7], "#fff")
-        t(hc + 0.55, z0 + i * 0.6 + 0.4, f"{p:03d}", 9.5, CZ, 400, "start")
+        r(hc, zF + i * 0.6, hc + 0.35, zF + (i + 1) * 0.6, ZBOR[z % 7], "#fff")
+        t(hc + 0.55, zF + i * 0.6 + 0.4, f"{p:03d}", 9.5, CZ, 400, "start")
     for i, p in enumerate(dirt):
         z = zid(p)
-        r(-hc - 0.35, z0 + i * 0.6, -hc, z0 + (i + 1) * 0.6, ZBOR[z % 7], "#fff")
-        t(-hc - 0.55, z0 + i * 0.6 + 0.4, f"{p:03d}", 9.5, CZ, 400, "end")
-    t(hc + 1.6, z0 + L / 2, "LADO ESQUERDO · P020–P031", 11.5, AZ, 700, rot=90)
-    t(-hc - 1.6, z0 + L / 2, "LADO DIREITO · P015, P043 → P032", 11.5, AZ, 700, rot=-90)
-    pts = [(0.15, -0.05), (0.25, z0 + 0.2), (0.25, z0 + L - 0.25), (-0.25, z0 + L - 0.25), (-0.25, z0 + 0.3)]
+        r(-hc - 0.35, zF + i * 0.6, -hc, zF + (i + 1) * 0.6, ZBOR[z % 7], "#fff")
+        t(-hc - 0.55, zF + i * 0.6 + 0.4, f"{p:03d}", 9.5, CZ, 400, "end")
+    t(hc + 1.6, zF + L / 2, "LADO ESQUERDO · P020–P031", 11.5, AZ, 700, rot=90)
+    t(-hc - 1.6, zF + L / 2, "LADO DIREITO · P015, P043 → P032", 11.5, AZ, 700, rot=-90)
+    pts = [(0.15, 0.55), (0.25, zF + 0.2), (0.25, zF + L - 0.25), (-0.25, zF + L - 0.25), (-0.25, zF + 0.3)]
     c.append("<polyline points='" + " ".join(f"{X(x)},{Y(z)}" for x, z in pts) + f"' fill='none' stroke='{AM}' stroke-width='3' stroke-dasharray='7 6' marker-end='url(#fim)'/>")
-    c.append(f"<circle cx='{X(0.35)}' cy='{Y(-0.25)}' r='8' fill='#2E9E4F' stroke='#111'/>")
-    r(2.5, 0.12, 2.85, 0.35, VD, "#1d5e3a")
-    t(2.68, 0.62, "concentrador", 9.5, VD, 700)
+    r(2.4, 0.95, 2.75, 1.18, VD, "#1d5e3a")
+    t(2.58, 0.85, "concentrador", 9.5, VD, 700)
     # legenda
     lx, ly = 1180, 110
-    itens = [("#DEE6F2", AZ2, "Estação 05 (piloto)"), ("#EEF0F3", "#AAB2BC", "Estações vizinhas"), ("#E3F1E8", VD, "Transferência"),
-             (AM, "#9a6413", "Rolete direcionador"), ("#2E9E4F", "#1d6b35", "Bacia (verde, tamanho único)")]
+    itens = [("#DEE6F2", AZ2, "Estação 05 (piloto)"), ("#EEF0F3", "#AAB2BC", "Estações vizinhas"), ("#C9D0D8", CZ, "Esteiras (dentro do alto giro)"),
+             ("#E3F1E8", VD, "Transferência"), (AM, "#9a6413", "Rolete direcionador"), ("#2E9E4F", "#1d6b35", "Bacia (verde, tamanho único)")]
     for i, (f, b_, txt) in enumerate(itens):
         c.append(f"<rect x='{lx}' y='{ly+i*28}' width='20' height='20' rx='3' fill='{f}' stroke='{b_}' stroke-width='1.6'/><text x='{lx+30}' y='{ly+i*28+15}' font-size='12.5' {FONT}>{txt}</text>")
     ty = ly + len(itens) * 28 + 26
     linhas = ["Regras da transferência", "Cada transferência atende até 4 estações:", "2 à esquerda e 2 à direita do vão.",
               "Ex.: 11|12 → 10, 11 · 12, 13.", "Ponta: 03|04 → 03 · 04, 05.", "", "A bacia só entra onde o pedido tem", "itens; depois volta à esteira de",
-              "transporte (ex.: começa na 03 e só", "continua na 07 → não entra na 04/05).", "", "Medidas aproximadas, sem escala."]
+              "transporte (ex.: começa na 03 e só", "continua na 07 → não entra na 04/05).", "", "As esteiras passam por dentro do alto", "giro: por baixo do andar 3 e por cima", "do andar 4.", "", "Medidas aproximadas, sem escala."]
     for i, l in enumerate(linhas):
         c.append(f"<text x='{lx}' y='{ty+i*21}' font-size='{13.5 if i==0 else 12.2}' font-weight='{700 if i==0 else 400}' fill='{AZ if i==0 else "#1c2430"}' {FONT}>{l}</text>")
-    return svg(W, H, "\n".join(c), "Planta da estação 05 e vizinhas — esteiras, transferência, alto giro e corredor do baixo giro")
+    return svg(W, H, "\n".join(c), "Planta da estação 05 e vizinhas — alto giro com as esteiras por dentro, operador e corredor do baixo giro")
 
 
 # ---------------------------------------------------------------- D5 cabeamento
