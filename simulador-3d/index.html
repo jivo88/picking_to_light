@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador 3D PTL</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<div id="cena"></div>
+
+<header id="topo">
+  <div class="marca"><span class="ponto"></span><b>Pick-to-Light</b><span class="sub">Simulador 3D da estação</span></div>
+  <div class="grupo">
+    <label>Estação</label>
+    <div class="seg" id="selEstacao">
+      <button data-v="05" class="on">05 · Medicamento</button>
+      <button data-v="27">27 · Perfumaria</button>
+    </div>
+  </div>
+  <div class="grupo">
+    <label>Arquitetura</label>
+    <div class="seg" id="selModo">
+      <button data-v="A" class="on">A · Coletor</button>
+      <button data-v="B2">B2 · RFID fixo</button>
+      <button data-v="B1">B1 · Pulseira</button>
+    </div>
+  </div>
+  <div class="grupo">
+    <label>Câmera</label>
+    <div class="seg" id="selCam">
+      <button data-v="geral" class="on">Geral</button>
+      <button data-v="frente">Frente</button>
+      <button data-v="fundo">Fundo</button>
+      <button data-v="operador">Operador</button>
+    </div>
+  </div>
+  <div class="grupo">
+    <label>Velocidade</label>
+    <div class="seg" id="selVel">
+      <button data-v="1" class="on">1×</button>
+      <button data-v="2">2×</button>
+      <button data-v="4">4×</button>
+      <button data-v="8">8×</button>
+    </div>
+  </div>
+  <div class="relogio"><span id="relogio">08:00:00</span><small>hora simulada</small></div>
+  <button class="icone" id="btnAjuda" title="Como usar">?</button>
+</header>
+
+<aside id="monitor" class="painel">
+  <div class="cab">
+    <h2>Monitoramento</h2>
+    <span class="chip" id="chipEstado">AGUARDANDO</span>
+  </div>
+  <div class="kpis">
+    <div><b id="kCaixas">0</b><span>caixas fechadas</span></div>
+    <div><b id="kItens">0</b><span>itens confirmados</span></div>
+    <div><b id="kTempo">–</b><span>tempo médio/caixa</span></div>
+    <div><b id="kHora">–</b><span>caixas/hora (projeção)</span></div>
+    <div><b id="kAcesos">0</b><span>displays acesos</span></div>
+    <div><b id="kPend">0</b><span>pendências p/ conferência</span></div>
+  </div>
+  <div class="infra" id="infra"></div>
+  <div id="alertas"></div>
+  <div class="cab log-cab"><h3>Eventos (API · MQTT · Sybase · BHT)</h3><button class="link" id="btnLimparLog">limpar</button></div>
+  <div id="log"></div>
+</aside>
+
+<aside id="direita" class="painel">
+  <div id="dispositivo"></div>
+  <button id="btnLeitura" class="gatilho">Gatilho</button>
+  <div class="dicaTecla" id="dicaTecla">ou tecla <kbd>Espaço</kbd></div>
+  <button id="btnCancelar" class="link">Cancelar caixa</button>
+
+  <div class="opcoes">
+    <label class="chave"><input type="checkbox" id="optAuto"><span></span>Operador automático</label>
+    <div class="faixa">
+      <span>Itens por caixa (média)</span><b id="valItens">8</b>
+      <input type="range" id="optItens" min="1" max="30" value="8">
+    </div>
+    <label class="chave"><input type="checkbox" id="optGuia" checked><span></span>LED guia de coluna</label>
+    <label class="chave"><input type="checkbox" id="optDestaque" checked><span></span>Destacar posição (apoio da demo)</label>
+    <label class="chave"><input type="checkbox" id="optCabos" checked><span></span>Mostrar cabeamento</label>
+    <div class="botoes">
+      <button id="btnFalha">Simular falha de módulo</button>
+      <button id="btnZerar">Zerar indicadores</button>
+    </div>
+  </div>
+</aside>
+
+<footer id="legenda">
+  <span><i style="background:#2ecc71"></i>Módulo Q — alto giro, andares 0–3</span>
+  <span><i style="background:#ff3b30"></i>Módulo E+Q — blocos 4–5 e zonas do baixo giro</span>
+  <span><i style="background:#F2A33A"></i>LED guia de coluna</span>
+  <span><i style="background:#3A7BD5"></i>Barramento frente</span>
+  <span><i style="background:#E67E22"></i>Barramento fundo</span>
+  <span class="dica">Clique no botão verde de um módulo aceso para confirmar a pega · arraste para girar · role para aproximar</span>
+</footer>
+
+<div id="ajuda" class="modal">
+  <div class="caixaModal">
+    <h2>Simulador 3D — estação de flow rack com pick-to-light</h2>
+    <p>Estação montada com os endereços reais da tabela <code>wms_endereco</code>: frente de alto giro (prédios 001–010) e fundo de baixo giro (prédio 015 e 020 em diante), com as regras de funcionamento do documento técnico.</p>
+    <ol>
+      <li><b>A caixa chega</b> pela esteira e para na estação (a esteira continua controlada pelo BHT).</li>
+      <li><b>Leitura abre a caixa:</b> gatilho do coletor (arquitetura A), tag lida pelo leitor fixo (B2) ou pela pulseira (B1).</li>
+      <li><b>Displays acendem:</b> no alto giro, todos os endereços da caixa com a quantidade; nos blocos dos andares 4–5 e nas zonas do baixo giro, um item por vez na ordem da rota.</li>
+      <li><b>Confirmação:</b> clique no botão verde do módulo. O display apaga ou passa ao próximo item da zona.</li>
+      <li><b>Nova leitura fecha a caixa.</b> Com itens pendentes aparece um alerta; uma terceira leitura fecha e registra a pendência para a conferência.</li>
+    </ol>
+    <p class="nota">Disposição física (frente do lado da esteira, fundo atrás do operador) e medidas são premissas até chegarem as fotos; ficam no bloco <code>CFG</code> de <code>sim.js</code>. Tempos e produtividade são simulados.</p>
+    <button id="btnFecharAjuda" class="gatilho">Começar</button>
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="dados.js"></script>
+<script src="sim.js"></script>
+</body>
+</html>

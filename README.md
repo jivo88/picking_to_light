@@ -1,3 +1,14 @@
+# Pick-to-Light — projeto do flow rack
+
+| Pasta | Conteúdo |
+|---|---|
+| [`simulador-3d/`](simulador-3d/) | **Simulador 3D da estação completa** (estações 05 e 27, endereços reais, arquiteturas A e B). Abra `index.html`. |
+| [`projeto/entregaveis/`](projeto/entregaveis/) | Apresentação (.pptx), documento técnico (.docx) e orçamento (.xlsx) |
+| [`projeto/`](projeto/) | Scripts que geram os entregáveis, os diagramas e os dados das estações |
+| raiz (`iniciar.py`, `placas/`, `simulador/`) | Simulador das placas do protótipo (MicroPython), descrito abaixo |
+
+---
+
 # Simulador Pick-to-Light (local, no VS Code)
 
 Simula as 3 placas do protótipo na sua máquina, **sem internet e sem o site do Wokwi**:

@@ -1,0 +1,135 @@
+:root {
+  --fundo: #dfe4ea;
+  --painel: rgba(17, 24, 38, 0.93);
+  --painel2: rgba(255, 255, 255, 0.06);
+  --borda: rgba(255, 255, 255, 0.10);
+  --texto: #E8ECF2;
+  --suave: #9AA6B8;
+  --ambar: #F2A33A;
+  --verde: #2ECC71;
+  --vermelho: #E74C3C;
+  --azul: #3A7BD5;
+  --roxo: #A57BD0;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--fundo); font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--texto); }
+#cena { position: fixed; inset: 0; }
+#cena canvas { display: block; }
+button { font: inherit; cursor: pointer; }
+
+/* ---------- topo ---------- */
+#topo { position: fixed; top: 10px; left: 10px; right: 10px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  background: var(--painel); border: 1px solid var(--borda); border-radius: 12px; padding: 8px 12px; z-index: 5; }
+.marca { display: flex; align-items: center; gap: 8px; margin-right: 6px; }
+.marca b { font-size: 15px; letter-spacing: .2px; }
+.marca .sub { color: var(--suave); font-size: 12px; }
+.ponto { width: 10px; height: 10px; border-radius: 50%; background: var(--ambar); box-shadow: 0 0 10px var(--ambar); }
+.grupo { display: flex; align-items: center; gap: 6px; }
+.grupo label { color: var(--suave); font-size: 11px; text-transform: uppercase; letter-spacing: .6px; }
+.seg { display: flex; background: var(--painel2); border-radius: 8px; padding: 2px; }
+.seg button { background: transparent; color: var(--suave); border: 0; border-radius: 6px; padding: 5px 9px; font-size: 12.5px; white-space: nowrap; }
+.seg button.on { background: var(--ambar); color: #1B2638; font-weight: 600; }
+.relogio { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
+.relogio span { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 15px; }
+.relogio small { color: var(--suave); font-size: 10px; }
+.icone { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--borda); background: var(--painel2); color: var(--texto); font-weight: 700; }
+
+/* ---------- painéis ---------- */
+.painel { position: fixed; top: calc(var(--topoH, 54px) + 20px); bottom: 52px; width: 318px; background: var(--painel); border: 1px solid var(--borda); border-radius: 12px; padding: 12px; z-index: 4; display: flex; flex-direction: column; gap: 10px; }
+#monitor { left: 10px; }
+#direita { right: 10px; align-items: stretch; overflow-y: auto; }
+.cab { display: flex; align-items: center; justify-content: space-between; }
+h2 { font-size: 15px; margin: 0; }
+h3 { font-size: 12px; margin: 0; color: var(--suave); font-weight: 600; }
+.chip { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: #34495E; color: #fff; letter-spacing: .4px; }
+.chip.SEPARANDO { background: var(--verde); color: #10251a; }
+.chip.PRONTA { background: var(--azul); }
+.chip.ALERTA { background: var(--vermelho); }
+.chip.NA_POSICAO { background: var(--ambar); color: #1B2638; }
+.chip.FECHADA { background: #16A085; }
+.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.kpis div { background: var(--painel2); border-radius: 8px; padding: 7px 9px; display: flex; flex-direction: column; }
+.kpis b { font-size: 20px; font-variant-numeric: tabular-nums; }
+.kpis span { font-size: 11px; color: var(--suave); }
+.infra { font-size: 11.5px; color: var(--suave); background: var(--painel2); border-radius: 8px; padding: 7px 9px; line-height: 1.5; }
+.infra b { color: var(--texto); font-weight: 600; }
+.infra .ok { color: var(--verde); }
+#alertas:empty { display: none; }
+.alerta { background: rgba(231, 76, 60, .16); border: 1px solid rgba(231, 76, 60, .55); border-radius: 8px; padding: 8px 9px; font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
+.alerta button { align-self: flex-start; background: var(--vermelho); color: #fff; border: 0; border-radius: 6px; padding: 4px 10px; font-size: 12px; }
+.log-cab { margin-top: 2px; }
+#log { flex: 1; overflow-y: auto; font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 11px; line-height: 1.45; background: rgba(0,0,0,.25); border-radius: 8px; padding: 6px 8px; }
+#log div { padding: 1px 0 2px; border-bottom: 1px solid rgba(255,255,255,.04); word-break: break-word; }
+#log .t { color: #6B7A90; }
+#log .tag { display: inline-block; min-width: 46px; font-weight: 700; }
+#log .API { color: #7FB3FF; } #log .MQTT { color: #F2A33A; } #log .EVT { color: #2ECC71; }
+#log .SYB { color: #C39BD3; } #log .BHT { color: #76D7C4; } #log .RFID { color: #A57BD0; } #log .ERRO { color: #FF6B5E; }
+.link { background: none; border: 0; color: var(--suave); font-size: 12px; text-decoration: underline; padding: 0; }
+
+/* ---------- dispositivos ---------- */
+#dispositivo { display: flex; justify-content: center; }
+.celular { width: 220px; background: #0d1117; border-radius: 26px; padding: 12px 10px 16px; border: 2px solid #2b3445; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+.celular .marcaCel { text-align: center; font-size: 10px; color: #6B7A90; margin-bottom: 6px; letter-spacing: 1px; }
+.tela { background: #F4F6F9; color: #1B2638; border-radius: 12px; min-height: 270px; overflow: hidden; display: flex; flex-direction: column; }
+.tela .barra { padding: 9px 10px; color: #fff; font-weight: 700; font-size: 13px; }
+.tela .corpo { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; justify-content: center; }
+.tela .grande { font-size: 30px; font-weight: 800; }
+.tela .media { font-size: 15px; font-weight: 700; }
+.tela .p { font-size: 12px; color: #5B6675; }
+.tela .rodape { font-size: 11px; color: #5B6675; padding: 7px 10px; border-top: 1px solid #DDE2E9; text-align: center; }
+.progresso { width: 100%; height: 8px; background: #DDE2E9; border-radius: 4px; overflow: hidden; }
+.progresso i { display: block; height: 100%; background: #2E8B57; }
+.lista { width: 100%; text-align: left; font-size: 11.5px; color: #2E3A4F; }
+.lista div { display: flex; justify-content: space-between; border-bottom: 1px dashed #DDE2E9; padding: 2px 0; }
+.lcd { width: 270px; background: #2a2f36; border-radius: 10px; padding: 12px; border: 2px solid #3b4250; }
+.lcd .vidro { background: #1d4fd8; background: linear-gradient(#2456e0, #1a46c4); border-radius: 4px; padding: 8px 8px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; line-height: 1.35; color: #EAF2FF; white-space: pre; text-shadow: 0 0 4px rgba(255,255,255,.4); }
+.lcd .rot { font-size: 10.5px; color: var(--suave); margin-top: 8px; text-align: center; }
+.relogioPulso { width: 170px; height: 170px; border-radius: 40px; background: #12161d; border: 8px solid #2b3445; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+.relogioPulso .oled { width: 120px; height: 120px; border-radius: 16px; background: #000; color: #E8ECF2; font-size: 12px; padding: 10px; display: flex; flex-direction: column; justify-content: center; gap: 4px; text-align: center; }
+.relogioPulso .oled b { font-size: 22px; }
+.gatilho { background: var(--ambar); color: #1B2638; border: 0; border-radius: 10px; padding: 12px; font-weight: 800; font-size: 15px; letter-spacing: .3px; box-shadow: 0 4px 0 #b97614; }
+.gatilho:active { transform: translateY(2px); box-shadow: 0 2px 0 #b97614; }
+.dicaTecla { text-align: center; color: var(--suave); font-size: 11px; margin-top: -4px; }
+kbd { background: var(--painel2); border: 1px solid var(--borda); border-radius: 4px; padding: 0 5px; font-size: 11px; }
+#btnCancelar { align-self: center; }
+.opcoes { margin-top: 4px; border-top: 1px solid var(--borda); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+.chave { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+.chave input { display: none; }
+.chave span { width: 34px; height: 19px; border-radius: 10px; background: #3b4558; position: relative; flex: none; transition: .2s; }
+.chave span::after { content: ""; position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: #fff; transition: .2s; }
+.chave input:checked + span { background: var(--verde); }
+.chave input:checked + span::after { left: 17px; }
+.faixa { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; }
+.faixa span { color: var(--suave); font-size: 12px; }
+.faixa input { grid-column: 1 / 3; accent-color: var(--ambar); }
+.botoes { display: flex; flex-direction: column; gap: 6px; }
+.botoes button { background: var(--painel2); color: var(--texto); border: 1px solid var(--borda); border-radius: 8px; padding: 7px; font-size: 12.5px; }
+
+/* ---------- legenda e modal ---------- */
+#legenda { position: fixed; left: 10px; right: 10px; bottom: 10px; height: 34px; display: flex; align-items: center; gap: 16px; padding: 0 12px;
+  background: var(--painel); border: 1px solid var(--borda); border-radius: 10px; font-size: 12px; color: var(--suave); z-index: 4; overflow: hidden; white-space: nowrap; }
+#legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+#legenda .dica { margin-left: auto; }
+.modal { position: fixed; inset: 0; background: rgba(10, 14, 22, .55); display: flex; align-items: center; justify-content: center; z-index: 10; }
+.modal.oculto { display: none; }
+.caixaModal { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; background: #111826; border: 1px solid var(--borda); border-radius: 14px; padding: 22px 24px; line-height: 1.5; font-size: 14px; }
+.caixaModal h2 { font-size: 19px; margin-bottom: 8px; }
+.caixaModal li { margin-bottom: 5px; }
+.caixaModal .nota { color: var(--suave); font-size: 12.5px; }
+.caixaModal code { background: var(--painel2); padding: 0 4px; border-radius: 4px; }
+.caixaModal .gatilho { margin-top: 6px; padding: 10px 26px; }
+
+@media (max-width: 1750px) {
+  .marca .sub { display: none; }
+  .seg button { padding: 5px 7px; }
+}
+@media (max-width: 1100px) {
+  .painel { width: 270px; }
+  .marca .sub { display: none; }
+  #legenda .dica { display: none; }
+}
+@media (max-width: 760px) {
+  #topo { gap: 8px; }
+  .painel { position: fixed; top: auto; bottom: 50px; height: 42vh; width: calc(50vw - 15px); }
+  #legenda span:not(.dica) { display: none; }
+}
