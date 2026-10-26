@@ -1,74 +1,63 @@
 """
 SIMULADOR PICK-TO-LIGHT (local, sem internet)
 
-Roda as 3 placas com os MESMOS main.py e diagram.json do Wokwi:
-  Placa 3 - leitor de pulso  ->  Placa 1 - estacao  ->  Placa 2 - concentrador
-As placas conversam por um broker MQTT que sobe junto, na sua maquina.
+Abre a versão unificada: estação 3D + comunicação (HTTPS, SQL, MQTT e RS-485) sincronizadas.
 
-Uso:   python iniciar.py
-Abre:  http://127.0.0.1:8765
+Uso:   python iniciar.py                abre o simulador unificado
+       python iniciar.py --3d           abre só a estação 3D
+       python iniciar.py --comunicacao  abre só a demonstração da comunicação
+       python iniciar.py --placas       abre o simulador antigo das 3 placas (MicroPython)
+Abre:  http://127.0.0.1:8780
 """
 
+import http.server
 import os
+import socketserver
+import subprocess
 import sys
-import time
+import threading
 import webbrowser
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, AQUI)
+PORTA = 8780
+PAGINAS = {
+    "--3d": "simulador-3d/index.html",
+    "--comunicacao": "demo-comunicacao/index.html",
+}
 
-from simulador.broker import Broker          # noqa: E402
-from simulador.placa import Placa            # noqa: E402
-from simulador.servidor import criar_servidor  # noqa: E402
 
-PORTA_PAGINA = 8765
-PORTA_BROKER = 18830     # porta propria para nao brigar com um Mosquitto instalado
+class Silencioso(http.server.SimpleHTTPRequestHandler):
+    def __init__(self, *a, **k):
+        super().__init__(*a, directory=AQUI, **k)
 
-PLACAS = [
-    # (id, titulo, pasta) - na ordem do fluxo, da esquerda para a direita
-    ("leitor", "Placa 3 · Leitor de pulso", "placas/leitor"),
-    ("estacao", "Placa 1 · Estação de bipagem", "placas/estacao"),
-    ("concentrador", "Placa 2 · Concentrador FR01", "placas/concentrador"),
-]
-ORDEM_PARTIDA = ["concentrador", "estacao", "leitor"]
+    def end_headers(self):
+        # evita que o navegador mostre uma versão antiga guardada em cache
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
+    def log_message(self, *a):
+        pass
 
 
 def main():
-    abrir = "--sem-navegador" not in sys.argv
-
-    broker = Broker(PORTA_BROKER)
-    try:
-        broker.iniciar()
-    except OSError as erro:
-        print("Nao consegui abrir a porta %d do broker: %s" % (PORTA_BROKER, erro))
-        sys.exit(1)
-
-    placas = []
-    for ident, titulo, pasta in PLACAS:
-        base = os.path.join(AQUI, pasta)
-        placas.append(Placa(ident, titulo, os.path.join(base, "main.py"),
-                            os.path.join(base, "diagram.json"), PORTA_BROKER))
-
-    servidor = criar_servidor(PORTA_PAGINA, placas, broker)
-    url = "http://127.0.0.1:%d" % PORTA_PAGINA
-
-    por_id = {p.id: p for p in placas}
-    for ident in ORDEM_PARTIDA:
-        por_id[ident].iniciar()
-        time.sleep(0.4)
-
-    print("")
-    print("=" * 60)
-    print(" Simulador rodando em %s" % url)
-    print(" Broker MQTT local na porta %d" % PORTA_BROKER)
-    print(" Ctrl+C para parar")
-    print("=" * 60)
-    if abrir:
-        webbrowser.open(url)
-    try:
-        servidor.serve_forever()
-    except KeyboardInterrupt:
-        print("\nSimulador encerrado.")
+    if "--placas" in sys.argv:
+        args = [a for a in sys.argv[1:] if a != "--placas"]
+        sys.exit(subprocess.call([sys.executable, os.path.join(AQUI, "iniciar_placas.py"), *args]))
+    pagina = "simulador-unificado/index.html"
+    for chave, caminho in PAGINAS.items():
+        if chave in sys.argv:
+            pagina = caminho
+    url = f"http://127.0.0.1:{PORTA}/{pagina}"
+    socketserver.TCPServer.allow_reuse_address = True
+    with socketserver.ThreadingTCPServer(("127.0.0.1", PORTA), Silencioso) as srv:
+        print(f"Simulador Pick-to-Light em {url}")
+        print("Para parar: Ctrl+C (ou Shift+F5 no VS Code)")
+        if "--sem-navegador" not in sys.argv:
+            threading.Timer(0.8, lambda: webbrowser.open(url)).start()
+        try:
+            srv.serve_forever()
+        except KeyboardInterrupt:
+            pass
 
 
 if __name__ == "__main__":

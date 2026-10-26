@@ -1,5 +1,14 @@
 # Pick-to-Light — projeto do flow rack
 
+## Como abrir
+
+**No VS Code:** abra esta pasta, aperte **F5** e escolha **Simulador unificado (3D + comunicação)**.
+O navegador abre em http://127.0.0.1:8780 com as abas *Estação 3D*, *Comunicação* e *Lado a lado*.
+
+**Pelo terminal:** `python iniciar.py` (ou `--3d`, `--comunicacao`, `--placas`).
+
+**Sem Python:** abra `simulador-unificado/index.html` direto no navegador.
+
 | Pasta | Conteúdo |
 |---|---|
 | [`simulador-unificado/`](simulador-unificado/) | **Versão unificada**: estação 3D e comunicação sincronizadas, com abas para alternar (3D, comunicação, lado a lado). Abra `index.html`. |
@@ -7,11 +16,11 @@
 | [`simulador-3d/`](simulador-3d/) | **Simulador 3D da estação completa** (estações 05 e 27, endereços reais, arquiteturas A e B). Abra `index.html`. |
 | [`projeto/entregaveis/`](projeto/entregaveis/) | Apresentação (.pptx), documento técnico (.docx) e orçamento (.xlsx) |
 | [`projeto/`](projeto/) | Scripts que geram os entregáveis, os diagramas e os dados das estações |
-| raiz (`iniciar.py`, `placas/`, `simulador/`) | Simulador das placas do protótipo (MicroPython), descrito abaixo |
+| raiz (`iniciar_placas.py`, `placas/`, `simulador/`) | Simulador antigo das 3 placas do protótipo (MicroPython), descrito abaixo |
 
 ---
 
-# Simulador Pick-to-Light (local, no VS Code)
+# Simulador das 3 placas (versão antiga, MicroPython)
 
 Simula as 3 placas do protótipo na sua máquina, **sem internet e sem o site do Wokwi**:
 
@@ -34,12 +43,12 @@ As placas conversam por um **broker MQTT local** que sobe junto com o simulador.
 
 **Pelo VS Code (recomendado)**
 1. Abra esta pasta no VS Code (*Arquivo › Abrir Pasta*).
-2. Aperte **F5** (ou *Executar › Iniciar Depuração*) e escolha **Simulador Pick-to-Light**.
+2. Aperte **F5** (ou *Executar › Iniciar Depuração*) e escolha **Simulador das 3 placas (versão antiga)**.
 3. O navegador abre em **http://127.0.0.1:8765** com as 3 placas.
 
 **Pelo terminal**
 ```
-python iniciar.py
+python iniciar_placas.py
 ```
 
 Para parar: **Shift+F5** no VS Code, ou **Ctrl+C** no terminal.
@@ -80,7 +89,7 @@ O painel **Tráfego MQTT**, no fim da página, mostra cada mensagem que passa en
 ## Estrutura
 
 ```
-iniciar.py                 sobe o broker, as 3 placas e a página
+iniciar_placas.py          sobe o broker, as 3 placas e a página
 placas/
   leitor/       main.py, diagram.json   (Placa 3)
   estacao/      main.py, diagram.json   (Placa 1)
@@ -106,4 +115,4 @@ simulador/
 - **O leitor NFC (PN532) é simulado pelos botões de etiqueta.** A leitura real
   só é testada com a placa física.
 - Portas usadas: **8765** (página) e **18830** (broker). Se alguma estiver ocupada,
-  troque em `iniciar.py`.
+  troque em `iniciar_placas.py`.

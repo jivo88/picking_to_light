@@ -2,10 +2,39 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Simulador Pick-to-Light",
+      "name": "Simulador unificado (3D + comunicação)",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/iniciar.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Só a estação 3D",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/iniciar.py",
+      "args": ["--3d"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Só a comunicação",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/iniciar.py",
+      "args": ["--comunicacao"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Simulador das 3 placas (versão antiga)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/iniciar_placas.py",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": true
