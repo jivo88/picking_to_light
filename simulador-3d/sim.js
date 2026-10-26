@@ -44,8 +44,9 @@
     tempoPega: 1.6, tempoPorUnidade: 0.25, tempoDeposito: 0.5,
     bacia: { c: 0.56, a: 0.26, l: 0.4, cor: '#2E9E4F', borda: '#1d6b35' },   // bacia retornável verde, tamanho único
     // caixa do endereço por tipo (fração da largura e da altura do vão) — em geral pequenas
-    caixaTipo: { A: [0.62, 0.62], B: [0.55, 0.56], C: [0.48, 0.52], F: [0.4, 0.46], N: [0.58, 0.6] },
-    fatorCaixaAlto: 1.35,
+    // caixa ocupa quase toda a largura do vão; o tipo muda a altura (e um pouco a largura)
+    caixaTipo: { A: [0.94, 0.62], B: [0.92, 0.56], C: [0.9, 0.52], F: [0.88, 0.46], N: [0.93, 0.6] },
+    fatorCaixaAlto: 1.3,
     segmentos: { Medicamento: [3, 22], Perfumaria: [26, 45] },
   };
   CFG.zAltoBaixoFace = CFG.zSep + CFG.largSep / 2 + 0.03;           // frente dos andares 4-5 (sob a esteira de separação)
@@ -454,7 +455,7 @@
         if (!tipo) return;
         const [fw0, fh0] = CFG.caixaTipo[tipo] || [0.5, 0.5];
         const fa = o.lado === 'alto' ? CFG.fatorCaixaAlto : 1;
-        const wt = c.w * Math.min(0.92, fw0 * fa), ht = h * Math.min(0.8, fh0 * fa), dt = o.lado === 'alto' ? 0.38 : 0.3;
+        const wt = c.w * fw0 - 0.006, ht = h * Math.min(0.8, fh0 * fa), dt = o.lado === 'alto' ? 0.38 : 0.3;
         const yc = (zz) => yb + 0.012 + ht / 2 - zz * Math.tan(CFG.tilt);
         profs.forEach((zz) => reservas.push(matriz(c.x, yc(zz), zz, CFG.tilt, 0, 0, wt, ht, dt)));
         if (cinza) { caixas.push(matriz(c.x, yc(-0.2), -0.2, CFG.tilt, 0, 0, wt, ht, dt)); return; }
@@ -464,8 +465,6 @@
         caixa.position.set(c.x, yc(-0.2), -0.2);
         caixa.rotation.x = CFG.tilt;
         g.add(caixa);
-        const off = ht / 2 + 0.02;
-        prodPorMat[(e.predio * 7 + e.andar * 3) % PRODUTOS.length].push(matriz(c.x, yc(-0.2) + off * Math.cos(CFG.tilt) - 0.03, -0.2 + off * Math.sin(CFG.tilt), CFG.tilt, 0, 0, wt * 0.8, 0.05, dt * 0.6));
         const lw = Math.min(0.15, wt * 0.82);
         etiquetas.push({ m: matriz(c.x, yc(-0.2) - ht * 0.12, -0.2 + dt / 2 + 0.003, CFG.tilt, 0, 0, lw, Math.min(lw * 0.28, ht * 0.4), 1), txt: fmtEnd(e.end) });
         e.tote = caixa;
@@ -477,11 +476,6 @@
         const lb = placa(pad(c.predio, 3), Math.min(0.2, c.w - 0.06), 0.065, { fundo: '#ffffff', cor: '#1B2638' });
         lb.position.set(c.x, top + 0.1, 0.03);
         g.add(lb);
-        const gm = mat('#3a2a10', { emissive: '#000000', roughness: 0.4 });
-        const led = new THREE.Mesh(new THREE.BoxGeometry(Math.min(0.16, c.w - 0.1), 0.022, 0.02), gm);
-        led.position.set(c.x, top + 0.005, 0.035);
-        g.add(led);
-        guias[o.lado + '-' + c.predio] = gm;
       }
     });
     g.add(instanciado(BOX1, cinza ? M.cinzaEstr : M.montante, mont, true));
@@ -1318,17 +1312,17 @@
     esperar(1.5).then(() => confirmarCadastro(m));
   }
 
-  // ======================================================================= DESTAQUES (tote e LED guia)
+  // ======================================================================= DESTAQUES (caixa do endereço na demo)
   let acesos = [];
   function atualizarDestaques() {
     atualizarSinal();
     enderecos.forEach((e) => { if (e.toteMat) e.toteMat.emissive.set('#000000'); });
-    Object.values(guias).forEach((g) => { g.emissive.set('#000000'); g.color.set('#3a2a10'); });
+
     acesos = [];
     modulos.forEach((m) => {
       if (!m.item) return;
       acesos.push(m.item.e);
-      if (S.guia && m.tipo === 'EQ' && !m.falha && m.item.e.guia) { m.item.e.guia.color.set('#F2A33A'); m.item.e.guia.emissive.set('#F2A33A'); }
+
     });
   }
 
@@ -1585,7 +1579,6 @@
   $('#btnLimparLog').addEventListener('click', () => { $('#log').innerHTML = ''; });
   $('#optAuto').addEventListener('change', (e) => ligarAuto(e.target.checked));
   $('#optItens').addEventListener('input', (e) => { S.itens = +e.target.value; $('#valItens').textContent = S.itens; });
-  $('#optGuia').addEventListener('change', (e) => { S.guia = e.target.checked; atualizarDestaques(); });
   $('#optDestaque').addEventListener('change', (e) => { S.destaque = e.target.checked; atualizarDestaques(); });
   $('#optCabos').addEventListener('change', (e) => { S.cabos = e.target.checked; aplicarVisibilidade(); });
   $('#btnAjuda').addEventListener('click', () => $('#ajuda').classList.remove('oculto'));

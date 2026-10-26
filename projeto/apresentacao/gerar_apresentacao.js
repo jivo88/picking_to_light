@@ -99,7 +99,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     ["40", "estações", "20 de Medicamento e 20 de Perfumaria"],
     ["7.981", "endereços", "1.280 com display próprio no alto giro"],
     ["R$ 305 mil", "operação completa", "Arquitetura A, produção interna"],
-    ["R$ 19,2 mil", "piloto", "estações 05 e 27"],
+    ["R$ 22,5 mil", "POC", "bancada + estações 04 e 27"],
   ];
   stats.forEach(([n, r, d], i) => {
     const x = 0.6 + i * 3.08;
@@ -110,7 +110,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   });
   s.addText([
     { text: "Proposta: ", options: { bold: true, color: C.text1 } },
-    { text: "começar pela Arquitetura A, que usa os coletores MovFast que já temos, com os módulos montados internamente e alimentação em 12 V. O piloto seria nas estações 05 e 27. A Arquitetura B (RFID) pode vir depois, aproveitando os mesmos displays.", options: { color: C.text2 } },
+    { text: "começar pela Arquitetura A, que usa os coletores MovFast que já temos, com os módulos montados internamente e alimentação em 12 V. O piloto seria nas estações 04 e 27. A Arquitetura B (RFID) pode vir depois, aproveitando os mesmos displays.", options: { color: C.text2 } },
   ], { x: 0.6, y: 4.1, w: 12.1, h: 1.1, fontSize: 17, margin: 0, isTextBox: true, valign: "top" });
   s.addText("Para decidir hoje: aprovação do piloto, Arquitetura A como base e montagem interna dos módulos.", { x: 0.6, y: 5.45, w: 12.1, h: 0.5, fontSize: 16, color: C.text1, bold: true, margin: 0, valign: "middle", isTextBox: true });
   s.addNotes("Números da tabela wms_endereco e da planilha Orcamento_PTL.xlsx (aba Resumo). O piloto custa cerca de 5% da operação completa e permite medir o ganho antes de investir no restante.");
@@ -327,7 +327,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     valAxisLabelFormatCode: "#,##0", catAxisOrientation: "maxMin", showTitle: true, title: "Hardware para 40 estações (R$ mil)", titleFontSize: 14, titleColor: "1B2638", titleFontFace: "+mn-lt",
   });
   const tabP = [
-    [cab("Piloto 05 e 27"), cab("R$")],
+    [cab("Piloto 04 e 27"), cab("R$")],
     ["A interna, materiais", "14.511"],
     ["A interna, com mão de obra", "19.211"],
     ["B2, leitor fixo", "20.550"],
@@ -363,7 +363,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   titulo(s, "Cronograma");
   const fases = [
     ["Protótipo de bancada", "3 a 4 sem.", "Um concentrador, um nó, displays e versão mínima do Serviço PTL"],
-    ["Piloto 05 e 27", "6 a 8 sem.", "Estações completas, app do coletor, painel e medição antes e depois"],
+    ["POC 04 e 27", "~10 sem.", "Bancada, depois as 2 estações completas, app do coletor e medição antes e depois"],
     ["Avaliação", "2 sem.", "Resultados, ajuste das zonas e decisão entre A e B"],
     ["Expansão", "10 a 14 sem.", "Medicamento e depois Perfumaria, de cinco em cinco estações"],
     ["Estabilização", "4 sem.", "Ajustes finais e entrega para a sustentação"],
@@ -427,7 +427,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   // ================================================================ 20 DECISAO
   s = pres.addSlide({ masterName: "CAPA", sectionTitle: "Próximos passos" });
   s.addText("Decisões", { placeholder: "title" });
-  s.addText("1. Aprovar o piloto nas estações 05 e 27 (cerca de R$ 19 mil)\n2. Usar a Arquitetura A como base e deixar a B para depois\n3. Montar os módulos internamente, em 12 V\n4. Liberar medidas, dados de volume, API do BHT e acesso ao Sybase", { placeholder: "body" });
+  s.addText("1. Aprovar a POC: bancada + estações 04 e 27 (cerca de R$ 22,5 mil)\n2. Usar a Arquitetura A como base e deixar a B para depois\n3. Montar os módulos internamente, em 12 V\n4. Liberar medidas, dados de volume, API do BHT e acesso ao Sybase", { placeholder: "body" });
   s.addNotes("Com essas quatro decisões, o protótipo de bancada pode começar na semana seguinte.");
 
   await pres.writeFile({ fileName: SAIDA });

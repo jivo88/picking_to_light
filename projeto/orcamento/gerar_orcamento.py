@@ -80,7 +80,7 @@ linhas = [
     ("• Células com fundo AMARELO são premissas/estimativas que precisam de cotação ou confirmação.", PRETO),
     ("• Aba 'Estações': números de endereços por estação, extraídos de wms_endereco (esteiras 1 e 2) em 23/10/2026. "
      "Corrija qualquer número direto ali: todo o orçamento recalcula.", PRETO),
-    ("• Coluna 'Piloto' (S/N) na aba 'Estações' define quais estações entram no cenário piloto (padrão: 05 e 27).", PRETO),
+    ("• Coluna 'Piloto' (S/N) na aba 'Estações' define quais estações entram no cenário piloto (POC: 04 e 27).", PRETO),
     ("• Aba 'Preços': catálogo de peças com fonte e data. Itens marcados 'Estimativa' devem ser cotados antes da compra.", PRETO),
     ("• A operação completa inclui as estações do piloto (não somar os dois).", PRETO),
     ("", None),
@@ -227,7 +227,7 @@ cabecalho(we, 1, tit, [11, 14, 10, 10, 12, 13, 13, 13, 12, 13, 11, 12, 11, 13, 1
 ordem = sorted(EST)
 for i, rua in enumerate(ordem, 2):
     e = EST[rua]
-    piloto = "S" if rua in ("05", "27") else "N"
+    piloto = "S" if rua in ("04", "27") else "N"      # estações da POC
     vals = [rua, e["segmento"], e["tipo"], piloto, e["total"], e["alto_0a3"], e["alto_45"],
             e["blocos_alto_45"], e["baixo"], e["zonas_baixo"], e["nos_coluna"], e["predios_fundo"]]
     for j, v in enumerate(vals, 1):
@@ -317,7 +317,7 @@ precos = [
     ("P05", "Placa do concentrador RP2040 + Ethernet W5500 (W5500-EVB-Pico)", "un", None, 12.50,
      "SparkFun DEV-19958 US$ 12,50, 23/10/2026; convertido com câmbio × fator de importação", "Cotado (US$)"),
     ("P06", "Fonte Mean Well LRS-150-12 (12 V / 12,5 A / 150 W)", "un", 189.98, None,
-     "MCEIG (fontesmeanwell.com.br), 23/10/2026. Carga estimada < 40 W por estação: folga para LED guia e expansão", "Cotado"),
+     "MCEIG (fontesmeanwell.com.br), 23/10/2026. Carga estimada < 40 W por estação: folga para expansão", "Cotado"),
     ("P07", "Fonte Mean Well LRS-150-5 (5 V / 22 A), variante 5 V", "un", 185.00, None,
      "Estimativa (mesma família da LRS-150-12), cotar", "Estimativa"),
     ("P08", "Regulador step-down 12 V → 5 V (mini, 3 A)", "un", 8.00, None, "Estimativa de mercado, cotar", "Estimativa"),
@@ -338,7 +338,7 @@ precos = [
     ("P19", "Fixações diversas por estação (abraçadeiras, parafusos, etiquetas, plugs da rede)", "kit", 40.00, None,
      "Estimativa", "Estimativa"),
     ("P20", "Switch 24 portas Gigabit TP-Link TL-SG1024DE", "un", 769.32, None, "KaBuM, 23/10/2026 (Pix)", "Cotado"),
-    ("P21", "Fita LED endereçável WS2812, guia de coluna (por LED) [opcional]", "LED", 0.90, None, "Estimativa, cotar", "Estimativa"),
+    ("P21", "(não usado) LED guia de coluna, retirado em 26/10/2026", "LED", 0, None, "Não faz parte do projeto", "Retirado"),
     ("P22", "Tag NFC NTAG213 adesiva 13,56 MHz", "un", 2.37, None,
      "Loja RFID, lote 100 un R$ 237,41 à vista, 23/10/2026 (lote de 5.000 deve sair mais barato)", "Cotado"),
     ("P23", "Suporte/proteção da tag na caixa retornável", "un", 0.50, None, "Estimativa", "Estimativa"),
@@ -379,6 +379,8 @@ precos = [
     ("P45", "Carregador USB 2 portas para pulseiras (Arq. B1)", "un", 35.00, None, "Estimativa, cotar", "Estimativa"),
     ("P46", "Ponto de tomada 220 V novo (material + eletricista)", "un", 350.00, None,
      "Estimativa, cotar com a manutenção predial", "Estimativa"),
+    ("P48", "Painel de MDF 1,2 × 0,6 m com longarina para a bancada + parafusos", "kit", 150.00, None, "Estimativa, cotar", "Estimativa"),
+    ("P49", "Switch 5 portas (bancada)", "un", 90.00, None, "Estimativa, cotar (ou porta livre de switch existente)", "Estimativa"),
     ("P47", "Sinal luminoso de baixo giro (sinaleiro LED âmbar 12 V 22 mm + haste + transistor no nó)", "un", 45.00, None,
      "Estimativa, cotar", "Estimativa"),
 ]
@@ -572,11 +574,6 @@ faixa_total(wa, r, "SUBTOTAL MATERIAIS, variante 5 V")
 cel(wa, "F%d" % r, "=F%d+SUM(F%d:F%d)" % (A_PECAS, ini, r - 1), NEG, BRL, fill=TOTAL)
 cel(wa, "G%d" % r, "=G%d+SUM(G%d:G%d)" % (A_PECAS, ini, r - 1), NEG, BRL, fill=TOTAL)
 r += 2
-cel(wa, "A%d" % r, "Opcional, guia de coluna no baixo giro (1 LED por prédio do baixo giro)", SUB, borda=False)
-r += 1
-A_GUIA = r
-qp, qc = par("ROUNDUP({L}*%s,0)" % res)
-linha_item(wa, r, "LEDs guia de coluna", "prédios do baixo giro × (1 + reserva); ligados ao E+Q da zona", qp, qc, PRECO["P21"])
 
 INFRA_F = "SUM('A-Interno'!F%d:F%d)" % (INF_INI, INF_FIM)
 INFRA_G = "SUM('A-Interno'!G%d:G%d)" % (INF_INI, INF_FIM)
@@ -721,7 +718,7 @@ sw = [
      "Diagnóstico no firmware (sem resposta, display sem ACK, botão travado), modo cadastro e tabela ptl_mapa_led"),
     ("Implantação do servidor (VM, broker MQTT, backup, monitoração)", "A e B", 24,
      "Considera VM em infraestrutura já existente; sem compra de servidor"),
-    ("Testes integrados, piloto e homologação", "A e B", 120, "Inclui ajustes no piloto (estações 05 e 27)"),
+    ("Testes integrados, piloto e homologação", "A e B", 120, "Inclui ajustes na POC (estações 04 e 27)"),
     ("Documentação e treinamento", "A e B", 40, "Operação, manutenção e suporte"),
 ]
 for i, (comp, arq, h, obs) in enumerate(sw, 2):
@@ -745,13 +742,133 @@ cel(wsw, "A%d" % (n + 3), "Custo-hora de desenvolvimento calculado na aba Premis
 SW_A, SW_B = n, n + 1
 
 # =====================================================================
+# 9b. POC (bancada + estações 04 e 27)
+# =====================================================================
+wq = wb.create_sheet("POC")
+cabecalho(wq, 3, ["Item", "Base de cálculo", "Qtd", "Preço unit. (R$)", "Total (R$)"], [48, 58, 10, 16, 16])
+cel(wq, "A1", "POC: bancada + estações 04 e 27 (Arquitetura A, coletor)", TIT, borda=False)
+cel(wq, "A2", "Fase 1 valida o hardware e o software na bancada; fase 2 instala nas estações 04 (Medicamento) e 27 (Perfumaria). "
+    "As estações da POC são as marcadas 'S' na aba Estações.", NOTA, borda=False)
+
+
+def linha_poc(r, nome, base, qtd, preco, fmt=NUM):
+    cel(wq, "A%d" % r, nome, wrap=True)
+    cel(wq, "B%d" % r, base, wrap=True)
+    cel(wq, "C%d" % r, qtd, AZUL if not str(qtd).startswith("=") else PRETO, fmt)
+    cel(wq, "D%d" % r, "=" + preco, VERDE, BRL)
+    cel(wq, "E%d" % r, "=C%d*D%d" % (r, r), PRETO, BRL)
+
+
+r = 4
+cel(wq, "A%d" % r, "Fase 1, bancada (1 coluna de alto giro, 1 zona de cada tipo)", SUB, borda=False)
+r += 1
+ini = r
+bancada = [
+    ("Concentrador 12 V completo", "gabinete, fonte, placa, alimentação", 1, UNIT["Concentrador 12 V"]),
+    ("Nó de coluna", "1 prédio de alto giro", 1, UNIT["Nó de coluna"]),
+    ("Módulos Q", "4 andares (0 a 3) do prédio", 4, UNIT["Módulo Q"]),
+    ("Módulos E+Q", "1 zona dos andares 4-5 + 1 zona do baixo giro", 2, UNIT["Módulo E+Q"]),
+    ("Sinal luminoso de baixo giro", "barra âmbar", 1, PRECO["P47"]),
+    ("Cabo Cat5e (m)", "barramento e ligações da bancada", 20, PRECO["P12"]),
+    ("Plugs RJ45", "", 20, PRECO["P11"]),
+    ("Painel de MDF com longarina", "simula a prateleira", 1, PRECO["P48"]),
+    ("Switch 5 portas", "rede da bancada", 1, PRECO["P49"]),
+    ("Ferramentas de rede (crimpar e testar)", "compra única, servem para a fase 2", 1, PRECO["P41"]),
+    ("Bancada de eletrônica (solda, multímetro)", "compra única, serve para a fase 2", 1, PRECO["P42"]),
+]
+for nome, base, q, pr in bancada:
+    linha_poc(r, nome, base, q, pr)
+    r += 1
+cel(wq, "A%d" % r, "Frete das compras")
+cel(wq, "B%d" % r, "% sobre os itens acima")
+cel(wq, "C%d" % r, None)
+cel(wq, "D%d" % r, "=" + REF["frete"], VERDE, PCT)
+cel(wq, "E%d" % r, "=D%d*SUM(E%d:E%d)" % (r, ini, r - 1), PRETO, BRL)
+r += 1
+linha_poc(r, "Montagem dos módulos (h)", "conc. + nó + 4 Q + 2 E+Q",
+          "=%s+%s+4*%s+2*%s" % (REF["h_conc"], REF["h_no"], REF["h_mod_q"], REF["h_mod_eq"]), REF["custo_hora"], NUM2)
+r += 1
+linha_poc(r, "Testes de bancada (h)", "acender, confirmar, falha, troca e cadastro de LED, 48 h de operação contínua", 16, REF["custo_hora"], NUM2)
+r += 1
+Q1 = r
+faixa_total(wq, r, "TOTAL FASE 1, bancada", "BCD")
+cel(wq, "E%d" % r, "=SUM(E%d:E%d)" % (ini, r - 1), NEG, BRL, fill=TOTAL)
+r += 2
+cel(wq, "A%d" % r, "Fase 2, instalação nas estações 04 e 27", SUB, borda=False)
+r += 1
+ini2 = r
+cel(wq, "A%d" % r, "Materiais, montagem, instalação e treinamento das 2 estações")
+cel(wq, "B%d" % r, "aba A-Interno, coluna piloto (estações com 'S')", wrap=True)
+for col in "CD":
+    cel(wq, "%s%d" % (col, r), None)
+cel(wq, "E%d" % r, "='A-Interno'!F%d" % A_TOT, VERDE, BRL)
+r += 1
+cel(wq, "A%d" % r, "(−) Ferramentas já compradas na fase 1")
+cel(wq, "B%d" % r, "kit de rede + bancada de eletrônica")
+for col in "CD":
+    cel(wq, "%s%d" % (col, r), None)
+cel(wq, "E%d" % r, "=-('A-Interno'!F%d+'A-Interno'!F%d)*(1+%s)" % (LIN["ferr1"], LIN["ferr2"], REF["frete"]), PRETO, BRL)
+r += 1
+cel(wq, "A%d" % r, "(−) Módulos da bancada reaproveitados na estação")
+cel(wq, "B%d" % r, "o concentrador, o nó, os 4 Q e os 2 E+Q da bancada vão para a estação 04", wrap=True)
+for col in "CD":
+    cel(wq, "%s%d" % (col, r), None)
+cel(wq, "E%d" % r, "=-(%s+%s+4*%s+2*%s)" % (UNIT["Concentrador 12 V"], UNIT["Nó de coluna"], UNIT["Módulo Q"], UNIT["Módulo E+Q"]), PRETO, BRL)
+r += 1
+Q2 = r
+faixa_total(wq, r, "TOTAL FASE 2, estações 04 e 27", "BCD")
+cel(wq, "E%d" % r, "=SUM(E%d:E%d)" % (ini2, r - 1), NEG, BRL, fill=TOTAL)
+r += 2
+QH = r
+faixa_total(wq, r, "HARDWARE DA POC (fase 1 + fase 2)", "BCD")
+cel(wq, "E%d" % r, "=E%d+E%d" % (Q1, Q2), NEG, BRL, fill=TOTAL)
+r += 1
+QC = r
+cel(wq, "A%d" % r, "Contingência")
+cel(wq, "B%d" % r, "% sobre o hardware da POC")
+cel(wq, "C%d" % r, None)
+cel(wq, "D%d" % r, "=" + REF["contingencia"], VERDE, PCT)
+cel(wq, "E%d" % r, "=D%d*E%d" % (r, QH), PRETO, BRL)
+r += 1
+QHC = r
+faixa_total(wq, r, "HARDWARE DA POC COM CONTINGÊNCIA (desembolso)", "BCD")
+cel(wq, "E%d" % r, "=E%d+E%d" % (QH, QC), NEG, BRL, fill=TOTAL)
+r += 2
+cel(wq, "A%d" % r, "Software para a POC (equipe interna, versão mínima)", SUB, borda=False)
+r += 1
+ini3 = r
+swpoc = [
+    ("Firmware do concentrador, dos nós e dos E+Q", "barramento, endereçamento, diagnóstico, cadastro", 160),
+    ("Serviço PTL, versão mínima", "abrir e fechar caixa, acender, confirmar, sinal de baixo giro", 160),
+    ("Integração Sybase (leitura dos itens da caixa)", "views de leitura e gravação de eventos", 60),
+    ("App do coletor (A1), versão mínima", "leitura com gatilho e progresso da caixa", 100),
+    ("Interface de controle, versão mínima", "falhas de LED e cadastro por endereço", 40),
+    ("Testes da bancada e operação assistida", "ajustes durante a POC", 80),
+]
+for nome, base, h in swpoc:
+    cel(wq, "A%d" % r, nome, wrap=True)
+    cel(wq, "B%d" % r, base, wrap=True)
+    cel(wq, "C%d" % r, h, AZUL, NUM, fill=AMARELO)
+    cel(wq, "D%d" % r, "=" + REF["custo_hora_dev"], VERDE, BRL)
+    cel(wq, "E%d" % r, "=C%d*D%d" % (r, r), PRETO, BRL)
+    r += 1
+QS = r
+faixa_total(wq, r, "SOFTWARE DA POC (horas e custo interno)", "BD")
+cel(wq, "C%d" % r, "=SUM(C%d:C%d)" % (ini3, r - 1), NEG, NUM, fill=TOTAL)
+cel(wq, "E%d" % r, "=SUM(E%d:E%d)" % (ini3, r - 1), NEG, BRL, fill=TOTAL)
+r += 2
+cel(wq, "A%d" % r, "Prazo estimado: bancada 3 a 4 semanas; instalação nas 2 estações 1 semana; operação assistida 4 semanas.", NOTA, borda=False)
+cel(wq, "A%d" % (r + 1), "O software da POC é a primeira parte do software do projeto (aba Software), não um custo a mais.", NOTA, borda=False)
+wq.freeze_panes = "A4"
+
+# =====================================================================
 # 10. RESUMO
 # =====================================================================
 wr = wb.create_sheet("Resumo")
 cabecalho(wr, 3, ["Cenário", "Descrição", "Piloto (R$)", "Operação completa (R$)", "Por estação, completo (R$)",
                   "Completo + contingência (R$)"], [42, 62, 17, 21, 21, 22])
 cel(wr, "A1", "Resumo do orçamento, Pick-to-Light", TIT, borda=False)
-cel(wr, "A2", "Piloto: estações marcadas 'S' na aba Estações (padrão 05 e 27). A operação completa já inclui o piloto. "
+cel(wr, "A2", "Piloto: estações marcadas 'S' na aba Estações (POC: 04 e 27). A operação completa já inclui o piloto. "
     "Hardware, instalação e treinamento; software nas linhas abaixo.", NOTA, borda=False)
 cen = [
     ("A interno, só materiais (12 V)", "Peças, infraestrutura e frete; montagem própria", "'A-Interno'!F%d" % A_PECAS, "'A-Interno'!G%d" % A_PECAS),
@@ -765,7 +882,6 @@ cen = [
     ("B1, RFID com pulseira", "Displays (A interno) + tags + pulseiras NFC", "'B-RFID'!F%d" % B1_TOT, "'B-RFID'!G%d" % B1_TOT),
     ("B2, RFID com leitor fixo na estação", "Displays (A interno) + tags + leitor fixo e painel (opção indicada na B)",
      "'B-RFID'!F%d" % B2_TOT, "'B-RFID'!G%d" % B2_TOT),
-    ("Opcional, guia de coluna no baixo giro", "1 LED por prédio do baixo giro", "'A-Interno'!F%d" % A_GUIA, "'A-Interno'!G%d" % A_GUIA),
 ]
 for i, (nome, desc, fp, fc) in enumerate(cen, 4):
     cel(wr, "A%d" % i, nome, NEG)
@@ -795,6 +911,12 @@ for k, (rot, desc, lh, ls) in enumerate([
         cel(wr, "%s%d" % (col, rr), None, fill=TOTAL)
     cel(wr, "F%d" % rr, "=F%d+D%d" % (lh, ls), NEG, BRL0, fill=TOTAL)
 LTOT += 1
+cel(wr, "A%d" % (LTOT + 2), "POC (bancada + estações 04 e 27)", NEG, fill=TOTAL)
+cel(wr, "B%d" % (LTOT + 2), "Hardware com contingência (aba POC); software da POC é interno", fill=TOTAL, wrap=True)
+cel(wr, "C%d" % (LTOT + 2), "=POC!E%d" % QHC, NEG, BRL0, fill=TOTAL)
+for col in "DEF":
+    cel(wr, "%s%d" % (col, LTOT + 2), None, fill=TOTAL)
+LTOT += 2
 cel(wr, "A%d" % (LTOT + 2), "Volume da operação (informado): ~3.000 volumes/dia e 250.000 a 270.000 produtos separados por dia.",
     NOTA, borda=False)
 wr.freeze_panes = "A4"

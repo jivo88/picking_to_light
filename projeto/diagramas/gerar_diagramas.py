@@ -659,8 +659,7 @@ def d_componentes():
     c.append(_comp(500, 775, 300, 64, "Módulos Q (29 a 35)", ["quantidade + botão, andares 0 a 3"], VD))
     c.append(_comp(500, 880, 300, 78, "Módulos E+Q andares 4-5 (2)", ["1 por lado (P001–P005, P006–P010)", "sob a esteira de separação"], VD))
     c.append(_comp(1000, 660, 300, 92, "Módulos E+Q das zonas (4)", ["2 por lado do corredor", "na altura dos olhos"], VD))
-    c.append(_comp(1000, 775, 300, 78, "LED guia de coluna", ["opcional, 1 por prédio"], CZ, tracejado=True))
-    c.append(_comp(1000, 875, 300, 78, "Sinal de baixo giro", ["luz âmbar na frente do operador", "saída extra do nó do prédio 005"], VD))
+    c.append(_comp(1000, 775, 300, 78, "Sinal de baixo giro", ["luz âmbar na frente do operador", "saída extra do nó do prédio 005"], VD))
     c.append(_comp(1330, 660, 230, 128, "Cabeamento", ["Cat5e com RJ45 em todo trecho", "par 1: RS-485", "pares 2 e 3: 12 V e GND", "par 4: reserva"], CZ))
     # ligações
     c.append(_linha([(330, 150), (415, 150)], AZ2, "HTTPS", 372, 135))
@@ -679,7 +678,6 @@ def d_componentes():
     c.append(_linha([(650, 752), (650, 775)], VD))
     c.append(_linha([(440, 706), (440, 919), (500, 919)], VD))
     c.append(_linha([(370, 852), (930, 852), (930, 706), (1000, 706)], VD, "RS-485 porta B", 930, 780))
-    c.append(_linha([(1150, 752), (1150, 775)], CZ, tracejada=True))
     c.append(_linha([(205, 885), (205, 860)], RX, "SPI", 232, 873, tracejada=True))
     # legenda
     ly = 845
@@ -690,6 +688,64 @@ def d_componentes():
                  f"<text x='{1360}' y='{ly+i*28+13}' font-size='12' {FONT}>{txt}</text>")
     return svg(W, H, "\n".join(c), "Arquitetura de componentes do sistema pick-to-light")
 
+
+
+# ---------------------------------------------------------------- D10 bancada da POC
+def d_bancada():
+    W, H = 1500, 760
+    c = []
+    # painel de MDF
+    c.append(f"<rect x='40' y='80' width='760' height='600' rx='10' fill='#E9DCC3' stroke='#B89B6A' stroke-width='2'/>")
+    c.append(f"<text x='60' y='108' font-size='14' font-weight='700' fill='#6B5532' {FONT}>Painel de MDF 1,2 × 0,6 m (simula a prateleira)</text>")
+    # coluna de alto giro: nó + 4 Q
+    c.append(f"<rect x='80' y='140' width='170' height='60' rx='8' fill='{VD2}' stroke='{VD}' stroke-width='2'/>"
+             f"<text x='165' y='166' text-anchor='middle' font-size='13' font-weight='700' {FONT}>Nó de coluna 0x01</text>"
+             f"<text x='165' y='184' text-anchor='middle' font-size='11' fill='{CZ}' {FONT}>prédio 001</text>")
+    for k in range(4):
+        y = 230 + k * 62
+        c.append(f"<line x1='120' y1='200' x2='120' y2='{y+20}' stroke='{CZ}' stroke-width='1.4'/>"
+                 f"<rect x='130' y='{y}' width='110' height='40' rx='6' fill='#1c1f26'/>"
+                 f"<text x='170' y='{y+28}' text-anchor='middle' font-size='20' fill='#ff3b2f' font-weight='700' font-family='DejaVu Sans Mono, monospace'>{[3, 1, '', 2][k]}</text>"
+                 f"<circle cx='222' cy='{y+20}' r='11' fill='{'#2ecc71' if k != 2 else '#1d4b31'}'/>"
+                 f"<text x='252' y='{y+25}' font-size='11.5' fill='{CZ}' {FONT}>0.04.001{k}.A</text>")
+    c.append(f"<text x='80' y='500' font-size='12.5' font-weight='700' fill='{AZ}' {FONT}>Alto giro, andares 0 a 3: 4 módulos Q</text>")
+    # E+Q
+    for i, (nome, end, q) in enumerate((("E+Q 0x41 · andares 4-5 (P001–P005)", "0.04.0035.A", 2), ("E+Q 0x51 · zona E1 do baixo giro", "0.04.0231.A", 1))):
+        y = 150 + i * 120
+        c.append(f"<rect x='430' y='{y}' width='330' height='70' rx='8' fill='#2b2f36'/>"
+                 f"<rect x='442' y='{y+12}' width='200' height='40' rx='4' fill='#0b0b0b'/>"
+                 f"<text x='542' y='{y+40}' text-anchor='middle' font-size='20' fill='#ff3b2f' font-weight='700' font-family='DejaVu Sans Mono, monospace'>{end}</text>"
+                 f"<rect x='650' y='{y+12}' width='50' height='40' rx='4' fill='#0b0b0b'/>"
+                 f"<text x='675' y='{y+40}' text-anchor='middle' font-size='20' fill='#39d36a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>{q}</text>"
+                 f"<circle cx='733' cy='{y+32}' r='14' fill='#2ecc71'/>"
+                 f"<text x='430' y='{y+88}' font-size='11.5' fill='{CZ}' {FONT}>{nome}</text>")
+    # sinal de baixo giro
+    c.append(f"<rect x='430' y='420' width='330' height='34' rx='6' fill='#1c1f26'/>"
+             f"<rect x='440' y='430' width='110' height='14' rx='3' fill='#F2A33A'/><rect x='640' y='430' width='110' height='14' rx='3' fill='#F2A33A'/>"
+             f"<text x='595' y='442' text-anchor='middle' font-size='11' font-weight='700' fill='#fff' {FONT}>↶ BAIXO GIRO</text>"
+             f"<text x='430' y='474' font-size='11.5' fill='{CZ}' {FONT}>Sinal de baixo giro (saída extra do nó)</text>")
+    # barramentos
+    c.append(f"<path d='M250,170 L350,170 L350,560' fill='none' stroke='{VD}' stroke-width='4'/>")
+    c.append(f"<path d='M430,185 L400,185 L400,560' fill='none' stroke='{AZ2}' stroke-width='4'/>")
+    c.append(f"<path d='M430,305 L400,305' fill='none' stroke='{AZ2}' stroke-width='4'/>")
+    c.append(f"<path d='M80,170 L60,170 L60,520 L415,520 L415,437 L430,437' fill='none' stroke='{AM}' stroke-width='2' stroke-dasharray='5 4'/>")
+    # concentrador
+    c.append(f"<rect x='250' y='560' width='260' height='100' rx='10' fill='#CBD2DC' stroke='{CZ}' stroke-width='2'/>"
+             f"<text x='380' y='590' text-anchor='middle' font-size='14' font-weight='700' {FONT}>Concentrador 12 V</text>"
+             f"<text x='380' y='610' text-anchor='middle' font-size='11.5' fill='{CZ}' {FONT}>RP2040 + W5500 · fonte · gabinete</text>"
+             f"<text x='380' y='630' text-anchor='middle' font-size='11.5' fill='{CZ}' {FONT}>porta A: alto giro · porta B: baixo giro</text>")
+    c.append(f"<text x='344' y='552' text-anchor='end' font-size='11' fill='{VD}' font-weight='700' {FONT}>RS-485 A</text><text x='406' y='552' font-size='11' fill='{AZ2}' font-weight='700' {FONT}>RS-485 B</text>")
+    # rede e servidor
+    c.append(f"<path d='M510,610 L900,610' fill='none' stroke='#7F8C8D' stroke-width='3'/>")
+    c.append(caixa(900, 560, 200, 100, "Switch 5 portas", ["rede da bancada"], CZ))
+    c.append(f"<path d='M1100,610 L1180,610 L1180,500' fill='none' stroke='#7F8C8D' stroke-width='3'/>")
+    c.append(caixa(1060, 330, 380, 170, "Notebook ou VM de teste", ["Serviço PTL (API + MQTT)", "broker Mosquitto", "views de leitura no Sybase de teste", "interface de controle (navegador)"], AZ2))
+    c.append(caixa(1060, 110, 380, 130, "Coletor MovFast (app A1)", ["lê a etiqueta da caixa de teste", "Wi-Fi da operação"], AZ2))
+    c.append(f"<path d='M1250,240 L1250,330' fill='none' stroke='{AZ2}' stroke-width='2.5' stroke-dasharray='6 5'/>"
+             f"<text x='1260' y='290' font-size='11.5' fill='{AZ2}' {FONT}>HTTPS</text>")
+    # o que é testado
+    c.append(f"<text x='40' y='716' font-size='12.5' fill='{CZ}' {FONT}>Testes na bancada: abrir e fechar caixa, acender e confirmar, sinal de baixo giro, falha de LED, troca e cadastro, 48 h ligado. Depois, os módulos vão para a estação 04.</text>")
+    return svg(W, H, "\n".join(c), "Mockup da bancada da POC (fase 1)")
 
 def main():
     figuras = {
@@ -702,6 +758,7 @@ def main():
         "telas_coletor": d_telas(),
         "modulos": d_modulos(),
         "manutencao": d_manutencao(),
+        "bancada_poc": d_bancada(),
         "componentes": d_componentes(),
     }
     html = ["<html><body style='margin:0;background:#fff'>"]

@@ -24,7 +24,6 @@ Parâmetros de URL úteis para a apresentação: `?auto` (operador automático),
 | Alto giro, andares 0–3 | 1 módulo **Q** (3 dígitos + botão) por endereço; todos os itens da caixa acendem juntos |
 | Alto giro, andares 4–5 | 2 zonas (P001–P005 e P006–P010) com 1 display **E+Q** cada, por baixo da esteira de separação; um item por vez, na ordem da rota |
 | Baixo giro | 2 zonas por lado do corredor (E1–E2 e D1–D2), display **E+Q** na altura dos olhos; um item por vez. P015 ocupa a frente do bloco (1 m), virado para a esteira, e entra na D1. Uma barra luminosa âmbar na frente do operador acende enquanto a caixa tem itens no baixo giro |
-| LED guia de coluna | Opcional; acende no prédio do item atual de cada bloco/zona |
 | Concentrador | Gabinete ventilado, Ethernet, 2 barramentos RS-485 + 12 V em Cat5e com RJ45 |
 | Abertura e fechamento | Arquitetura A: gatilho do coletor; B2: leitor NFC fixo + painel LCD + FECHAR; B1: pulseira |
 | Bacia | Verde, tamanho único; vem pela esteira de transporte, passa pela transferência e pelo rolete direcionador até a estação e, fechada, é empurrada de volta à esteira de transporte |

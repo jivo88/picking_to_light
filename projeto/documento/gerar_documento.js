@@ -93,7 +93,7 @@ c.push(new Paragraph({ spacing: { after: 700 }, children: [t("Separação por lu
 c.push(tabela(["Item", "Descrição"], [
   ["Arquiteturas", "A: coletor de dados, concentrador e displays\nB: identificação por RFID, concentrador e displays"],
   ["Abrangência", "40 estações (20 de Medicamento, ruas 03 a 22, e 20 de Perfumaria, ruas 26 a 45), 7.981 endereços"],
-  ["Piloto", "Estações 05 (Medicamento) e 27 (Perfumaria)"],
+  ["Piloto (POC)", "Estações 04 (Medicamento) e 27 (Perfumaria), depois de uma bancada de testes"],
   ["Material de apoio", "Orcamento_PTL.xlsx, Apresentacao_PTL.pptx e simulador 3D (repositório picking_to_light)"],
   ["Versão", "1.4, de 26/10/2026 (2 zonas por lado, andares 4-5 sob a separação, sinal de baixo giro), em revisão pela TI, arquitetura de software e diretoria"],
   ["Elaboração", "Equipe de TI"],
@@ -115,7 +115,7 @@ c.push(H2("1.1 O que está no escopo"));
   "A parte de displays é a mesma nas duas: um concentrador por estação, displays de quantidade no alto giro e displays de endereço e quantidade nos andares 4 e 5 do alto giro e nas zonas do baixo giro.",
   "Um serviço no servidor (Serviço PTL) ligado ao Sybase e à API do sistema BHT, com um painel de acompanhamento para a gestão e para a TI.",
   "Comparação entre fazer os módulos internamente e comprar de terceiros.",
-  "Orçamento do piloto (estações 05 e 27) e da operação completa (40 estações), em 12 V e em 5 V.",
+  "Orçamento da POC (bancada + estações 04 e 27) e da operação completa (40 estações), em 12 V e em 5 V.",
   "Simulador 3D de uma estação, usado na apresentação.",
 ].forEach((x) => c.push(B(x)));
 c.push(H2("1.2 O que fica fora nesta fase"));
@@ -184,7 +184,6 @@ c.push(P("Cada lado do corredor tem duas zonas de cerca de seis prédios. Cada z
 [
   "Estação comum: lado esquerdo 020 a 031 em duas zonas (E1 e E2) e lado direito 015 e 043 a 032 em duas zonas (D1 e D2), quatro zonas no total. As esquinas têm zonas a mais, de quatro prédios.",
   "Com seis prédios por zona, uma zona tem até 48 endereços. O display mostra o endereço como na etiqueta, por exemplo 0.05.0312.A, usando o ponto decimal dos dígitos.",
-  "Opcional: um LED guia no topo de cada prédio, que acende a coluna do item atual da zona. Custa cerca de R$ 1.000 para a operação toda.",
   "O número de zonas por lado é configurável e pode mudar depois do piloto, conforme a produtividade.",
 ].forEach((x) => c.push(B(x)));
 
@@ -377,7 +376,7 @@ c.push(H2("8.7 Painel de acompanhamento e interface de controle"));
 // 9 HARDWARE
 c.push(H1("9. Hardware"));
 c.push(H2("9.1 Quantidades"));
-c.push(tabela(["Item", "Estação comum (Medicamento)", "Piloto (05 e 27)", "Operação completa"], [
+c.push(tabela(["Item", "Estação comum (Medicamento)", "Piloto (04 e 27)", "Operação completa"], [
   ["Módulos Q (alto giro, andares 0 a 3)", "29", "64", fmt(tot.alto_0a3)],
   ["Nós de coluna", "10", "20", "400"],
   ["Módulos E+Q (andares 4 e 5 e zonas)", "2 + 4 = 6", "12", fmt(tot.blocos_alto_45 + tot.zonas_baixo)],
@@ -396,7 +395,7 @@ c.push(...img("cabeamento", 640, 274, "Figura 9. Cabeamento da estação: barram
 c.push(H2("9.3 Concentrador e gabinete"));
 [
   "Placa RP2040 com Ethernet W5500, duas saídas RS-485, regulador de 12 para 5 V, auto-teste ao ligar e watchdog.",
-  "Fonte Mean Well LRS-150-12 (12 V, 12,5 A). A estação consome cerca de 1,5 A, o que deixa folga para os LEDs guia e para ampliações.",
+  "Fonte Mean Well LRS-150-12 (12 V, 12,5 A). A estação consome cerca de 1,5 A, o que deixa folga para ampliações.",
   "Gabinete IP54 com cooler de 40 mm com termostato, entrada de ar com filtro lavável, trilho DIN e disjuntor de 2 A.",
 ].forEach((x) => c.push(B(x)));
 c.push(H2("9.4 12 V ou 5 V"));
@@ -441,7 +440,7 @@ c.push(...img("manutencao", 640, 273, "Figura 10. Aviso de falha e cadastro de L
 // 12 ORCAMENTO
 c.push(H1("12. Orçamento"));
 c.push(P("Os valores de hardware estão na planilha Orcamento_PTL.xlsx, com preços pesquisados em lojas brasileiras em 23 e 26/10/2026. Os itens sem preço público aparecem como estimativa e precisam de cotação. Câmbio usado: US$ 1 = R$ 5,04. Fator de importação estimado: 1,9."));
-c.push(tabela(["Cenário", "Piloto (05 e 27)", "Operação completa", "Por estação"], [
+c.push(tabela(["Cenário", "Piloto (04 e 27)", "Operação completa", "Por estação"], [
   ["A interno, só materiais (12 V)", "R$ 14.511", "R$ 222.483", "R$ 5.562"],
   ["A interno, só materiais (5 V)", "R$ 14.732", "R$ 227.135", "R$ 5.678"],
   ["A interno, materiais e mão de obra", "R$ 19.211", "R$ 304.755", "R$ 7.619"],
@@ -460,7 +459,7 @@ c.push(H1("13. Plano de implantação"));
 c.push(tabela(["Fase", "Entregas", "Duração estimada"], [
   ["0. Proposta", "Arquitetura, orçamento e simulador 3D", "Concluída"],
   ["1. Protótipo de bancada", "Um concentrador, um nó com quatro módulos Q e dois módulos E+Q; firmware e versão mínima do Serviço PTL", "3 a 4 semanas"],
-  ["2. Piloto", "Estações 05 e 27 completas, app do coletor e painel; medição do tempo por caixa antes e depois", "6 a 8 semanas"],
+  ["2. POC", "Bancada (3 a 4 semanas) e depois as estações 04 e 27 completas, app do coletor e interface de controle; medição do tempo por caixa antes e depois. Hardware: cerca de R$ 22,5 mil com contingência (aba POC)", "cerca de 10 semanas"],
   ["3. Avaliação", "Resultados do piloto, ajuste de zonas e rota, decisão entre A e B e entre fazer e comprar", "2 semanas"],
   ["4. Expansão", "Medicamento e depois Perfumaria, em lotes de cinco estações", "10 a 14 semanas"],
   ["5. Estabilização", "Ajustes finais, documentação e entrega para a sustentação", "4 semanas"],
