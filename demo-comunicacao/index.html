@@ -77,7 +77,7 @@ select { background: var(--painel); color: var(--tinta); border: 1px solid var(-
   <label class="chk"><input type="checkbox" id="chkRotina"> Mostrar polling e heartbeat</label>
   <label class="chk"><input type="checkbox" id="chkRede" checked> Cabo de rede do concentrador ligado</label>
   <span class="grupo">Dispositivo com defeito
-    <select id="selFalha"><option value="">nenhum</option><option value="no01">nó de coluna 0x01</option><option value="eq41">E+Q andar 4 (0x41)</option><option value="eq52">E+Q zona E2 (0x52)</option></select></span>
+    <select id="selFalha"><option value="">nenhum</option><option value="no01">nó de coluna 0x01</option><option value="eq41">E+Q andares 4-5 (0x41)</option><option value="eq52">E+Q zona E2 (0x52)</option></select></span>
   <label class="chk"><input type="checkbox" id="chkSeguir" checked> Inspecionar a última mensagem</label>
   <button class="btn" id="btnReiniciar">Reiniciar</button>
 </div>
@@ -257,7 +257,7 @@ select { background: var(--painel); color: var(--tinta); border: 1px solid var(-
   const DEV = {
     no01: { addr: 0x01, tipo: 'no', nome: 'Nó de coluna 0x01', slots: [
       { end: '0.05.0010.A', qtd: 0, aceso: false, aperto: false }, { end: '0.05.0042.A', qtd: 0, aceso: false, aperto: false }, { end: '0.05.0071.A', qtd: 0, aceso: false, aperto: false }] },
-    eq41: { addr: 0x41, tipo: 'eq', nome: 'E+Q andar 4 · 0x41', fila: [], aceso: false, aperto: false },
+    eq41: { addr: 0x41, tipo: 'eq', nome: 'E+Q andares 4-5 · 0x41', fila: [], aceso: false, aperto: false },
     eq52: { addr: 0x52, tipo: 'eq', nome: 'E+Q zona E2 · 0x52', fila: [], aceso: false, aperto: false },
   };
   // nó de coluna com 3 módulos Q
@@ -278,7 +278,7 @@ select { background: var(--painel); color: var(--tinta); border: 1px solid var(-
   })();
   ['eq41', 'eq52'].forEach((id) => {
     const p = P[id];
-    const g = caixaNo(id, id === 'eq41' ? 'Módulo E+Q · 0x41' : 'Módulo E+Q · 0x52', id === 'eq41' ? 'alto giro, andar 4, lado esquerdo' : 'baixo giro, zona E2 (P023 a P025)', 'var(--verde)');
+    const g = caixaNo(id, id === 'eq41' ? 'Módulo E+Q · 0x41' : 'Módulo E+Q · 0x52', id === 'eq41' ? 'alto giro, andares 4-5, lado esquerdo' : 'baixo giro, zona E2 (P026 a P031)', 'var(--verde)');
     DEV[id].g = g;
     DEV[id].dEnd = display(g, p.x + 14, p.y + 58, 8, 'var(--led)');
     DEV[id].dQtd = display(g, p.x + 136, p.y + 58, 3, 'var(--qtd)');
@@ -316,8 +316,8 @@ select { background: var(--painel); color: var(--tinta); border: 1px solid var(-
     { end: '0.05.0042.A', qtd: 1, dev: 'no01', slot: 1 },
     { end: '0.05.0071.A', qtd: 2, dev: 'no01', slot: 2 },
     { end: '0.05.0034.A', qtd: 2, dev: 'eq41' },
-    { end: '0.05.0231.A', qtd: 1, dev: 'eq52' },
-    { end: '0.05.0255.A', qtd: 4, dev: 'eq52' },
+    { end: '0.05.0271.A', qtd: 1, dev: 'eq52' },
+    { end: '0.05.0295.A', qtd: 4, dev: 'eq52' },
   ];
   let caixaSeq = 1234;
   const S = { estado: 'AGUARDANDO', caixa: '', ok: 0, total: ITENS.length, online: true, fila: [], redeLigada: true, falhaInformada: null };

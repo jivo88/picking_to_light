@@ -12,7 +12,7 @@ def categoria(r):
         return "alto_45" if a in (4, 5) else "alto_0a3"
     return "baixo"                                         # predio 015, fundo e esquinas
 
-ZONAS_POR_LADO = 4            # baixo giro: 4 zonas por lado do corredor (1 display de endereco + 1 de quantidade cada)
+ZONAS_POR_LADO = 2            # baixo giro: 2 zonas por lado do corredor (1 display E+Q cada) — definido em 26/10/2026
 PREDIO_VIRADA = 32            # predios < 32 no lado esquerdo do corredor; 015 e >= 32 no lado direito
 
 
@@ -49,7 +49,7 @@ def zona(r):
     if p <= 10:
         a = int(r["cd_andar"])
         if a in (4, 5):
-            return ("AG-E" if p <= 5 else "AG-D") + str(a)  # alto giro 4-5: 1 display E+Q por andar e por lado
+            return "AG-E" if p <= 5 else "AG-D"             # alto giro 4-5: 2 zonas (P001-P005 e P006-P010), 1 display E+Q cada
         return None                                         # alto giro 0-3: display proprio
     if p >= 60:
         return "BG-X%02d" % ((p - 60) // 4 + 1)            # esquina: zonas de 4 predios
@@ -76,7 +76,7 @@ for rua, rs in sorted(por_rua.items()):
     estacoes[rua] = {
         "rua": rua, "segmento": seg, "tipo": tipo, "total": len(rs),
         "alto_0a3": cat["alto_0a3"], "alto_45": cat["alto_45"], "baixo": cat["baixo"],
-        "blocos_alto_45": 4 if cat["alto_45"] else 0,   # A4 e A5 em cada lado (display fixo no lado)
+        "blocos_alto_45": len({zona(r) for r in rs if categoria(r) == "alto_45"}),   # 2 zonas: esquerda e direita
         "zonas_baixo": len(zonas_bg),
         "zonas": dict(sorted(zonas.items())),
         # 1 nó por prédio do alto giro com endereços nos andares 0-3 (máx. 4 módulos Q por prédio nos dados)

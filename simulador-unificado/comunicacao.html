@@ -115,7 +115,7 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
 
   // ------------------------------------------------------------ RS-485
   function crc16(bytes) { let c = 0xFFFF; for (const b of bytes) { c ^= b; for (let i = 0; i < 8; i++) c = c & 1 ? (c >> 1) ^ 0xA001 : c >> 1; } return c; }
-  const CMD = { 0x10: 'MOSTRAR_Q', 0x11: 'MOSTRAR_EQ', 0x12: 'APAGAR', 0x20: 'LER_BOTOES', 0x21: 'LER_STATUS', 0x30: 'AUTO_TESTE', 0x31: 'IDENTIFICAR',
+  const CMD = { 0x10: 'MOSTRAR_Q', 0x11: 'MOSTRAR_EQ', 0x12: 'APAGAR', 0x13: 'SINAL_BG', 0x20: 'LER_BOTOES', 0x21: 'LER_STATUS', 0x30: 'AUTO_TESTE', 0x31: 'IDENTIFICAR',
     0x40: 'MODO_CADASTRO', 0x41: 'DEF_ENDERECO' };
   const FALHAS_BIT = { 1: 'display sem ACK', 2: 'botão travado' };
   function quadro(addr, cmd, dados) { const corpo = [addr, cmd, dados.length, ...dados]; const c = crc16(corpo); return [0x02, ...corpo, c & 0xFF, c >> 8]; }
@@ -124,6 +124,7 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
     let txt;
     if (base === 0x10 && !resp) txt = `andar ${d[0]}, quantidade ${(d[1] << 8) | d[2]}, ${d[3] === 1 ? 'aceso' : 'piscando'}`;
     else if (base === 0x11 && !resp) txt = `endereço "${comPontos(d.slice(0, 8), d[8])}", quantidade ${(d[9] << 8) | d[10]}, ${d[11] === 1 ? 'aceso' : 'piscando'}`;
+    else if (base === 0x13 && !resp) txt = `luz de baixo giro ${d[0] ? 'acesa' : 'apagada'}`;
     else if (base === 0x21 && resp) txt = d[1] ? `porta ${d[0]}: ${FALHAS_BIT[d[1]] || 'erro ' + d[1]}` : 'sem falhas';
     else if (base === 0x31 && !resp) txt = `mostrar 888 por ${d[0]} s`;
     else if (base === 0x40 && !resp) txt = d.length ? `porta ${d[0]}: aguardar botão do módulo novo` : 'módulos sem endereço respondem';
@@ -529,6 +530,11 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
         await enviar('servico', 'sybase', sql(`UPDATE ptl_mapa_led\n   SET serial = '${dg.serial}', dt_cadastro = getdate(), usuario = 'tecnico'\n WHERE estacao = '${S.est}'\n   AND cd_endereco IN (${(dg.cds || []).slice(0, 4).map((x) => `'${x}'`).join(', ')}${(dg.cds || []).length > 4 ? ', ...' : ''})`, 'UPDATE', 'grava o LED no endereço'));
         return;
       }
+      case 'sinal':
+        // sinal luminoso de baixo giro ligado na saída extra do nó do prédio 005 (par 4 do cabo)
+        await enviar('conc', 'd5', rs(0x05, 0x13, [ev.aceso ? 1 : 0], ev.aceso ? 'SINAL BG' : 'SINAL BG off'));
+        await enviar('d5', 'conc', rs(0x05, 0x93, [0], 'OK'));
+        return;
       case 'cadastro_cancelado':
         await enviar('fonte', 'servico', Object.assign(http('DELETE', `/v1/estacoes/${S.est}/cadastro`, null, 'DELETE cadastro'), { de: 'Interface de controle' }));
         return;

@@ -4,12 +4,14 @@
  *   andar 3 e por cima do andar 4) e a esteira de separação fica na frente, aberta, ≈ 20 cm da de transporte;
  *   transferência a cada 4 estações com rolete direcionador (2 estações à esquerda, 2 à direita);
  *   o corredor do baixo giro fica atrás do operador, perpendicular às esteiras.
- *   Medidas do desenho de 26/10/2026: estação de 2,5 m (alto giro com prédios de 25 cm); baixo giro com corredor de 1,2 m
- *   e prateleiras de 50 cm de profundidade e 2 m de comprimento (12 prédios × 8 andares por lado); o prédio 015 fica na
- *   frente do bloco da direita, virado para a esteira; os 0,3 m que sobram ficam entre as prateleiras de estações vizinhas.
- *   Concentrador atrás da estação (do outro lado do alto giro).
+ *   Medidas do desenho de 26/10/2026: estação de 2,5 m (alto giro com prédios de 25 cm); andares 4 e 5 do alto giro
+ *   ficam por baixo da esteira de separação. Baixo giro com corredor de ~1,5 m e blocos de 1 m (duas prateleiras de 50 cm
+ *   de costas, 2 m de comprimento, 12 prédios × 8 andares por lado); o prédio 015 ocupa a frente do bloco inteiro (1 m),
+ *   virado para a esteira. Concentrador atrás da estação (do outro lado do alto giro).
+ *   Sinal luminoso na frente do operador avisa quando a caixa tem itens no baixo giro.
  *   Prateleiras alinhadas, andar 0 em cima; a caixa do endereço varia pelo tipo (A, B, C, F, N), em geral pequena.
- *   Baixo giro: 4 zonas por lado do corredor, display de endereço + quantidade na altura dos olhos.
+ *   Andares 4-5: 2 zonas (P001–P005 e P006–P010), 1 display E+Q cada. Baixo giro: 2 zonas por lado do corredor,
+ *   display de endereço + quantidade na altura dos olhos.
  *   Endereços no formato da etiqueta: bairro.rua.prédio+andar.apto (ex.: 0.05.0421.A).
  * Regras de funcionamento iguais às do documento técnico (Arquitetura A e B).
  * Medidas ficam em CFG e são premissas até chegarem as medidas reais. */
@@ -22,13 +24,14 @@
   const CFG = {
     // alto giro: na frente do operador; andares 0-3 acima das esteiras, 4-5 abaixo
     WA: 0.25, profAlto: 1.2, zAltoFace: -0.95,
-    baseAlto: 0.25, hAltoBaixo: 0.3,            // andares 5 e 4 (de baixo para cima)
+    baseAlto: 0.2, hAltoBaixo: 0.29,            // andares 5 e 4 (de baixo para cima), por baixo da esteira de separação
+    profAltoBaixo: 1.0,                         // profundidade da estante dos andares 4-5
     yAltoCima: 1.38, hAltoCima: 0.29,           // andares 3, 2, 1, 0 (andar 0 em cima)
     // baixo giro: corredor perpendicular atrás do operador
     baseBaixo: 0.25, alturaBaixo: 2.04, niveisBaixo: 8, profBaixo: 0.5, compBaixo: 2.0,
     prof015: 0.3,                // faixa do prédio 015 na frente do bloco da direita (virada para a esteira)
     yDisplayBaixo: 1.5,          // displays das zonas do baixo giro na altura dos olhos
-    larguraCorredor: 1.2,
+    larguraCorredor: 1.5,        // 2,5 m − bloco de 1 m (2 prateleiras de 50 cm de costas)
     passo: 2.5,                  // largura da estação (= frente do alto giro)
     predioVirada: 32,            // prédios < 32 no lado esquerdo do corredor; 015 e >= 32 no direito
     tilt: 0.1,
@@ -45,7 +48,7 @@
     fatorCaixaAlto: 1.35,
     segmentos: { Medicamento: [3, 22], Perfumaria: [26, 45] },
   };
-  CFG.vao = CFG.passo - CFG.larguraCorredor - 2 * CFG.profBaixo;   // sobra entre prateleiras de estações vizinhas (0,3 m)
+  CFG.zAltoBaixoFace = CFG.zSep + CFG.largSep / 2 + 0.03;           // frente dos andares 4-5 (sob a esteira de separação)
   CFG.zCorr = CFG.zFaces + CFG.prof015;                              // início das prateleiras do corredor
   CFG.compAlto = 10 * CFG.WA;
   // níveis do alto giro por andar: {yb, h}
@@ -267,7 +270,7 @@
   const rotEnd = (e) => fmtEnd(e.end);
   // ---------------- integração com a versão unificada (janela pai recebe os eventos)
   const EMBUTIDO = window.parent !== window;
-  const ADDR_EQ = { 'AG-E4': 0x41, 'AG-E5': 0x42, 'AG-D4': 0x43, 'AG-D5': 0x44, 'BG-E1': 0x51, 'BG-E2': 0x52, 'BG-E3': 0x53, 'BG-E4': 0x54, 'BG-D1': 0x55, 'BG-D2': 0x56, 'BG-D3': 0x57, 'BG-D4': 0x58 };
+  const ADDR_EQ = { 'AG-E': 0x41, 'AG-D': 0x42, 'BG-E1': 0x51, 'BG-E2': 0x52, 'BG-D1': 0x55, 'BG-D2': 0x56 };
   function dispDe(m) {
     if (m.tipo === 'Q') return { tipo: 'Q', addr: m.end.predio, pos: m.end.andar, id: m.id };
     const a = ADDR_EQ[m.id] || (0x60 + (parseInt(String(m.id).replace(/\D/g, ''), 10) || 0));
@@ -418,8 +421,9 @@
   // Prateleiras alinhadas: todos os prédios têm os mesmos níveis; andar 0 em cima.
   function construirRack(colunas, o) {
     const g = new THREE.Group();
-    const top = Math.max(...o.niveis.map((n) => n.yb + n.h));
-    const hM = top + 0.5;
+    const nvs = o.niveis.filter(Boolean);
+    const top = Math.max(...nvs.map((n) => n.yb + n.h));
+    const hM = o.semTopo ? top + 0.02 : top + 0.5;
     const cinza = !!o.cinza;
     // montantes só nas pontas de cada vão (o.porVao prédios por vão), como no flow rack real
     const pv = o.porVao || 1;
@@ -469,7 +473,7 @@
         if (c.i % pv === 0) rotPorAndar[Math.min(7, a)].push(matriz(c.x - c.w / 2 + 0.04, yb - 0.022, 0.024));
         if (e.cat === 'alto_0a3') { e.modulo = criarModulo('Q', g, c.x, yb - 0.036, 0.04, 0, rotEnd(e), 'alto'); e.modulo.end = e; }
       });
-      if (!cinza) {
+      if (!cinza && !o.semTopo) {
         const lb = placa(pad(c.predio, 3), Math.min(0.2, c.w - 0.06), 0.065, { fundo: '#ffffff', cor: '#1B2638' });
         lb.position.set(c.x, top + 0.1, 0.03);
         g.add(lb);
@@ -492,9 +496,11 @@
     }
     const xs = colunas.map((c) => c.x);
     g.userData = { top, xmin: Math.min(...xs) - colunas[0].w / 2, xmax: Math.max(...xs) + colunas[0].w / 2 };
-    const header = caixaMesh(g.userData.xmax - g.userData.xmin + 0.06, 0.05, 0.05, cinza ? M.cinzaEstr : M.montante);
-    header.position.set((g.userData.xmin + g.userData.xmax) / 2, top + 0.48, -0.01);
-    g.add(header);
+    if (!o.semTopo) {
+      const header = caixaMesh(g.userData.xmax - g.userData.xmin + 0.06, 0.05, 0.05, cinza ? M.cinzaEstr : M.montante);
+      header.position.set((g.userData.xmin + g.userData.xmax) / 2, top + 0.48, -0.01);
+      g.add(header);
+    }
     return g;
   }
   function posicionar(g, x, z, normal) {
@@ -512,9 +518,17 @@
       if (!cinza) (porPredio[p] || []).forEach((e) => { ends[e.andar] = e; });
       cols.push({ x: xMundo(p), w: W, predio: p, ends });
     }
-    const g = construirRack(cols, { niveis: CFG.niveisAlto, prof: CFG.profAlto, lado: 'alto', cinza, seed, porVao: 5 });
-    posicionar(g, 0, CFG.zAltoFace, '+z');
-    g.userData.xMundo = xMundo;
+    // andares 0-3: estante com a esteira de transporte por baixo; andares 4-5: estante por baixo da esteira de separação
+    const sup = construirRack(cols, { niveis: CFG.niveisAlto.slice(0, 4), prof: CFG.profAlto, lado: 'alto', cinza, seed, porVao: 5 });
+    posicionar(sup, 0, CFG.zAltoFace, '+z');
+    const niv45 = [];
+    niv45[4] = CFG.niveisAlto[4];
+    niv45[5] = CFG.niveisAlto[5];
+    const inf = construirRack(cols, { niveis: niv45, prof: CFG.profAltoBaixo, lado: 'alto', cinza, seed: (seed || 7) + 11, porVao: 5, semTopo: true });
+    posicionar(inf, 0, CFG.zAltoBaixoFace, '+z');
+    const g = new THREE.Group();
+    g.add(sup, inf);
+    g.userData = { top: sup.userData.top, xMundo, sup, inf };
     return g;
   }
   // lado do corredor: prédios em ordem a partir da entrada; normal '-x' = lado esquerdo (+x), '+x' = lado direito (-x)
@@ -533,12 +547,12 @@
     g.userData.wb = wb;
     return g;
   }
-  // prédio 015: faixa de 30 cm na frente do bloco da direita, virada para a esteira (andares 0 a 3, andar 0 em cima)
+  // prédio 015: faixa de 30 cm na frente do bloco inteiro (1 m, as duas prateleiras de costas), virada para a esteira
   CFG.niveis015 = [0, 1, 2, 3].map((a) => ({ yb: CFG.baseBaixo + (3 - a) * (CFG.alturaBaixo / 4), h: CFG.alturaBaixo / 4 }));
   function frente015(xc, porPredio, cinza, seed) {
     const ends = {};
     if (!cinza) (porPredio[15] || []).forEach((e) => { ends[e.andar] = e; });
-    const g = construirRack([{ x: 0, w: CFG.profBaixo, predio: cinza ? 0 : 15, ends }], { niveis: CFG.niveis015, prof: CFG.prof015, lado: 'baixo', cinza, seed });
+    const g = construirRack([{ x: 0, w: 2 * CFG.profBaixo, predio: cinza ? 0 : 15, ends }], { niveis: CFG.niveis015, prof: CFG.prof015, lado: 'baixo', cinza, seed });
     posicionar(g, xc, CFG.zFaces, '-z');
     return g;
   }
@@ -577,22 +591,21 @@
     const topA = alto.userData.top;
     const xm = alto.userData.xMundo;
     const blocos = {};
+    // andares 4-5: 2 zonas (esquerda P001–P005 e direita P006–P010), 1 display E+Q cada, na longarina entre A4 e A5
     [['AG-E', 1, 5, 'P001–P005'], ['AG-D', 6, 10, 'P006–P010']].forEach(([id, p1, p2, nome]) => {
       const cx = (xm(p1) + xm(p2)) / 2;
-      [4, 5].forEach((a) => {
-        const m = criarModulo('EQ', alto, cx, CFG.niveisAlto[a].yb - 0.05, 0.05, 0, id + a, 'alto');
-        m.nome = `Alto giro ${nome} A${a}`;
-        blocos[id + a] = m;
-      });
+      const m = criarModulo('EQ', alto.userData.inf, cx, CFG.niveisAlto[4].yb - 0.035, 0.05, 0, id, 'alto');
+      m.nome = `Alto giro ${nome} A4–A5`;
+      blocos[id] = m;
     });
     for (let p = 1; p <= 10; p++) {
       const no = caixaMesh(0.1, 0.07, 0.1, M.corpo);
       no.position.set(xm(p), topA + 0.08, -0.22);
-      alto.add(no);
+      alto.userData.sup.add(no);
     }
     const sinal = placa(`ALTO GIRO · ESTAÇÃO ${S.est} · P001–P010`, CFG.compAlto - 0.1, 0.16, { escala: 0.5 });
     sinal.position.set(0, topA + 0.66, -0.01);
-    alto.add(sinal);
+    alto.userData.sup.add(sinal);
 
     // ---------------- BAIXO GIRO (corredor atrás do operador)
     const baixos = enderecos.filter((e) => e.cat === 'baixo');
@@ -602,11 +615,11 @@
     const rackE = ladoCorredor(hc, '-x', esq, porPredio, false);
     const rackW = ladoCorredor(-hc, '+x', dir, porPredio, false);
     grpBaixo.add(rackE, rackW);
-    const x015 = -(hc + CFG.profBaixo / 2);
+    const x015 = -(hc + CFG.profBaixo);   // centro do bloco da direita (divisa com a estação vizinha)
     if (porPredio[15]) {
       const r15 = frente015(x015, porPredio, false);
       grpBaixo.add(r15);
-      const s15 = placa('P015 · frente do bloco', 0.46, 0.06, { escala: 0.55 });
+      const s15 = placa('P015 · frente do bloco (150 a 153)', 0.9, 0.07, { escala: 0.55 });
       s15.position.set(0, r15.userData.top + 0.2, 0.02);
       r15.add(s15);
     }
@@ -689,6 +702,7 @@
 
     construirConcentrador(topA, topB, CFG.zCorr + CFG.compBaixo);
     construirB2();
+    construirSinalBaixo();
     atualizarInfra();
     aplicarVisibilidade();
   }
@@ -793,6 +807,35 @@
     const rede = sprite(['Ethernet · VLAN PTL', 'switch → Serviço PTL (API + MQTT + Sybase)'], 1.15, { fundo: 'rgba(46,58,79,0.92)' });
     rede.position.set(xc, yT + 0.85, zc);
     cabosA.add(rede);
+  }
+
+  // ---------------- sinal luminoso de baixo giro: o operador vê, olhando para o alto giro, que a caixa tem itens atrás dele
+  let sinalBG = null;
+  // barra luminosa âmbar na frente do alto giro, entre a esteira de transporte e o andar 3 (altura dos olhos do operador)
+  function construirSinalBaixo() {
+    const g = new THREE.Group();
+    g.position.set(0, 1.215, CFG.zAltoFace + 0.05);
+    grpEst.add(g);
+    g.add(caixaMesh(1.3, 0.07, 0.03, M.corpo));
+    const luzMat = mat('#5a3a08', { emissive: '#000000', roughness: 0.25 });
+    [-1, 1].forEach((sd) => {
+      const barra = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.038, 0.012), luzMat);
+      barra.position.set(sd * 0.39, 0, 0.018);
+      g.add(barra);
+    });
+    const pl = placa('↶ BAIXO GIRO', 0.3, 0.05, { fundo: '#1B2638', escala: 0.66 });
+    pl.position.set(0, 0, 0.017);
+    g.add(pl);
+    sinalBG = { g, luzMat, aceso: false };
+  }
+  const pendBaixo = () => (atual && ['SEPARANDO', 'ALERTA'].includes(estado) ? atual.itens.filter((i) => i.status === 'pendente' && i.e.cat === 'baixo').length : 0);
+  function atualizarSinal() {
+    if (!sinalBG) return;
+    const v = pendBaixo() > 0;
+    if (v === sinalBG.aceso) return;
+    sinalBG.aceso = v;
+    log('EVT', `Sinal de baixo giro ${v ? 'aceso: a caixa tem itens no corredor' : 'apagado: baixo giro concluído'}`);
+    emitir('sinal', { aceso: v });
   }
 
   // ---------------- B2: leitor fixo sob a posição de pega + painel LCD + botão FECHAR (na frente do alto giro)
@@ -1050,7 +1093,7 @@
     log('MQTT', `ptl/est${S.est}/cmd SEPARAR caixa=${atual.id} itens=${its.length} (Q:${q.length} · andares 4-5:${blocos} · zonas:${zonas})`);
     log('EVT', `ptl/est${S.est}/evt ACK ${q.length + blocos + zonas} display(s) aceso(s)`);
     const displays = modulos.filter((m) => m.item).map((m) => Object.assign(dispDe(m), { end: rotEnd(m.item.e), qtd: m.item.qtd, fila: m.fila.length, falha: m.falha }));
-    emitir('abrir', { caixa: atual.id, origem: ori || 'coletor', total: its.length, displays,
+    emitir('abrir', { caixa: atual.id, origem: ori || 'coletor', total: its.length, displays, sinalBG: its.some((i) => i.e.cat === 'baixo'),
       itens: its.map((i) => ({ end: rotEnd(i.e), qtd: i.qtd, cd: i.e.end })) });
     atualizarDestaques();
     atualizarUI();
@@ -1278,6 +1321,7 @@
   // ======================================================================= DESTAQUES (tote e LED guia)
   let acesos = [];
   function atualizarDestaques() {
+    atualizarSinal();
     enderecos.forEach((e) => { if (e.toteMat) e.toteMat.emissive.set('#000000'); });
     Object.values(guias).forEach((g) => { g.emissive.set('#000000'); g.color.set('#3a2a10'); });
     acesos = [];
@@ -1343,6 +1387,7 @@
           carregando = 0;
           continue;
         }
+        oper.olhar = alvo.e;
         await andarAte(p.x, p.z);
         if (!ativo()) break;
         oper.rot = p.rot;
@@ -1351,6 +1396,7 @@
         await esperar(tp);
         if (!ativo()) break;
         if (alvo.e.modulo.item === alvo && !alvo.e.modulo.falha) { confirmar(alvo.e.modulo, 'operador'); carregando++; }
+        oper.olhar = null;
         continue;
       }
       if (estado === 'PRONTA') {
@@ -1594,6 +1640,7 @@
     concentrador: { p: [2.4, 2.2, -4.7], t: [0.5, 1.45, -2.2] },
     baixo: { p: [0, 2.2, 0.75], t: [0, 1.1, 9.0] },
     operador: { seguir: true },
+    visao: { seguir: true, olhos: true },
   };
   let camAnim = null;
   function aplicarVisibilidade() {
@@ -1684,6 +1731,10 @@
       else e.toteMat.emissive.setRGB(0, 0, 0);
     });
     if (b2) { b2.leituraT = Math.max(0, b2.leituraT - dt); b2.leitor.material.emissive.set(b2.leituraT > 0 ? '#3b82f6' : '#000000'); }
+    if (sinalBG) {
+      if (sinalBG.aceso) { sinalBG.luzMat.color.set('#ffb52e'); sinalBG.luzMat.emissive.setRGB(1.0 * pulso, 0.55 * pulso, 0.02); }
+      else { sinalBG.luzMat.color.set('#5a3a08'); sinalBG.luzMat.emissive.set('#000000'); }
+    }
     const conc = grpEst.userData.concentrador;
     if (conc) {
       conc.userData.leds[1].visible = Math.sin(now / 90) > -0.2;
@@ -1703,7 +1754,20 @@
       controls.target.lerpVectors(camAnim.de.t, camAnim.para.t, k);
       if (camAnim.k >= 1) camAnim = null;
     }
-    if (CAMS[S.cam].seguir) {
+    avatar.visible = !CAMS[S.cam].olhos;
+    if (CAMS[S.cam].olhos) {
+      // visão do operador: câmera na altura dos olhos, olhando para onde ele está virado (ou para o item que vai pegar)
+      const ang = avatar.rotation.y;
+      vF.set(oper.x - Math.sin(ang) * 0.3, 1.66, oper.z - Math.cos(ang) * 0.3);   // um pouco atrás dos olhos, para dar contexto
+      const alvoE = oper.olhar;
+      if (alvoE && alvoE.tote && !oper.caminho.length) { alvoE.tote.getWorldPosition(vT); vT.y = Math.max(vT.y, 0.7); }
+      else vT.set(oper.x + Math.sin(ang) * 2.5, 1.2, oper.z + Math.cos(ang) * 2.5);
+      if (camera.fov !== 72) { camera.fov = 72; camera.updateProjectionMatrix(); }
+      camera.position.lerp(vF, Math.min(1, dtReal * 6));
+      controls.target.lerp(vT, Math.min(1, dtReal * 4));
+      camera.lookAt(controls.target);
+    } else if (camera.fov !== 50) { camera.fov = 50; camera.updateProjectionMatrix(); }
+    if (CAMS[S.cam].olhos) { /* já tratado */ } else if (CAMS[S.cam].seguir) {
       const ang = avatar.rotation.y;
       vF.set(oper.x - Math.sin(ang) * 1.5, 1.95, oper.z - Math.cos(ang) * 1.5);
       vT.set(oper.x + Math.sin(ang) * 1.6, 1.25, oper.z + Math.cos(ang) * 1.6);

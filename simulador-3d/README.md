@@ -22,8 +22,8 @@ Parâmetros de URL úteis para a apresentação: `?auto` (operador automático),
 | Elemento | Regra |
 |---|---|
 | Alto giro, andares 0–3 | 1 módulo **Q** (3 dígitos + botão) por endereço; todos os itens da caixa acendem juntos |
-| Alto giro, andares 4–5 | 4 displays **E+Q** (A4 e A5 em cada lado, P001–P005 e P006–P010); um item por vez, na ordem da rota |
-| Baixo giro | 4 zonas por lado do corredor (E1–E4 e D1–D4), display **E+Q** na altura dos olhos; um item por vez. P015 fica na frente do bloco da direita, virado para a esteira, e entra na D1 |
+| Alto giro, andares 4–5 | 2 zonas (P001–P005 e P006–P010) com 1 display **E+Q** cada, por baixo da esteira de separação; um item por vez, na ordem da rota |
+| Baixo giro | 2 zonas por lado do corredor (E1–E2 e D1–D2), display **E+Q** na altura dos olhos; um item por vez. P015 ocupa a frente do bloco (1 m), virado para a esteira, e entra na D1. Uma barra luminosa âmbar na frente do operador acende enquanto a caixa tem itens no baixo giro |
 | LED guia de coluna | Opcional; acende no prédio do item atual de cada bloco/zona |
 | Concentrador | Gabinete ventilado, Ethernet, 2 barramentos RS-485 + 12 V em Cat5e com RJ45 |
 | Abertura e fechamento | Arquitetura A: gatilho do coletor; B2: leitor NFC fixo + painel LCD + FECHAR; B1: pulseira |
@@ -36,8 +36,9 @@ produziria (API REST, MQTT, Sybase e BHT), com os mesmos nomes do documento téc
 
 ## Ajustes
 
-Medidas do desenho de 26/10/2026: estação de 2,5 m (prédios do alto giro de 25 cm), corredor de 1,2 m,
-prateleiras do baixo giro de 50 cm × 2 m e concentrador atrás da estação. Ficam no bloco `CFG` no topo de
+Medidas do desenho de 26/10/2026: estação de 2,5 m (prédios do alto giro de 25 cm), blocos do baixo giro de
+1 m (2 prateleiras de 50 cm × 2 m), corredor de cerca de 1,5 m e concentrador atrás da estação. Câmeras
+**Atrás do operador** e **Visão do operador** (o que ele vê, na altura dos olhos). Ficam no bloco `CFG` no topo de
 `sim.js`. Os endereços aparecem como na etiqueta (`0.05.0421.A`), inclusive nos displays de 8 dígitos (com
 ponto decimal). **Simular falha de módulo** mostra qual LED falhou; **Trocar e cadastrar** põe o módulo novo
 piscando **CAd** e o clique no botão dele grava o LED no endereço.

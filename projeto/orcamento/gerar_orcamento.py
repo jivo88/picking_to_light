@@ -98,12 +98,14 @@ linhas = [
     ("TERMOS", SUB),
     ("Módulo Q: display de QUANTIDADE (3 dígitos) + botão com LED, um por endereço de alto giro (andares 0 a 3).", PRETO),
     ("Módulo E+Q: display de ENDEREÇO (8 dígitos) + QUANTIDADE (3 dígitos) + botão; usado nos andares 4 e 5 do alto giro "
-     "(A4 e A5 em cada lado: 4 por estação) e em cada zona de baixo giro (4 zonas por lado do corredor, na altura dos olhos).", PRETO),
+     "(2 zonas por estação: P001–P005 e P006–P010, por baixo da esteira de separação) e em cada zona de baixo giro "
+     "(2 zonas por lado do corredor, na altura dos olhos).", PRETO),
     ("Nó de coluna: microcontrolador por coluna (prédio) do alto giro que liga até 4 Módulos Q ao barramento RS-485 "
      "(nos dados, nenhum prédio tem mais de 4 endereços nos andares 0-3).", PRETO),
     ("Concentrador: controlador da estação (Ethernet cabeada), recebe a caixa do serviço PTL e comanda os 2 barramentos.", PRETO),
-    ("Zona de baixo giro: 4 zonas por lado do corredor, cada uma com 1 display E+Q na altura dos olhos "
+    ("Zona de baixo giro: 2 zonas por lado do corredor (cerca de 6 prédios cada), cada uma com 1 display E+Q na altura dos olhos "
      "(o prédio 015 entra na zona D1; esquinas têm zonas de 4 prédios).", PRETO),
+    ("Sinal de baixo giro: luz âmbar ao lado da posição de pega que acende quando a caixa tem itens no corredor.", PRETO),
     ("", None),
     ("O QUE MUDOU NA REVISÃO DE 26/10/2026", SUB),
     ("• Canaleta calculada pelo layout real de cada estação (frente do alto giro + descidas por prédio + 2 lados do corredor + travessia), "
@@ -121,6 +123,8 @@ linhas = [
     ("• Software: custo-hora calculado com o salário de mercado de analista de desenvolvimento (antes R$ 60/h fixo) "
      "e implantação do servidor/broker incluída.", PRETO),
     ("• Câmbio atualizado (fechamento de 23/10/2026) e contingência de 10% no Resumo.", PRETO),
+    ("• Ajuste de 26/10/2026 (tarde): 2 displays E+Q nos andares 4-5 (antes 4) e 2 zonas por lado no baixo giro (antes 4), "
+     "o que reduz os módulos E+Q de 485 para 251; sinal luminoso de baixo giro por estação.", PRETO),
 ]
 for i, (t, f) in enumerate(linhas, 1):
     c = ws.cell(row=i + 1, column=2, value=t)
@@ -216,7 +220,7 @@ for i, (k, d, v, u, f, am) in enumerate(premissas, 2):
 # =====================================================================
 we = wb.create_sheet("Estações")
 tit = ["Rua (estação)", "Segmento", "Tipo", "Piloto (S/N)", "Total de endereços",
-       "Alto giro 0-3\n(Módulos Q)", "Alto giro 4-5\n(endereços)", "E+Q alto giro\n4-5 (A4/A5)",
+       "Alto giro 0-3\n(Módulos Q)", "Alto giro 4-5\n(endereços)", "E+Q alto giro\n4-5 (2 zonas)",
        "Baixo giro\n(endereços)", "Zonas baixo giro\n(E+Q)", "Nós de coluna", "Prédios do\nbaixo giro",
        "Módulos E+Q", "Segmentos de\nbarramento", "Concentrador"]
 cabecalho(we, 1, tit, [11, 14, 10, 10, 12, 13, 13, 13, 12, 13, 11, 12, 11, 13, 12])
@@ -268,8 +272,8 @@ we.cell(row=LP + 2, column=1,
         value="Coluna D (Piloto) = quantidade de estações nas linhas de total. "
               "Fonte: wms_endereco (cd_esteira 1 e 2), exportado em 23/10/2026; rua 90 (Marketing/Almoxarifado) desconsiderada.").font = NOTA
 we.cell(row=LP + 3, column=1,
-        value="Regras: Alto giro = prédios 001-010; andares 4-5 com 4 displays E+Q por estação (A4 e A5 nos lados 001-005 e 006-010). "
-              "Baixo giro = demais prédios (corredor, 015 e esquinas): 4 zonas E+Q por lado do corredor; esquinas com zonas de 4 prédios.").font = NOTA
+        value="Regras: Alto giro = prédios 001-010; andares 4-5 com 2 displays E+Q por estação (zonas 001-005 e 006-010). "
+              "Baixo giro = demais prédios (corredor, 015 e esquinas): 2 zonas E+Q por lado do corredor; esquinas com zonas de 4 prédios.").font = NOTA
 we.cell(row=LP + 4, column=1,
         value="Segmentos de barramento = 1 cabo de entrada por nó e por módulo E+Q (ligação em cadeia nas 2 portas do concentrador).").font = NOTA
 we.freeze_panes = "B2"
@@ -375,6 +379,8 @@ precos = [
     ("P45", "Carregador USB 2 portas para pulseiras (Arq. B1)", "un", 35.00, None, "Estimativa, cotar", "Estimativa"),
     ("P46", "Ponto de tomada 220 V novo (material + eletricista)", "un", 350.00, None,
      "Estimativa, cotar com a manutenção predial", "Estimativa"),
+    ("P47", "Sinal luminoso de baixo giro (sinaleiro LED âmbar 12 V 22 mm + haste + transistor no nó)", "un", 45.00, None,
+     "Estimativa, cotar", "Estimativa"),
 ]
 PRECO = {}
 for i, (cod, item, un, brl, usd, fonte, st) in enumerate(precos, 2):
@@ -471,6 +477,7 @@ infra = [
      "prédios alto giro × (largura × linhas + descida) + 2 lados × corredor + travessia, por estação",
      "{K}*({larg_alto}*{linhas_alto}+{alt_vertical})+{O}*2*{comp_corredor}+{O}*{m_travessia}", PRECO["P18"]),
     ("fix", "Fixações diversas", "1 kit por estação", "{O}", PRECO["P19"]),
+    ("sin", "Sinal luminoso de baixo giro", "1 por estação, ao lado da posição de pega", "{O}", PRECO["P47"]),
     ("rede", "Cabo de rede até a estação (m)", "metros por estação", "{O}*{m_rede}", PRECO["P12"]),
     ("sw", "Switch 24 portas", "estações ÷ portas por switch (arredondado para cima)", "ROUNDUP({O}/{portas_switch},0)", PRECO["P20"]),
     ("nb", "Nobreak do switch", "1 por switch", "{SW}", PRECO["P43"]),

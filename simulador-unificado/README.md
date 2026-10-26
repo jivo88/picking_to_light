@@ -5,7 +5,7 @@ Junta as aplicações em uma só tela, sincronizadas:
 - **Estação 3D** (`../simulador-3d`): a estação com os endereços reais, o operador, as esteiras e os displays.
 - **Comunicação** (`comunicacao.html`): cada ação feita no 3D aparece como mensagens HTTPS, SQL, MQTT e
   RS-485 entre a leitura, o Serviço PTL, o broker, o concentrador e os dispositivos do barramento
-  (10 nós de coluna, 4 displays dos andares 4 e 5 e 8 zonas do baixo giro).
+  (10 nós de coluna, 2 displays dos andares 4 e 5 e 4 zonas do baixo giro).
 - **Controle** (`controle.html`): a interface de controle da manutenção. Mostra qual LED falhou (endereço no
   formato da etiqueta, por exemplo `0.05.0042.A`, nó e porta ou endereço RS-485 do E+Q, local e tipo de falha)
   e tem o cadastro de LED por endereço, com busca, teste (888) e troca de módulo por tela + botão.
@@ -31,6 +31,7 @@ Atalhos: teclas 1, 2, 3 e 4 (com o foco fora das telas). A aba escolhida fica sa
 | Simular falha | conforme o tipo: 3 tentativas sem resposta (E+Q) ou LER_STATUS com "display sem ACK" / "botão travado", `FALHA_MODULO` com endereço e porta, INSERT em `ptl_evento_falha`; o aviso aparece no Controle e o 3D mostra o módulo com moldura vermelha |
 | Trocar e cadastrar | POST `/cadastro`, `CONFIG CADASTRO`, MODO_CADASTRO; o módulo novo pisca **CAd**; ao apertar o botão dele: DEF_ENDERECO (E+Q), `CADASTRO_OK` e UPDATE em `ptl_mapa_led` |
 | Testar (Controle) | `CONFIG IDENTIFICAR` e IDENTIFICAR: o LED mostra 888 por 3 s |
+| Sinal de baixo giro aceso/apagado | SINAL_BG para o nó do prédio 005 (saída extra que liga a barra âmbar) |
 | Troca de estação, de arquitetura ou de velocidade | o barramento é redesenhado com os dispositivos da estação |
 
 No sentido contrário, a tela de comunicação também comanda o 3D: o botão **Gatilho / leitura**, o clique
