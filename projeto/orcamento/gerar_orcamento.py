@@ -66,35 +66,35 @@ ws.title = "Leia-me"
 ws.column_dimensions["A"].width = 3
 ws.column_dimensions["B"].width = 110
 linhas = [
-    ("Orçamento — Projeto Pick-to-Light (Flow Rack)", TIT),
+    ("Orçamento do projeto Pick-to-Light (flow rack)", TIT),
     ("Arquitetura A (coletor + concentrador + displays) e Arquitetura B (identificação por RFID)", SUB),
     ("", None),
     ("COMO USAR", SUB),
-    ("• Células em AZUL são entradas editáveis (quantidades, preços, premissas). Células em PRETO são fórmulas — não editar.", PRETO),
+    ("• Células em AZUL são entradas editáveis (quantidades, preços, premissas). Células em PRETO são fórmulas: não editar.", PRETO),
     ("• Células com fundo AMARELO são premissas/estimativas que precisam de cotação ou confirmação.", PRETO),
     ("• Aba 'Estações': números de endereços por estação, extraídos de wms_endereco (esteiras 1 e 2) em 23/10/2026. "
-     "Corrija qualquer número direto ali — todo o orçamento recalcula.", PRETO),
+     "Corrija qualquer número direto ali: todo o orçamento recalcula.", PRETO),
     ("• Coluna 'Piloto' (S/N) na aba 'Estações' define quais estações entram no cenário piloto (padrão: 05 e 27).", PRETO),
     ("• Aba 'Preços': catálogo de peças com fonte e data. Itens marcados 'Estimativa' devem ser cotados antes da compra.", PRETO),
     ("", None),
     ("ABAS", SUB),
-    ("Premissas — câmbio, fator de importação, custo-hora, horas de montagem/instalação, reserva técnica, frota de caixas.", PRETO),
-    ("Estações — dimensionamento por estação (40 estações: 20 Medicamento + 20 Perfumaria).", PRETO),
-    ("Preços — catálogo de peças com fonte.", PRETO),
-    ("Composição — lista de materiais (BOM) de cada tipo de módulo e custo unitário.", PRETO),
-    ("A-Interno — Arquitetura A com produção interna: peças, peças + mão de obra, variante 5 V.", PRETO),
-    ("A-Terceiros — Arquitetura A com produção de terceiros: (T1) placa própria montada por EMS e (T2) PTL comercial importado.", PRETO),
-    ("B-RFID — Arquitetura B: mesma infraestrutura de displays + identificação RFID (B1 pulseira, B2 leitor fixo).", PRETO),
-    ("Software — esforço estimado de desenvolvimento (horas) para as duas arquiteturas.", PRETO),
-    ("Resumo — comparativo de todos os cenários: Piloto x Operação completa.", PRETO),
+    ("Premissas: câmbio, fator de importação, custo-hora, horas de montagem/instalação, reserva técnica, frota de caixas.", PRETO),
+    ("Estações: dimensionamento por estação (40 estações: 20 Medicamento + 20 Perfumaria).", PRETO),
+    ("Preços: catálogo de peças com fonte.", PRETO),
+    ("Composição: lista de materiais (BOM) de cada tipo de módulo e custo unitário.", PRETO),
+    ("A-Interno: Arquitetura A com produção interna: peças, peças + mão de obra, variante 5 V.", PRETO),
+    ("A-Terceiros: Arquitetura A com produção de terceiros: (T1) placa própria montada por EMS e (T2) PTL comercial importado.", PRETO),
+    ("B-RFID: Arquitetura B: mesma infraestrutura de displays + identificação RFID (B1 pulseira, B2 leitor fixo).", PRETO),
+    ("Software: esforço estimado de desenvolvimento (horas) para as duas arquiteturas.", PRETO),
+    ("Resumo: comparativo de todos os cenários: Piloto x Operação completa.", PRETO),
     ("", None),
     ("TERMOS", SUB),
-    ("Módulo Q — display de QUANTIDADE (3 dígitos) + botão com LED, um por endereço de alto giro (andares 0 a 3).", PRETO),
-    ("Módulo E+Q — display de ENDEREÇO (8 dígitos) + QUANTIDADE (3 dígitos) + botão; usado nos andares 4 e 5 do alto giro "
+    ("Módulo Q: display de QUANTIDADE (3 dígitos) + botão com LED, um por endereço de alto giro (andares 0 a 3).", PRETO),
+    ("Módulo E+Q: display de ENDEREÇO (8 dígitos) + QUANTIDADE (3 dígitos) + botão; usado nos andares 4 e 5 do alto giro "
      "(1 por andar em cada lado: 4 por estação) e em cada zona de baixo giro (4 zonas por lado do corredor, na altura dos olhos).", PRETO),
-    ("Nó de coluna — microcontrolador por coluna (prédio) do alto giro que liga os Módulos Q daquela coluna ao barramento RS-485.", PRETO),
-    ("Concentrador — controlador da estação (Ethernet cabeada), recebe a caixa do serviço PTL e comanda os barramentos.", PRETO),
-    ("Zona de baixo giro — 1 display E+Q a cada 4 prédios do fundo (inclui prédio 015 na 1ª zona e prédios de esquina).", PRETO),
+    ("Nó de coluna: microcontrolador por coluna (prédio) do alto giro que liga os Módulos Q daquela coluna ao barramento RS-485.", PRETO),
+    ("Concentrador: controlador da estação (Ethernet cabeada), recebe a caixa do serviço PTL e comanda os barramentos.", PRETO),
+    ("Zona de baixo giro: 4 zonas por lado do corredor, cada uma com 1 display E+Q na altura dos olhos (o prédio 015 entra na zona D1; esquinas têm zonas de 4 prédios).", PRETO),
 ]
 for i, (t, f) in enumerate(linhas, 1):
     c = ws.cell(row=i + 1, column=2, value=t)
@@ -109,7 +109,7 @@ wp = wb.create_sheet("Premissas")
 cabecalho(wp, 1, ["Premissa", "Valor", "Unidade", "Fonte / observação"], [44, 14, 12, 90])
 premissas = [
     # chave, descricao, valor, unidade, fonte, amarelo?
-    ("cambio", "Câmbio USD/BRL (comercial)", 5.0413, "R$/US$", "renovainvest.com.br/dolar-hoje — 23/10/2026 12h11", False),
+    ("cambio", "Câmbio USD/BRL (comercial)", 5.0413, "R$/US$", "renovainvest.com.br/dolar-hoje, 23/10/2026 12h11", False),
     ("fator_imp", "Fator de importação (frete + impostos + despacho) sobre o valor FOB", 1.9, "x",
      "Estimativa para importação formal de eletrônicos (II + IPI + PIS/COFINS + ICMS + frete). Confirmar com Comércio Exterior.", True),
     ("salario_tec", "Salário médio técnico eletrônico (CLT)", 2846.84, "R$/mês",
@@ -117,10 +117,10 @@ premissas = [
     ("encargos", "Fator de encargos e benefícios sobre salário", 2.0, "x", "Estimativa usual (encargos + benefícios + provisões). Ajustar com RH.", True),
     ("horas_mes", "Horas produtivas por mês", 163, "h", "44 h/semana com ausências", True),
     ("custo_hora", "Custo-hora técnico (calculado)", "=B4*B5/B6", "R$/h", "Fórmula: salário × encargos ÷ horas", False),
-    ("h_mod_q", "Montagem — Módulo Q", 0.25, "h/un", "Estimativa: display + botão + carcaça + teste", True),
-    ("h_no", "Montagem — Nó de coluna", 0.75, "h/un", "Estimativa: placa base, soldas, gravação de firmware, teste", True),
-    ("h_mod_eq", "Montagem — Módulo E+Q", 1.0, "h/un", "Estimativa", True),
-    ("h_conc", "Montagem — Concentrador (gabinete completo)", 2.0, "h/un", "Estimativa", True),
+    ("h_mod_q", "Montagem, Módulo Q", 0.25, "h/un", "Estimativa: display + botão + carcaça + teste", True),
+    ("h_no", "Montagem, Nó de coluna", 0.75, "h/un", "Estimativa: placa base, soldas, gravação de firmware, teste", True),
+    ("h_mod_eq", "Montagem, Módulo E+Q", 1.0, "h/un", "Estimativa", True),
+    ("h_conc", "Montagem, Concentrador (gabinete completo)", 2.0, "h/un", "Estimativa", True),
     ("h_inst", "Instalação por estação (canaletas, módulos, cabos)", 16, "h/estação", "Estimativa: 2 técnicos × 1 turno", True),
     ("h_comiss", "Testes e comissionamento por estação", 4, "h/estação", "Estimativa", True),
     ("reserva", "Reserva técnica (peças sobressalentes)", 0.10, "%", "Sobre módulos, nós e concentradores", True),
@@ -132,7 +132,7 @@ premissas = [
     ("pulseiras_por_est", "Pulseiras por estação (Arq. B1)", 1.2, "un", "1 por operador + 20% reserva/carga", True),
     ("custo_hora_dev", "Custo-hora desenvolvimento interno", 60, "R$/h", "Estimativa para referência; ajustar com RH/TI", True),
     ("m_5v_extra", "Cabo de força extra por estação na variante 5 V", 30, "m", "Distribuição de 5 V exige mais pontos de injeção", True),
-    ("p_cabo_forca", "Cabo de força 2×1,5 mm² (variante 5 V)", 4.5, "R$/m", "Estimativa — cotar", True),
+    ("p_cabo_forca", "Cabo de força 2×1,5 mm² (variante 5 V)", 4.5, "R$/m", "Estimativa, cotar", True),
 ]
 REF = {}
 for i, (k, d, v, u, f, am) in enumerate(premissas, 2):
@@ -179,8 +179,8 @@ for i, rua in enumerate(ordem, 2):
         c.number_format = NUM
 ULT = len(ordem) + 1
 LC, LP = ULT + 2, ULT + 3       # linhas de total completo / piloto
-we.cell(row=LC, column=1, value="TOTAL — operação completa").font = NEG
-we.cell(row=LP, column=1, value="TOTAL — piloto (Piloto = S)").font = NEG
+we.cell(row=LC, column=1, value="Total da operação completa").font = NEG
+we.cell(row=LP, column=1, value="Total do piloto (Piloto = S)").font = NEG
 dv = DataValidation(type="list", formula1='"S,N"', allow_blank=False)
 we.add_data_validation(dv)
 dv.add("D2:D%d" % ULT)
@@ -223,62 +223,62 @@ cabecalho(wpr, 1, ["Código", "Item", "Unidade", "Preço (R$)", "Preço (US$)", 
 C = "=E{r}*" + REF["cambio"] + "*" + REF["fator_imp"]
 precos = [
     # cod, item, unidade, brl, usd, fonte, status
-    ("P01", "Display 7 segmentos 4 dígitos TM1637 (usa 3 dígitos — quantidade)", "un", 9.98, None,
-     "Usinainfo — Módulo Display TM1637 4 dígitos vermelho — 23/10/2026 (Pix)", "Cotado"),
+    ("P01", "Display 7 segmentos 4 dígitos TM1637 (usa 3 dígitos, quantidade)", "un", 9.98, None,
+     "Usinainfo, Módulo Display TM1637 4 dígitos vermelho, 23/10/2026 (Pix)", "Cotado"),
     ("P02", "Display 7 segmentos 8 dígitos MAX7219 (endereço)", "un", 20.17, None,
-     "Usinainfo — Display MAX7219 8 dígitos SPI — 23/10/2026 (Pix)", "Cotado"),
+     "Usinainfo, Display MAX7219 8 dígitos SPI, 23/10/2026 (Pix)", "Cotado"),
     ("P03", "Microcontrolador Raspberry Pi Pico (RP2040)", "un", 39.90, None,
-     "MakerHero — Raspberry Pi Pico — 23/10/2026", "Cotado"),
+     "MakerHero, Raspberry Pi Pico, 23/10/2026", "Cotado"),
     ("P04", "Módulo transceptor RS-485 (MAX485)", "un", 8.90, None,
-     "Saravati — Módulo conversor TTL/RS485 MAX485 — 23/10/2026", "Cotado"),
+     "Saravati, Módulo conversor TTL/RS485 MAX485, 23/10/2026", "Cotado"),
     ("P05", "Placa do concentrador RP2040 + Ethernet W5500 (W5500-EVB-Pico)", "un", None, 12.50,
-     "SparkFun DEV-19958 US$ 12,50 — 23/10/2026; convertido com câmbio × fator de importação", "Cotado (US$)"),
+     "SparkFun DEV-19958 US$ 12,50, 23/10/2026; convertido com câmbio × fator de importação", "Cotado (US$)"),
     ("P06", "Fonte Mean Well LRS-150-12 (12 V / 12,5 A / 150 W)", "un", 189.98, None,
-     "MCEIG (fontesmeanwell.com.br) — 23/10/2026", "Cotado"),
-    ("P07", "Fonte Mean Well LRS-150-5 (5 V / 26 A) — variante 5 V", "un", 185.00, None,
-     "Estimativa (mesma família da LRS-150-12) — cotar", "Estimativa"),
-    ("P08", "Regulador step-down 12 V → 5 V (mini, 3 A)", "un", 8.00, None, "Estimativa de mercado — cotar", "Estimativa"),
-    ("P09", "Botão de confirmação com LED (16 mm, momentâneo)", "un", 7.00, None, "Estimativa de mercado — cotar", "Estimativa"),
-    ("P10", "Conector RJ45 fêmea para placa (jack)", "un", 2.50, None, "Estimativa — cotar", "Estimativa"),
-    ("P11", "Plug RJ45 Cat5e (macho)", "un", 0.80, None, "Estimativa (pote com 100) — cotar", "Estimativa"),
+     "MCEIG (fontesmeanwell.com.br), 23/10/2026", "Cotado"),
+    ("P07", "Fonte Mean Well LRS-150-5 (5 V / 26 A), variante 5 V", "un", 185.00, None,
+     "Estimativa (mesma família da LRS-150-12), cotar", "Estimativa"),
+    ("P08", "Regulador step-down 12 V → 5 V (mini, 3 A)", "un", 8.00, None, "Estimativa de mercado, cotar", "Estimativa"),
+    ("P09", "Botão de confirmação com LED (16 mm, momentâneo)", "un", 7.00, None, "Estimativa de mercado, cotar", "Estimativa"),
+    ("P10", "Conector RJ45 fêmea para placa (jack)", "un", 2.50, None, "Estimativa, cotar", "Estimativa"),
+    ("P11", "Plug RJ45 Cat5e (macho)", "un", 0.80, None, "Estimativa (pote com 100), cotar", "Estimativa"),
     ("P12", "Cabo Cat5e (por metro)", "m", "=1229.41/305", None,
-     "KaBuM — Cabo Cat5e Fortrek FK500C 305 m R$ 1.229,41 (Pix) — 23/10/2026", "Cotado"),
+     "KaBuM, Cabo Cat5e Fortrek FK500C 305 m R$ 1.229,41 (Pix), 23/10/2026", "Cotado"),
     ("P13", "Carcaça do Módulo Q (impressão 3D PETG ou caixa plástica pequena)", "un", 5.00, None, "Estimativa", "Estimativa"),
     ("P14", "Carcaça do Módulo E+Q / Nó de coluna", "un", 15.00, None, "Estimativa", "Estimativa"),
     ("P15", "Placa base universal + bornes (nó / módulo E+Q)", "un", 10.00, None, "Estimativa", "Estimativa"),
     ("P16", "Gabinete do concentrador ventilado (caixa IP54 + cooler 40 mm 12 V + filtro)", "un", 90.00, None,
-     "Estimativa — cotar (ambiente com poeira e calor)", "Estimativa"),
-    ("P17", "Trilho DIN + bornes + disjuntor 2 A", "kit", 45.00, None, "Estimativa — cotar", "Estimativa"),
+     "Estimativa, cotar (ambiente com poeira e calor)", "Estimativa"),
+    ("P17", "Trilho DIN + bornes + disjuntor 2 A", "kit", 45.00, None, "Estimativa, cotar", "Estimativa"),
     ("P18", "Canaleta / perfil de fixação dos módulos (por metro)", "m", 9.00, None,
-     "Estimativa (canaleta PVC 20×10 mm em barra de 2 m) — cotar", "Estimativa"),
+     "Estimativa (canaleta PVC 20×10 mm em barra de 2 m), cotar", "Estimativa"),
     ("P19", "Fixações diversas (abraçadeiras, parafusos, etiquetas) por estação", "kit", 40.00, None, "Estimativa", "Estimativa"),
-    ("P20", "Switch 24 portas Gigabit TP-Link TL-SG1024DE", "un", 769.32, None, "KaBuM — 23/10/2026 (Pix)", "Cotado"),
-    ("P21", "Fita LED endereçável WS2812 — guia de coluna (por LED) [opcional]", "LED", 0.90, None, "Estimativa — cotar", "Estimativa"),
+    ("P20", "Switch 24 portas Gigabit TP-Link TL-SG1024DE", "un", 769.32, None, "KaBuM, 23/10/2026 (Pix)", "Cotado"),
+    ("P21", "Fita LED endereçável WS2812, guia de coluna (por LED) [opcional]", "LED", 0.90, None, "Estimativa, cotar", "Estimativa"),
     ("P22", "Tag NFC NTAG213 adesiva 13,56 MHz", "un", 2.37, None,
-     "Loja RFID — lote 100 un R$ 237,41 à vista — 23/10/2026", "Cotado"),
+     "Loja RFID, lote 100 un R$ 237,41 à vista, 23/10/2026", "Cotado"),
     ("P23", "Suporte/proteção da tag na caixa retornável", "un", 0.50, None, "Estimativa", "Estimativa"),
-    ("P24", "ESP32-C3 Super Mini (pulseira)", "un", 29.89, None, "Usinainfo — 23/10/2026 (Pix)", "Cotado"),
+    ("P24", "ESP32-C3 Super Mini (pulseira)", "un", 29.89, None, "Usinainfo, 23/10/2026 (Pix)", "Cotado"),
     ("P25", "Módulo leitor NFC PN532 (43×40 mm, com cartão e chaveiro)", "un", 42.65, None,
-     "MakerHero — Kit Módulo Leitor RFID NFC PN532 — 23/10/2026 (Pix)", "Cotado"),
-    ("P26", "Kit energia pulseira (LiPo 500 mAh + TP4056 + motor vibração + botão)", "kit", 35.00, None, "Estimativa — cotar", "Estimativa"),
+     "MakerHero, Kit Módulo Leitor RFID NFC PN532, 23/10/2026 (Pix)", "Cotado"),
+    ("P26", "Kit energia pulseira (LiPo 500 mAh + TP4056 + motor vibração + botão)", "kit", 35.00, None, "Estimativa, cotar", "Estimativa"),
     ("P27", "Carcaça 3D + pulseira velcro", "un", 20.00, None, "Estimativa", "Estimativa"),
-    ("P28", "Display LCD 20×4 I2C (painel da estação — Arq. B2)", "un", 35.00, None, "Estimativa — cotar", "Estimativa"),
+    ("P28", "Display LCD 20×4 I2C (painel da estação, Arq. B2)", "un", 35.00, None, "Estimativa, cotar", "Estimativa"),
     ("P29", "Módulo PTL comercial 3 dígitos + botão (RS-485)", "un", None, 30.00,
-     "Alibaba — Sophia T-P3: US$ 32 (1-299 un) / US$ 28 (300+) — 23/10/2026; média US$ 30", "Cotado (US$)"),
+     "Alibaba, Sophia T-P3: US$ 32 (1-299 un) / US$ 28 (300+), 23/10/2026; média US$ 30", "Cotado (US$)"),
     ("P30", "Módulo PTL comercial endereço + quantidade (display alfanumérico)", "un", None, 65.00,
-     "Estimativa (não há preço público) — solicitar cotação a fornecedores", "Estimativa"),
+     "Estimativa (não há preço público), solicitar cotação a fornecedores", "Estimativa"),
     ("P31", "Controlador/gateway PTL comercial por estação", "un", None, 220.00,
-     "Estimativa (não há preço público) — solicitar cotação", "Estimativa"),
-    ("P32", "PCB própria montada por EMS — Módulo Q (MCU + display 0,56\" + botão + 2× RJ45)", "un", None, 9.00,
+     "Estimativa (não há preço público), solicitar cotação", "Estimativa"),
+    ("P32", "PCB própria montada por EMS, Módulo Q (MCU + display 0,56\" + botão + 2× RJ45)", "un", None, 9.00,
      "Estimativa com base na tabela de montagem JLCPCB (jlcpcb.com/help/article/pcb-assembly-price) + componentes", "Estimativa"),
-    ("P33", "PCB própria montada por EMS — Módulo E+Q", "un", None, 22.00, "Estimativa (idem)", "Estimativa"),
-    ("P34", "PCB própria montada por EMS — Concentrador (MCU + Ethernet + 2× RS-485)", "un", None, 35.00, "Estimativa (idem)", "Estimativa"),
+    ("P33", "PCB própria montada por EMS, Módulo E+Q", "un", None, 22.00, "Estimativa (idem)", "Estimativa"),
+    ("P34", "PCB própria montada por EMS, Concentrador (MCU + Ethernet + 2× RS-485)", "un", None, 35.00, "Estimativa (idem)", "Estimativa"),
     ("P35", "Engenharia de projeto das PCBs (terceirizada, valor único)", "projeto", 15000.00, None,
-     "Estimativa — solicitar orçamento a design house", "Estimativa"),
-    ("P36", "Leitor RFID UHF de pulso comercial (FEIG HyWEAR Compact) — referência", "un", None, 997.00,
-     "atlasRFIDstore — US$ 997 — 22/10/2026 (UHF; não lê tags NFC)", "Cotado (US$)"),
-    ("P37", "Leitor HF/NFC fixo industrial (USB/RS-232) — alternativa comercial ao PN532", "un", 350.00, None,
-     "Estimativa — cotar (ex.: ACS ACR122U ou similar)", "Estimativa"),
+     "Estimativa, solicitar orçamento a design house", "Estimativa"),
+    ("P36", "Leitor RFID UHF de pulso comercial (FEIG HyWEAR Compact), referência", "un", None, 997.00,
+     "atlasRFIDstore, US$ 997, 22/10/2026 (UHF; não lê tags NFC)", "Cotado (US$)"),
+    ("P37", "Leitor HF/NFC fixo industrial (USB/RS-232), alternativa comercial ao PN532", "un", 350.00, None,
+     "Estimativa, cotar (ex.: ACS ACR122U ou similar)", "Estimativa"),
 ]
 PRECO = {}
 for i, (cod, item, un, brl, usd, fonte, st) in enumerate(precos, 2):
@@ -328,7 +328,7 @@ for conj, itens in bom.items():
         cel(wc, "E%d" % r, "=INDEX('Preços'!$D:$D,MATCH(B%d,'Preços'!$A:$A,0))" % r, VERDE, BRL)
         cel(wc, "F%d" % r, "=D%d*E%d" % (r, r), PRETO, BRL)
         r += 1
-    cel(wc, "A%d" % r, "Custo unitário — " + conj, NEG, fill=TOTAL)
+    cel(wc, "A%d" % r, "Custo unitário, " + conj, NEG, fill=TOTAL)
     for col in "BCDE":
         cel(wc, "%s%d" % (col, r), None, fill=TOTAL)
     cel(wc, "F%d" % r, "=SUM(F%d:F%d)" % (ini, r - 1), NEG, BRL, fill=TOTAL)
@@ -343,7 +343,7 @@ cel(wc, "A%d" % r, "Variante 5 V: os módulos e nós não usam regulador step-do
 wa = wb.create_sheet("A-Interno")
 cabecalho(wa, 1, ["Item", "Base de cálculo", "Qtd piloto", "Qtd completo", "Preço unit. (R$)",
                   "Total piloto (R$)", "Total completo (R$)"], [42, 46, 12, 13, 15, 17, 18])
-cel(wa, "A2", "Arquitetura A — produção e montagem interna (12 V)", SUB, borda=False)
+cel(wa, "A2", "Arquitetura A, produção e montagem interna (12 V)", SUB, borda=False)
 res = "(1+%s)" % REF["reserva"]
 linhas_a = [
     ("Módulos Q (alto giro 0-3)", "endereços alto giro 0-3 × (1 + reserva)",
@@ -378,7 +378,7 @@ for nome, base, qp, qc, preco in linhas_a:
     cel(wa, "G%d" % r, "=D%d*E%d" % (r, r), PRETO, BRL)
     r += 1
 A_PECAS = r
-cel(wa, "A%d" % r, "SUBTOTAL PEÇAS — Arquitetura A (12 V)", NEG, fill=TOTAL)
+cel(wa, "A%d" % r, "SUBTOTAL PEÇAS, Arquitetura A (12 V)", NEG, fill=TOTAL)
 for col in "BCDE":
     cel(wa, "%s%d" % (col, r), None, fill=TOTAL)
 cel(wa, "F%d" % r, "=SUM(F3:F%d)" % (r - 1), NEG, BRL, fill=TOTAL)
@@ -416,7 +416,7 @@ cel(wa, "F%d" % r, "=SUM(F%d:F%d)" % (ini, r - 1), NEG, BRL, fill=TOTAL)
 cel(wa, "G%d" % r, "=SUM(G%d:G%d)" % (ini, r - 1), NEG, BRL, fill=TOTAL)
 r += 2
 A_TOT = r
-cel(wa, "A%d" % r, "TOTAL — Arquitetura A interna (peças + mão de obra)", NEG, fill=TOTAL)
+cel(wa, "A%d" % r, "TOTAL, Arquitetura A interna (peças + mão de obra)", NEG, fill=TOTAL)
 for col in "BCDE":
     cel(wa, "%s%d" % (col, r), None, fill=TOTAL)
 cel(wa, "F%d" % r, "=F%d+F%d" % (A_PECAS, A_MO), NEG, BRL, fill=TOTAL)
@@ -443,13 +443,13 @@ for nome, base, qp, qc, preco in v5:
     cel(wa, "G%d" % r, "=D%d*E%d" % (r, r), PRETO, BRL)
     r += 1
 A_5V = r
-cel(wa, "A%d" % r, "SUBTOTAL PEÇAS — variante 5 V", NEG, fill=TOTAL)
+cel(wa, "A%d" % r, "SUBTOTAL PEÇAS, variante 5 V", NEG, fill=TOTAL)
 for col in "BCDE":
     cel(wa, "%s%d" % (col, r), None, fill=TOTAL)
 cel(wa, "F%d" % r, "=F%d+SUM(F%d:F%d)" % (A_PECAS, ini, r - 1), NEG, BRL, fill=TOTAL)
 cel(wa, "G%d" % r, "=G%d+SUM(G%d:G%d)" % (A_PECAS, ini, r - 1), NEG, BRL, fill=TOTAL)
 r += 2
-cel(wa, "A%d" % r, "Opcional — guia de coluna no baixo giro (1 LED por prédio do fundo)", SUB, borda=False)
+cel(wa, "A%d" % r, "Opcional, guia de coluna no baixo giro (1 LED por prédio do fundo)", SUB, borda=False)
 r += 1
 A_GUIA = r
 cel(wa, "A%d" % r, "LEDs guia de coluna")
@@ -466,14 +466,14 @@ cel(wa, "G%d" % r, "=D%d*E%d" % (r, r), PRETO, BRL)
 wt = wb.create_sheet("A-Terceiros")
 cabecalho(wt, 1, ["Item", "Base de cálculo", "Qtd piloto", "Qtd completo", "Preço unit. (R$)",
                   "Total piloto (R$)", "Total completo (R$)"], [44, 44, 12, 13, 15, 17, 18])
-cel(wt, "A2", "T1 — Placas próprias fabricadas e montadas por EMS (cada módulo com seu microcontrolador)", SUB, borda=False)
+cel(wt, "A2", "T1, Placas próprias fabricadas e montadas por EMS (cada módulo com seu microcontrolador)", SUB, borda=False)
 q_mod = "=ROUNDUP(%s*%s,0)"
 t1 = [
-    ("Módulo Q — PCB montada", "endereços alto giro 0-3 × (1 + reserva)",
+    ("Módulo Q, PCB montada", "endereços alto giro 0-3 × (1 + reserva)",
      q_mod % (tot("F", "P"), res), q_mod % (tot("F", "C"), res), "%s+%s" % (PRECO["P32"], PRECO["P13"])),
-    ("Módulo E+Q — PCB montada", "blocos + zonas × (1 + reserva)",
+    ("Módulo E+Q, PCB montada", "blocos + zonas × (1 + reserva)",
      q_mod % (tot("M", "P"), res), q_mod % (tot("M", "C"), res), "%s+%s+%s" % (PRECO["P33"], PRECO["P14"], PRECO["P09"])),
-    ("Concentrador — PCB montada + fonte + gabinete", "estações × (1 + reserva)",
+    ("Concentrador, PCB montada + fonte + gabinete", "estações × (1 + reserva)",
      q_mod % (tot("O", "P"), res), q_mod % (tot("O", "C"), res),
      "%s+%s+%s+%s" % (PRECO["P34"], PRECO["P06"], PRECO["P16"], PRECO["P17"])),
     ("Cabo de barramento + plugs (m)", "segmentos × metros (módulos em cadeia)",
@@ -502,13 +502,13 @@ for nome, base, qp, qc, preco in t1:
         cel(wt, "G%d" % r, "=D%d*E%d" % (r, r), PRETO, BRL)
     r += 1
 T1_TOT = r
-cel(wt, "A%d" % r, "TOTAL T1 — PCB própria (EMS)", NEG, fill=TOTAL)
+cel(wt, "A%d" % r, "TOTAL T1, PCB própria (EMS)", NEG, fill=TOTAL)
 for col in "BCDE":
     cel(wt, "%s%d" % (col, r), None, fill=TOTAL)
 cel(wt, "F%d" % r, "=SUM(F3:F%d)" % (r - 1), NEG, BRL, fill=TOTAL)
 cel(wt, "G%d" % r, "=SUM(G3:G%d)" % (r - 1), NEG, BRL, fill=TOTAL)
 r += 2
-cel(wt, "A%d" % r, "T2 — Sistema PTL comercial importado (hardware pronto; software de integração continua interno)", SUB, borda=False)
+cel(wt, "A%d" % r, "T2, Sistema PTL comercial importado (hardware pronto; software de integração continua interno)", SUB, borda=False)
 r += 1
 ini = r
 t2 = [
@@ -542,7 +542,7 @@ for nome, base, qp, qc, preco in t2:
         cel(wt, "G%d" % r, "=D%d*E%d" % (r, r), PRETO, BRL)
     r += 1
 T2_TOT = r
-cel(wt, "A%d" % r, "TOTAL T2 — PTL comercial importado", NEG, fill=TOTAL)
+cel(wt, "A%d" % r, "TOTAL T2, PTL comercial importado", NEG, fill=TOTAL)
 for col in "BCDE":
     cel(wt, "%s%d" % (col, r), None, fill=TOTAL)
 cel(wt, "F%d" % r, "=SUM(F%d:F%d)" % (ini, r - 1), NEG, BRL, fill=TOTAL)
@@ -559,7 +559,7 @@ wb_ = wb.create_sheet("B-RFID")
 cabecalho(wb_, 1, ["Item", "Base de cálculo", "Qtd piloto", "Qtd completo", "Preço unit. (R$)",
                    "Total piloto (R$)", "Total completo (R$)"], [46, 44, 12, 13, 15, 17, 18])
 cel(wb_, "A2", "Arquitetura B = infraestrutura de displays da Arquitetura A + identificação da caixa por RFID", SUB, borda=False)
-cel(wb_, "A3", "Infraestrutura de displays (Arquitetura A interna — peças + mão de obra)")
+cel(wb_, "A3", "Infraestrutura de displays (Arquitetura A interna, peças + mão de obra)")
 cel(wb_, "B3", "aba A-Interno")
 cel(wb_, "F3", "='A-Interno'!F%d" % A_TOT, VERDE, BRL)
 cel(wb_, "G3", "='A-Interno'!G%d" % A_TOT, VERDE, BRL)
@@ -579,7 +579,7 @@ cel(wb_, "D5", "=D4*30/3600", PRETO, NUM2)
 cel(wb_, "E5", "=" + REF["custo_hora"], VERDE, BRL)
 cel(wb_, "F5", "=C5*E5", PRETO, BRL)
 cel(wb_, "G5", "=D5*E5", PRETO, BRL)
-cel(wb_, "A7", "B1 — Pulseira NFC (montagem própria)", SUB, borda=False)
+cel(wb_, "A7", "B1, Pulseira NFC (montagem própria)", SUB, borda=False)
 cel(wb_, "A8", "Pulseiras NFC (ESP32-C3 + PN532 + bateria)")
 cel(wb_, "B8", "estações × pulseiras por estação")
 cel(wb_, "C8", "=ROUNDUP(%s*%s,0)" % (tot("O", "P"), REF["pulseiras_por_est"]), PRETO, NUM)
@@ -594,12 +594,12 @@ cel(wb_, "D9", "=D8*1.5", PRETO, NUM2)
 cel(wb_, "E9", "=" + REF["custo_hora"], VERDE, BRL)
 cel(wb_, "F9", "=C9*E9", PRETO, BRL)
 cel(wb_, "G9", "=D9*E9", PRETO, BRL)
-cel(wb_, "A10", "TOTAL B1 — displays + tags + pulseiras", NEG, fill=TOTAL)
+cel(wb_, "A10", "TOTAL B1, displays + tags + pulseiras", NEG, fill=TOTAL)
 for col in "BCDE":
     cel(wb_, "%s10" % col, None, fill=TOTAL)
 cel(wb_, "F10", "=F3+F4+F5+F8+F9", NEG, BRL, fill=TOTAL)
 cel(wb_, "G10", "=G3+G4+G5+G8+G9", NEG, BRL, fill=TOTAL)
-cel(wb_, "A12", "B2 — Leitor fixo na estação + painel (sem item no corpo do operador)", SUB, borda=False)
+cel(wb_, "A12", "B2, Leitor fixo na estação + painel (sem item no corpo do operador)", SUB, borda=False)
 cel(wb_, "A13", "Leitor PN532 + LCD 20×4 + botão Fechar")
 cel(wb_, "B13", "1 por estação (ligado ao concentrador)")
 cel(wb_, "C13", "=%s" % tot("O", "P"), PRETO, NUM)
@@ -614,13 +614,13 @@ cel(wb_, "D14", "=D13*2", PRETO, NUM2)
 cel(wb_, "E14", "=" + REF["custo_hora"], VERDE, BRL)
 cel(wb_, "F14", "=C14*E14", PRETO, BRL)
 cel(wb_, "G14", "=D14*E14", PRETO, BRL)
-cel(wb_, "A15", "TOTAL B2 — displays + tags + leitor fixo", NEG, fill=TOTAL)
+cel(wb_, "A15", "TOTAL B2, displays + tags + leitor fixo", NEG, fill=TOTAL)
 for col in "BCDE":
     cel(wb_, "%s15" % col, None, fill=TOTAL)
 cel(wb_, "F15", "=F3+F4+F5+F13+F14", NEG, BRL, fill=TOTAL)
 cel(wb_, "G15", "=G3+G4+G5+G13+G14", NEG, BRL, fill=TOTAL)
-cel(wb_, "A17", "Referência de mercado — leitor de pulso comercial")
-cel(wb_, "B17", "FEIG HyWEAR (UHF) por operador — não lê NFC; exigiria tags UHF")
+cel(wb_, "A17", "Referência de mercado, leitor de pulso comercial")
+cel(wb_, "B17", "FEIG HyWEAR (UHF) por operador, não lê NFC; exigiria tags UHF")
 cel(wb_, "C17", "=C8", PRETO, NUM)
 cel(wb_, "D17", "=D8", PRETO, NUM)
 cel(wb_, "E17", "=" + PRECO["P36"], VERDE, BRL)
@@ -639,7 +639,7 @@ sw = [
     ("Serviço PTL (API REST + MQTT + regras de separação)", "A e B", 240, "Núcleo: abre/fecha caixa, divide por estação/zona, ordena pela rota"),
     ("Integração Sybase ASE (tabelas PTL, views, procedures)", "A e B", 120, "Leitura de itens da caixa e gravação de eventos/log"),
     ("Integração API do sistema BHT (informações da caixa)", "A e B", 60, "Consulta da caixa e, se possível, liberação para a próxima estação"),
-    ("App coletor Android (A1 — app próprio)", "A", 160, "Leitura com gatilho para abrir/fechar, progresso da caixa"),
+    ("App coletor Android (A1, app próprio)", "A", 160, "Leitura com gatilho para abrir/fechar, progresso da caixa"),
     ("Tela no WMS PowerBuilder para o coletor (A2)", "A", 80, "Alternativa ao app; grava a leitura em tabela consumida pelo serviço"),
     ("Firmware do concentrador (Ethernet + MQTT + 2 barramentos RS-485)", "A e B", 120, "Base no protótipo MicroPython já validado"),
     ("Firmware dos nós de coluna e módulos E+Q", "A e B", 100, "Protocolo de barramento, endereçamento, auto-teste"),
@@ -655,12 +655,12 @@ for i, (comp, arq, h, obs) in enumerate(sw, 2):
     cel(wsw, "D%d" % i, "=C%d*%s" % (i, REF["custo_hora_dev"]), PRETO, BRL0)
     cel(wsw, "E%d" % i, obs, wrap=True)
 n = len(sw) + 2
-cel(wsw, "A%d" % n, "TOTAL — Arquitetura A com app próprio (sem tela WMS e sem itens só da B)", NEG, fill=TOTAL)
+cel(wsw, "A%d" % n, "TOTAL, Arquitetura A com app próprio (sem tela WMS e sem itens só da B)", NEG, fill=TOTAL)
 cel(wsw, "B%d" % n, None, fill=TOTAL)
 cel(wsw, "C%d" % n, '=SUMIF(B2:B%d,"A e B",C2:C%d)+C5' % (n - 1, n - 1), NEG, NUM, fill=TOTAL)
 cel(wsw, "D%d" % n, "=C%d*%s" % (n, REF["custo_hora_dev"]), NEG, BRL0, fill=TOTAL)
 cel(wsw, "E%d" % n, "Com a tela no WMS (A2) no lugar do app, troque 160 h por 80 h.", wrap=True, fill=TOTAL)
-cel(wsw, "A%d" % (n + 1), "TOTAL — Arquitetura B", NEG, fill=TOTAL)
+cel(wsw, "A%d" % (n + 1), "TOTAL, Arquitetura B", NEG, fill=TOTAL)
 cel(wsw, "B%d" % (n + 1), None, fill=TOTAL)
 cel(wsw, "C%d" % (n + 1), '=SUMIF(B2:B%d,"A e B",C2:C%d)+SUMIF(B2:B%d,"B",C2:C%d)' % (n - 1, n - 1, n - 1, n - 1), NEG, NUM, fill=TOTAL)
 cel(wsw, "D%d" % (n + 1), "=C%d*%s" % (n + 1, REF["custo_hora_dev"]), NEG, BRL0, fill=TOTAL)
@@ -671,22 +671,22 @@ SW_A, SW_B = n, n + 1
 # 10. RESUMO
 # =====================================================================
 wr = wb.create_sheet("Resumo")
-cabecalho(wr, 3, ["Cenário", "Descrição", "Piloto (R$)", "Operação completa (R$)", "Por estação — completo (R$)"],
+cabecalho(wr, 3, ["Cenário", "Descrição", "Piloto (R$)", "Operação completa (R$)", "Por estação, completo (R$)"],
           [40, 62, 17, 21, 21])
-cel(wr, "A1", "Resumo do orçamento — Pick-to-Light", TIT, borda=False)
+cel(wr, "A1", "Resumo do orçamento, Pick-to-Light", TIT, borda=False)
 cel(wr, "A2", "Piloto: estações marcadas 'S' na aba Estações (padrão 05 e 27). Valores de hardware; software na última linha.",
     Font(name="Arial", size=9, italic=True), borda=False)
 cen = [
-    ("A — Interno, só peças (12 V)", "Peças para toda a operação, montagem própria", "'A-Interno'!F%d" % A_PECAS, "'A-Interno'!G%d" % A_PECAS),
-    ("A — Interno, só peças (variante 5 V)", "Sem reguladores, fonte 5 V, mais cabo de força", "'A-Interno'!F%d" % A_5V, "'A-Interno'!G%d" % A_5V),
-    ("A — Interno, peças + mão de obra", "Montagem, instalação e comissionamento internos", "'A-Interno'!F%d" % A_TOT, "'A-Interno'!G%d" % A_TOT),
-    ("A — Terceiros T1 (PCB própria via EMS)", "Placas próprias fabricadas/montadas por terceiros + instalação",
+    ("A interno, só peças (12 V)", "Peças para toda a operação, montagem própria", "'A-Interno'!F%d" % A_PECAS, "'A-Interno'!G%d" % A_PECAS),
+    ("A interno, só peças (variante 5 V)", "Sem reguladores, fonte 5 V, mais cabo de força", "'A-Interno'!F%d" % A_5V, "'A-Interno'!G%d" % A_5V),
+    ("A interno, peças + mão de obra", "Montagem, instalação e comissionamento internos", "'A-Interno'!F%d" % A_TOT, "'A-Interno'!G%d" % A_TOT),
+    ("A terceiros, T1 (PCB própria via EMS)", "Placas próprias fabricadas/montadas por terceiros + instalação",
      "'A-Terceiros'!F%d" % T1_TOT, "'A-Terceiros'!G%d" % T1_TOT),
-    ("A — Terceiros T2 (PTL comercial importado)", "Hardware PTL pronto + instalação",
+    ("A terceiros, T2 (PTL comercial importado)", "Hardware PTL pronto + instalação",
      "'A-Terceiros'!F%d" % T2_TOT, "'A-Terceiros'!G%d" % T2_TOT),
-    ("B1 — RFID com pulseira", "Displays (A interno) + tags + pulseiras NFC", "'B-RFID'!F10", "'B-RFID'!G10"),
-    ("B2 — RFID com leitor fixo na estação", "Displays (A interno) + tags + leitor fixo e painel", "'B-RFID'!F15", "'B-RFID'!G15"),
-    ("Opcional — guia de coluna no baixo giro", "1 LED por prédio do fundo", "'A-Interno'!F%d" % A_GUIA, "'A-Interno'!G%d" % A_GUIA),
+    ("B1, RFID com pulseira", "Displays (A interno) + tags + pulseiras NFC", "'B-RFID'!F10", "'B-RFID'!G10"),
+    ("B2, RFID com leitor fixo na estação", "Displays (A interno) + tags + leitor fixo e painel", "'B-RFID'!F15", "'B-RFID'!G15"),
+    ("Opcional, guia de coluna no baixo giro", "1 LED por prédio do fundo", "'A-Interno'!F%d" % A_GUIA, "'A-Interno'!G%d" % A_GUIA),
 ]
 for i, (nome, desc, fp, fc) in enumerate(cen, 4):
     cel(wr, "A%d" % i, nome, NEG)

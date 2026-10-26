@@ -1,4 +1,4 @@
-// Apresentacao para diretoria e arquitetura — Pick-to-Light
+// Apresentação para diretoria e arquitetura: projeto Pick-to-Light
 const pptxgen = require("pptxgenjs");
 const fs = require("fs");
 const React = require("react");
@@ -33,7 +33,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
 (async () => {
   const pres = new pptxgen();
   pres.layout = "LAYOUT_WIDE"; // 13.33 x 7.5
-  pres.title = "Pick-to-Light — Arquitetura e orçamento";
+  pres.title = "Pick-to-Light: arquitetura e orçamento";
   pres.theme = { headFontFace: THEME.headFontFace, bodyFontFace: THEME.bodyFontFace };
   const C = pres.SchemeColor;
   const W = 13.333;
@@ -88,19 +88,15 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   pres.addSection({ title: "Abertura" });
   let s = pres.addSlide({ masterName: "CAPA", sectionTitle: "Abertura" });
   s.addText("Pick-to-Light no flow rack", { placeholder: "title" });
-  s.addText("Arquitetura, funcionamento, orçamento e demonstração · 40 estações de Medicamento e Perfumaria", { placeholder: "body" });
-  for (let i = 0; i < 12; i++) {
-    const aceso = [1, 4, 7, 8].includes(i);
-    s.addShape(pres.shapes.OVAL, { x: 0.8 + i * 0.55, y: 1.45, w: 0.28, h: 0.28, fill: { color: aceso ? HEX.ambar : "2E3A4F" }, line: { color: aceso ? HEX.ambar : "2E3A4F" } });
-  }
-  s.addText("Versão para decisão · 23/10/2026", { x: 0.8, y: 6.5, w: 6, h: 0.4, fontSize: 14, color: "8A97AB", margin: 0 });
-  s.addNotes("Abertura: o objetivo da reunião é decidir o piloto e a arquitetura. Tudo o que for mostrado tem planilha, documento técnico e simulador como apoio.");
+  s.addText("Proposta de arquitetura, orçamento e piloto para as 40 estações de Medicamento e Perfumaria", { placeholder: "body" });
+  s.addText("TI · outubro de 2026", { x: 0.8, y: 6.5, w: 6, h: 0.4, fontSize: 14, color: "8A97AB", margin: 0 });
+  s.addNotes("Objetivo da reunião: decidir o piloto e a arquitetura. A planilha, o documento técnico e o simulador estão disponíveis para consulta.");
 
   // ================================================================ 2 RESUMO
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Abertura" });
-  titulo(s, "Resumo: piloto de R$ 15,4 mil para validar a operação completa");
+  titulo(s, "Resumo");
   const stats = [
-    ["40", "estações", "20 Medicamento + 20 Perfumaria"],
+    ["40", "estações", "20 de Medicamento e 20 de Perfumaria"],
     ["7.981", "endereços", "1.280 com display próprio no alto giro"],
     ["R$ 284 mil", "operação completa", "Arquitetura A, produção interna"],
     ["R$ 15,4 mil", "piloto", "estações 05 e 27"],
@@ -113,20 +109,19 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     s.addText(d, { x: x + 0.2, y: 3.0, w: 2.5, h: 0.55, fontSize: 13, color: C.accent6, margin: 0, isTextBox: true });
   });
   s.addText([
-    { text: "Recomendação: ", options: { bold: true, color: C.text1 } },
-    { text: "Arquitetura A (coletores MovFast já existentes + concentrador + displays), produção interna em 12 V, piloto nas estações 05 e 27. A Arquitetura B (RFID) fica como evolução, usando a mesma infraestrutura de displays.", options: { color: C.text2 } },
+    { text: "Proposta: ", options: { bold: true, color: C.text1 } },
+    { text: "começar pela Arquitetura A, que usa os coletores MovFast que já temos, com os módulos montados internamente e alimentação em 12 V. O piloto seria nas estações 05 e 27. A Arquitetura B (RFID) pode vir depois, aproveitando os mesmos displays.", options: { color: C.text2 } },
   ], { x: 0.6, y: 4.1, w: 12.1, h: 1.1, fontSize: 17, margin: 0, isTextBox: true, valign: "top" });
-  circuloIcone(s, ic.ok, 0.6, 5.45, 0.5, C.accent2);
-  s.addText("Decisões pedidas hoje: aprovar o piloto, a arquitetura A como base e o caminho de produção interna.", { x: 1.25, y: 5.45, w: 11.4, h: 0.5, fontSize: 16, color: C.text1, bold: true, margin: 0, valign: "middle", isTextBox: true });
-  s.addNotes("Números da tabela wms_endereco e da planilha Orcamento_PTL.xlsx (aba Resumo). O piloto custa cerca de 5% da operação completa e mede o ganho real antes do investimento maior.");
+  s.addText("Para decidir hoje: aprovação do piloto, Arquitetura A como base e montagem interna dos módulos.", { x: 0.6, y: 5.45, w: 12.1, h: 0.5, fontSize: 16, color: C.text1, bold: true, margin: 0, valign: "middle", isTextBox: true });
+  s.addNotes("Números da tabela wms_endereco e da planilha Orcamento_PTL.xlsx (aba Resumo). O piloto custa cerca de 5% da operação completa e permite medir o ganho antes de investir no restante.");
 
   // ================================================================ 3 PROBLEMA
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Abertura" });
-  titulo(s, "Hoje o operador procura o endereço; a luz passa a indicar onde e quanto");
+  titulo(s, "Situação atual e objetivos");
   const prob = [
-    [ic.caixa, "≈ 3.000 volumes/dia", "passam pela linha de separação"],
-    [ic.mao, "250 a 270 mil produtos/dia", "separados em linha nas 40 estações"],
-    [ic.ferr, "Manutenção era o problema", "na experiência anterior (fios contínuos na canaleta)"],
+    [ic.caixa, "Cerca de 3.000 volumes por dia", "passam pela linha de separação"],
+    [ic.mao, "250 a 270 mil produtos por dia", "separados nas 40 estações"],
+    [ic.ferr, "Manutenção no sistema anterior", "fios contínuos na canaleta davam muito trabalho"],
   ];
   prob.forEach(([img, a, b], i) => {
     const y = 1.55 + i * 1.3;
@@ -140,20 +135,20 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     { text: "Reduzir o tempo por caixa em cada estação", options: { bullet: true, breakLine: true } },
     { text: "Reduzir erros de separação (endereço e quantidade)", options: { bullet: true, breakLine: true } },
     { text: "Abrir e fechar a caixa só com a leitura, sem tocar na tela", options: { bullet: true, breakLine: true } },
-    { text: "Troca de qualquer display em menos de 5 minutos", options: { bullet: true, breakLine: true } },
-    { text: "Visão em tempo real para gestão e TI", options: { bullet: true } },
+    { text: "Trocar um display com defeito em menos de 5 minutos", options: { bullet: true, breakLine: true } },
+    { text: "Acompanhamento das estações pela gestão e pela TI", options: { bullet: true } },
   ], { x: 7.5, y: 2.25, w: 5, h: 3.8, fontSize: 16, color: C.text2, paraSpaceAfter: 10, valign: "top", isTextBox: true });
-  s.addText("Fora do escopo agora: controle da esteira (BHT), falta no display (segue na conferência) e reposição (melhoria futura).", { x: 0.6, y: 5.6, w: 6.3, h: 0.8, fontSize: 13, italic: true, color: C.accent6, margin: 0, isTextBox: true });
-  s.addNotes("Volume informado pela operação. A falta continua sendo apontada na conferência, como hoje, para não alterar processos além do necessário.");
+  s.addText("Fica fora nesta fase: controle da esteira (continua no BHT), falta de produto (continua na conferência) e reposição.", { x: 0.6, y: 5.6, w: 6.3, h: 0.8, fontSize: 13, italic: true, color: C.accent6, margin: 0, isTextBox: true });
+  s.addNotes("Volume informado pela operação. A falta continua sendo apontada na conferência para não mudar mais processos do que o necessário.");
 
   // ================================================================ 4 COMO FUNCIONA
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Abertura" });
-  titulo(s, "Quatro passos, nenhum toque na tela");
+  titulo(s, "Como funciona na estação");
   const passos = [
     [ic.barcode, "1. Lê a etiqueta", "O operador aperta o gatilho do coletor na etiqueta da caixa. A caixa abre na estação."],
-    [ic.luz, "2. Displays acendem", "Alto giro: todos os endereços com a quantidade. Baixo giro: endereço + quantidade por zona."],
+    [ic.luz, "2. Displays acendem", "No alto giro acendem todos os endereços da caixa. No baixo giro, cada zona mostra endereço e quantidade."],
     [ic.mao, "3. Pega e confirma", "Pega a quantidade e aperta o botão. O display apaga ou passa ao próximo item da zona."],
-    [ic.ok, "4. Lê de novo e fecha", "Com todos apagados, nova leitura fecha, registra no Sybase e a bacia volta à esteira."],
+    [ic.ok, "4. Lê de novo e fecha", "Com tudo apagado, nova leitura fecha a caixa, grava no Sybase e a caixa volta à esteira."],
   ];
   passos.forEach(([img, t1, t2], i) => {
     const x = 0.6 + i * 3.1;
@@ -162,23 +157,23 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     s.addText(t1, { x: x + 0.3, y: 3.0, w: 2.35, h: 0.5, fontSize: 19, bold: true, color: C.text1, margin: 0, isTextBox: true });
     s.addText(t2, { x: x + 0.3, y: 3.5, w: 2.35, h: 1.8, fontSize: 14, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
   });
-  s.addText("Na Arquitetura B, os passos 1 e 4 acontecem com a leitura RFID da tag fixa na caixa retornável.", { x: 0.6, y: 5.85, w: 12, h: 0.5, fontSize: 14, italic: true, color: C.accent4, margin: 0, isTextBox: true });
-  s.addNotes("Abertura e fechamento só com a leitura atende ao pedido da operação: selecionar opção na tela reduz produtividade.");
+  s.addText("Na Arquitetura B, os passos 1 e 4 são feitos pela leitura da tag RFID fixa na caixa.", { x: 0.6, y: 5.85, w: 12, h: 0.5, fontSize: 14, italic: true, color: C.accent4, margin: 0, isTextBox: true });
+  s.addNotes("A operação pediu que abrir e fechar a caixa fosse só pela leitura, sem escolher opção na tela.");
 
   // ================================================================ SECAO ARQUITETURAS
   pres.addSection({ title: "Arquiteturas" });
   s = pres.addSlide({ masterName: "SECAO", sectionTitle: "Arquiteturas" });
-  s.addText("Duas arquiteturas, uma mesma infraestrutura de displays", { placeholder: "title" });
-  s.addText("A muda só a forma de identificar a caixa: coletor (A) ou RFID (B)", { placeholder: "body" });
+  s.addText("Arquiteturas", { placeholder: "title" });
+  s.addText("As duas usam os mesmos displays. Muda apenas como a caixa é identificada: pelo coletor (A) ou por RFID (B).", { placeholder: "body" });
 
   // ================================================================ 6 ARQ A
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Arquiteturas" });
-  titulo(s, "Arquitetura A: coletor existente + concentrador por estação");
+  titulo(s, "Arquitetura A: coletor de dados");
   imagem(s, BASE + "/diagramas/arquitetura_a.png", 0.5, 1.3, 8.6, 5.5);
   const cardsA = [
-    ["Coletor MovFast", "A1: app Android próprio (recomendado)\nA2: tela do WMS no coletor"],
-    ["Serviço PTL", "API + MQTT, integra Sybase e API do BHT, painel de gestão"],
-    ["Concentrador", "Ethernet cabeada, 2 barramentos RS-485, fonte 12 V, gabinete ventilado"],
+    ["Coletor MovFast", "A1: app Android próprio (indicado)\nA2: tela do WMS no coletor"],
+    ["Serviço PTL", "API e MQTT, ligado ao Sybase e à API do BHT, com painel de acompanhamento"],
+    ["Concentrador", "Rede cabeada, dois barramentos RS-485, fonte de 12 V e gabinete ventilado"],
   ];
   cardsA.forEach(([a, b], i) => {
     const y = 1.4 + i * 1.75;
@@ -186,16 +181,22 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     s.addText(a, { x: 9.55, y: y + 0.12, w: 3.0, h: 0.4, fontSize: 16, bold: true, color: C.text1, margin: 0, isTextBox: true });
     s.addText(b, { x: 9.55, y: y + 0.52, w: 3.0, h: 0.95, fontSize: 13, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
   });
-  s.addNotes("A alternativa A1 (app) dá a melhor experiência; A2 (tela do WMS) é mais rápida de desenvolver e pode servir no piloto se o app atrasar.");
+  s.addNotes("O app (A1) é melhor para o operador. A tela do WMS (A2) é mais rápida de fazer e pode ser usada no piloto se o app atrasar.");
+
+  // ================================================================ 6b COMPONENTES
+  s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Arquiteturas" });
+  titulo(s, "Arquitetura de componentes");
+  imagem(s, BASE + "/diagramas/componentes.png", 0.5, 1.2, 12.3, 5.7);
+  s.addNotes("Azul: software novo (Serviço PTL). Verde: hardware novo em cada estação. Marrom: sistemas que já existem. Tracejado: opcional ou só na Arquitetura B. O serviço fala com o Sybase por SQL, com o BHT por HTTP e com os 40 concentradores por MQTT na rede cabeada; cada concentrador comanda dois barramentos RS-485.");
 
   // ================================================================ 7 ARQ B
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Arquiteturas" });
-  titulo(s, "Arquitetura B: RFID na caixa retornável, mesmos displays");
+  titulo(s, "Arquitetura B: RFID na caixa");
   imagem(s, BASE + "/diagramas/arquitetura_b.png", 0.5, 1.3, 8.6, 5.5);
   const cardsB = [
-    ["B2 — leitor fixo (recomendado)", "Leitor NFC na posição da caixa + painel LCD. Nada no corpo do operador."],
-    ["B1 — pulseira NFC", "≈ R$ 130 por unidade, mãos livres; bateria e conforto são o ponto de atenção."],
-    ["Tag na caixa", "NTAG213 ≈ R$ 2,37/un; frota estimada de 5.000 caixas (confirmar)."],
+    ["B2: leitor fixo (indicado)", "Leitor NFC no ponto onde a caixa para e painel LCD. O operador não carrega nada."],
+    ["B1: pulseira NFC", "Cerca de R$ 130 por unidade, mãos livres. Bateria e conforto preocupam."],
+    ["Tag na caixa", "NTAG213, cerca de R$ 2,37 cada. Frota estimada em 5.000 caixas, a confirmar."],
   ];
   cardsB.forEach(([a, b], i) => {
     const y = 1.4 + i * 1.75;
@@ -203,63 +204,63 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     s.addText(a, { x: 9.55, y: y + 0.12, w: 3.0, h: 0.4, fontSize: 15, bold: true, color: C.accent4, margin: 0, isTextBox: true });
     s.addText(b, { x: 9.55, y: y + 0.52, w: 3.0, h: 0.95, fontSize: 13, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
   });
-  s.addNotes("Leitores de pulso comerciais são UHF (ex.: FEIG ≈ US$ 997) e leem de longe, com risco de pegar a caixa vizinha. Por isso a proposta usa NFC de curto alcance.");
+  s.addNotes("Os leitores de pulso comerciais são UHF (o FEIG custa cerca de US$ 997) e leem de longe, podendo pegar a caixa vizinha. Por isso a proposta usa NFC, que lê a poucos centímetros.");
 
   // ================================================================ 8 A x B
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Arquiteturas" });
-  titulo(s, "A começa mais rápido e mais barato; B tira o coletor da mão do operador");
+  titulo(s, "Comparação entre A e B");
   const cab = (t) => ({ text: t, options: { bold: true, color: C.background1, fill: { color: C.text1 } } });
   const linhasAB = [
-    [cab("Critério"), cab("A — Coletor"), cab("B2 — RFID leitor fixo")],
-    ["Leitura da caixa", "Coletores MovFast já existentes", "Tag fixa na caixa + leitor por estação"],
-    ["Ação do operador", "Gatilho para abrir e para fechar", "Posiciona a caixa (abre); nova leitura (fecha)"],
-    ["Hardware — 40 estações", "R$ 284 mil", "R$ 308 mil"],
+    [cab("Critério"), cab("A: coletor"), cab("B2: RFID com leitor fixo")],
+    ["Leitura da caixa", "Coletores MovFast que já temos", "Tag em cada caixa e leitor em cada estação"],
+    ["O que o operador faz", "Aperta o gatilho para abrir e para fechar", "Posiciona a caixa (abre) e lê de novo (fecha)"],
+    ["Hardware, 40 estações", "R$ 284 mil", "R$ 308 mil"],
     ["Custo recorrente novo", "Nenhum", "Tags de caixas novas ou danificadas"],
-    ["Software (estimativa)", "≈ 1.080 h", "≈ 1.000 h + cadastro das tags"],
+    ["Software (estimativa)", "Cerca de 1.080 h", "Cerca de 1.000 h, mais o cadastro das tags"],
     ["Principais riscos", "Wi-Fi e disponibilidade dos coletores", "Posição de leitura na esteira; frota de tags"],
-    ["Prazo", "Menor", "Maior (tags, cadastro, mecânica)"],
+    ["Prazo", "Menor", "Maior, por causa das tags, do cadastro e da instalação"],
   ];
   s.addTable(linhasAB, { x: 0.6, y: 1.45, w: 12.1, colW: [3.0, 4.55, 4.55], fontSize: 15, color: C.text2, border: { type: "solid", pt: 0.75, color: "D5DBE3" }, rowH: 0.56, valign: "middle", margin: [4, 8, 4, 8] });
-  s.addNotes("Valores com mão de obra interna. A Arquitetura B reaproveita 100% da infraestrutura de displays da A, então começar pela A não perde investimento.");
+  s.addNotes("Valores com mão de obra interna. A B usa toda a parte de displays da A, então começar pela A não desperdiça investimento.");
 
   // ================================================================ SECAO ESTACAO
   pres.addSection({ title: "A estação" });
   s = pres.addSlide({ masterName: "SECAO", sectionTitle: "A estação" });
-  s.addText("A estação: alto giro na esteira, baixo giro no corredor", { placeholder: "title" });
-  s.addText("Layout conforme o desenho da operação, com os endereços reais da tabela wms_endereco", { placeholder: "body" });
+  s.addText("A estação", { placeholder: "title" });
+  s.addText("Layout desenhado com a operação e com os endereços da tabela wms_endereco", { placeholder: "body" });
 
   // ================================================================ 10a PLANTA
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "A estação" });
-  titulo(s, "Uma transferência atende 4 estações; a bacia volta à esteira de qualquer ponto");
+  titulo(s, "Planta da estação e transferência");
   imagem(s, BASE + "/diagramas/planta_estacao.png", 0.5, 1.25, 12.3, 5.6);
-  s.addNotes("Esteira de transporte e de separação lado a lado (≈ 20 cm). A transferência passa a bacia para a separação e o rolete direcionador manda para 2 estações à esquerda ou 2 à direita (ex.: entre 11 e 12 atende 10 a 13; na ponta, entre 3 e 4 atende 3, 4 e 5). A bacia só entra nas estações com itens do pedido. Alto giro na frente do operador, com a esteira de transporte passando por dentro (por baixo do andar 3 e por cima do andar 4) e a de separação aberta na frente; corredor do baixo giro atrás do operador, com 020-031 à esquerda e 015 + 043 a 032 à direita.");
+  s.addNotes("Esteira de transporte e de separação lado a lado, a uns 20 cm uma da outra. A transferência passa a bacia para a separação e o rolete direcionador manda para 2 estações à esquerda ou 2 à direita (ex.: entre 11 e 12 atende 10 a 13; na ponta, entre 3 e 4 atende 3, 4 e 5). A bacia só entra nas estações com itens do pedido. Alto giro na frente do operador, com a esteira de transporte passando por dentro (por baixo do andar 3 e por cima do andar 4) e a de separação aberta na frente; corredor do baixo giro atrás do operador, com 020-031 à esquerda e 015 + 043 a 032 à direita.");
 
   // ================================================================ 10 LAYOUT
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "A estação" });
-  titulo(s, "Andar 0 em cima; alto giro com display por endereço e baixo giro por zonas");
+  titulo(s, "Vista frontal da estação 05");
   imagem(s, BASE + "/diagramas/layout_estacao.png", 0.5, 1.4, 12.3, 4.4);
   const leg = [
-    [C.accent2, "Alto giro, andares 0-3 (de cima)", "1 display de quantidade por endereço (29 a 35 por estação)"],
-    [C.accent3, "Alto giro, andares 4-5", "4 displays por estação (A4 e A5 em cada lado) com endereço + quantidade"],
-    [C.accent1, "Baixo giro", "4 zonas por lado do corredor, display de endereço + quantidade na altura dos olhos"],
+    [C.accent2, "Alto giro, andares 0 a 3", "um display de quantidade por endereço (29 a 35 por estação)"],
+    [C.accent3, "Alto giro, andares 4 e 5", "quatro displays de endereço e quantidade (A4 e A5 em cada lado)"],
+    [C.accent1, "Baixo giro", "quatro zonas por lado, com display na altura dos olhos"],
   ];
   leg.forEach(([cor, a, b], i) => {
     const x = 0.6 + i * 4.1;
     s.addShape(pres.shapes.OVAL, { x, y: 6.15, w: 0.28, h: 0.28, fill: { color: cor }, line: { color: cor } });
     s.addText([{ text: a + ": ", options: { bold: true, color: C.text1 } }, { text: b, options: { color: C.accent6 } }], { x: x + 0.4, y: 6.0, w: 3.6, h: 0.65, fontSize: 12, margin: 0, valign: "middle", isTextBox: true });
   });
-  s.addNotes("Prateleiras alinhadas; a caixa do endereço muda de tamanho pelo tipo. Estação 05: 209 endereços. 49 de alto giro (29 com display próprio + 20 nos andares 4-5, atendidos por 4 displays E+Q) e 160 de baixo giro em 8 zonas (4 por lado, displays na altura dos olhos). O tamanho da zona é parâmetro e será ajustado no piloto.");
+  s.addNotes("Prateleiras alinhadas; a caixa do endereço muda de tamanho pelo tipo. Estação 05: 209 endereços. 49 de alto giro (29 com display próprio e 20 nos andares 4 e 5, atendidos por quatro displays) e 160 de baixo giro em 8 zonas (4 por lado, displays na altura dos olhos). O tamanho da zona é parâmetro e será ajustado no piloto.");
 
   // ================================================================ 11 DISPLAYS E CABEAMENTO
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "A estação" });
-  titulo(s, "Conector em todos os trechos: display trocado em menos de 5 minutos");
+  titulo(s, "Displays e cabeamento");
   imagem(s, BASE + "/diagramas/modulos.png", 0.5, 1.3, 7.4, 2.5);
   imagem(s, BASE + "/diagramas/cabeamento.png", 0.5, 3.95, 7.4, 3.0);
   const pontos = [
-    [ic.rede, "Cat5e com RJ45", "RS-485 e 12 V no mesmo cabo; cada trecho é um cabo curto com conector."],
-    [ic.ferr, "Sem fio contínuo na canaleta", "Diferente do sistema anterior: o módulo com defeito sai sem abrir a canaleta."],
-    [ic.escudo, "12 V em vez de 5 V", "Em 10 m de cabo a queda chega a 34% em 5 V e a 14% em 12 V, absorvida pelos reguladores locais."],
-    [ic.chip, "Gabinete ventilado", "Filtro e cooler contra poeira e calor; auto-teste diário dos displays."],
+    [ic.rede, "Cat5e com RJ45", "Dados e 12 V no mesmo cabo. Cada trecho é um cabo curto com conector."],
+    [ic.ferr, "Sem fio contínuo na canaleta", "Ao contrário do sistema anterior, o módulo com defeito sai sem abrir a canaleta."],
+    [ic.escudo, "12 V em vez de 5 V", "Em 10 m de cabo a queda é de 34% em 5 V e de 14% em 12 V, que os reguladores dos módulos compensam."],
+    [ic.chip, "Gabinete ventilado", "Filtro e cooler por causa da poeira e do calor. Teste dos displays a cada turno."],
   ];
   pontos.forEach(([img, a, b], i) => {
     const y = 1.45 + i * 1.35;
@@ -267,76 +268,76 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     s.addText(a, { x: 9.05, y: y - 0.05, w: 3.7, h: 0.4, fontSize: 16, bold: true, color: C.text1, margin: 0, isTextBox: true });
     s.addText(b, { x: 9.05, y: y + 0.35, w: 3.7, h: 0.85, fontSize: 13, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
   });
-  s.addNotes("O requisito central da operação é reduzir manutenção. Cada módulo se conecta por RJ45; o nó de coluna concentra os displays de um prédio.");
+  s.addNotes("O principal pedido da operação é reduzir a manutenção. Cada módulo se liga por RJ45 e o nó de coluna reúne os displays de um prédio.");
 
   // ================================================================ 12 INTERFACES
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "A estação" });
-  titulo(s, "No coletor, só o necessário: abrir, acompanhar e fechar");
+  titulo(s, "Telas do coletor e painel");
   imagem(s, BASE + "/diagramas/telas_coletor.png", 0.5, 1.3, 8.4, 4.6);
   s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 9.2, y: 1.4, w: 3.55, h: 4.9, rectRadius: 0.1, fill: { color: C.background2 }, line: { color: C.background2 } });
   circuloIcone(s, ic.grafico, 9.45, 1.6, 0.6, C.accent3);
-  s.addText("Painel de monitoramento", { x: 10.15, y: 1.65, w: 2.5, h: 0.55, fontSize: 15, bold: true, color: C.text1, margin: 0, valign: "middle", isTextBox: true });
+  s.addText("Painel de acompanhamento", { x: 10.15, y: 1.65, w: 2.5, h: 0.55, fontSize: 15, bold: true, color: C.text1, margin: 0, valign: "middle", isTextBox: true });
   s.addText([
-    { text: "Status das 40 estações em tempo real", options: { bullet: true, breakLine: true } },
-    { text: "Caixas/hora e tempo médio por caixa", options: { bullet: true, breakLine: true } },
+    { text: "Situação das 40 estações", options: { bullet: true, breakLine: true } },
+    { text: "Caixas por hora e tempo médio por caixa", options: { bullet: true, breakLine: true } },
     { text: "Módulos e concentradores com falha", options: { bullet: true, breakLine: true } },
-    { text: "Para gestão da operação e TI", options: { bullet: true } },
+    { text: "Usado pela gestão da operação e pela TI", options: { bullet: true } },
   ], { x: 9.45, y: 2.35, w: 3.15, h: 3.6, fontSize: 14, color: C.text2, paraSpaceAfter: 8, valign: "top", isTextBox: true });
   s.addNotes("Telas do app A1. Com itens pendentes, a segunda leitura gera um alerta e exige nova leitura para fechar; a pendência fica registrada para a conferência.");
 
   // ================================================================ 13 SEQUENCIA
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "A estação" });
-  titulo(s, "Integração: o Serviço PTL fala com o Sybase, a API do BHT e os concentradores");
+  titulo(s, "Integração com Sybase, BHT e concentradores");
   imagem(s, BASE + "/diagramas/sequencia.png", 0.5, 1.3, 8.6, 5.4);
   const integ = [
-    ["Sybase ASE", "Tabelas PTL (sessões, eventos, mapa) e views dos itens da caixa"],
-    ["API do BHT", "Dados da caixa; aviso de conclusão a validar com o fornecedor"],
-    ["MQTT", "Comandos e eventos por estação, com usuário e ACL próprios"],
-    ["Rede", "VLAN dedicada; coletores no Wi-Fi existente"],
+    ["Sybase ASE", "Tabelas do PTL (sessões, eventos e mapa) e views com os itens da caixa"],
+    ["API do BHT", "Dados da caixa. O aviso de conclusão depende do fornecedor."],
+    ["MQTT", "Comandos e eventos de cada estação, com usuário e permissão próprios"],
+    ["Rede", "VLAN só do PTL. Coletores no Wi-Fi atual."],
   ];
   integ.forEach(([a, b], i) => {
     const y = 1.45 + i * 1.3;
     s.addText(a, { x: 9.35, y, w: 3.4, h: 0.4, fontSize: 16, bold: true, color: C.text1, margin: 0, isTextBox: true });
     s.addText(b, { x: 9.35, y: y + 0.4, w: 3.4, h: 0.8, fontSize: 13, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
   });
-  s.addNotes("Para o arquiteto de software: o serviço lê os itens por views no Sybase para não acoplar ao modelo do WMS. Linguagem e hospedagem do serviço ficam para a decisão da arquitetura.");
+  s.addNotes("Para a arquitetura de software: o serviço lê os itens por views no Sybase para não depender do modelo do WMS. Linguagem e servidor ainda serão definidos.");
 
   // ================================================================ SECAO ORCAMENTO
   pres.addSection({ title: "Orçamento" });
   s = pres.addSlide({ masterName: "SECAO", sectionTitle: "Orçamento" });
-  s.addText("Orçamento e caminhos de produção", { placeholder: "title" });
-  s.addText("Preços cotados em lojas brasileiras em 23/10/2026; estimativas marcadas na planilha", { placeholder: "body" });
+  s.addText("Orçamento", { placeholder: "title" });
+  s.addText("Preços pesquisados em lojas brasileiras em 23/10/2026. Os itens estimados estão marcados na planilha.", { placeholder: "body" });
 
   // ================================================================ 15 ORCAMENTO GRAFICO
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Orçamento" });
-  titulo(s, "Produção interna custa um terço de um sistema comercial importado");
-  s.addChart(pres.charts.BAR, [{ name: "Operação completa (R$ mil)", labels: ["A interna — só peças", "A interna — peças + mão de obra", "B2 — RFID leitor fixo", "B1 — RFID pulseira", "A terceiros — placa própria (EMS)", "A terceiros — PTL comercial"], values: [211, 284, 308, 309, 369, 906] }], {
+  titulo(s, "Custo de hardware por cenário");
+  s.addChart(pres.charts.BAR, [{ name: "Operação completa (R$ mil)", labels: ["A interna, só peças", "A interna, peças e mão de obra", "B2, RFID com leitor fixo", "B1, RFID com pulseira", "A com placa própria (EMS)", "A com PTL comercial"], values: [211, 284, 308, 309, 369, 906] }], {
     x: 0.5, y: 1.35, w: 8.3, h: 5.4, barDir: "bar", chartColors: [THEME.colors.accent3],
     catAxisLabelColor: "5B6675", valAxisLabelColor: "8A97AB", catAxisLabelFontSize: 12, valAxisLabelFontSize: 10,
     catAxisLabelFontFace: "+mn-lt", valAxisLabelFontFace: "+mn-lt", dataLabelFontFace: "+mn-lt",
     valGridLine: { color: "E3E7ED", size: 0.5 }, catGridLine: { style: "none" }, showLegend: false,
     showValue: true, dataLabelPosition: "outEnd", dataLabelColor: "1B2638", dataLabelFontSize: 12, dataLabelFormatCode: '"R$ "#,##0" mil"',
-    valAxisLabelFormatCode: "#,##0", catAxisOrientation: "maxMin", showTitle: true, title: "Hardware — 40 estações (R$ mil)", titleFontSize: 14, titleColor: "1B2638", titleFontFace: "+mn-lt",
+    valAxisLabelFormatCode: "#,##0", catAxisOrientation: "maxMin", showTitle: true, title: "Hardware para 40 estações (R$ mil)", titleFontSize: 14, titleColor: "1B2638", titleFontFace: "+mn-lt",
   });
   const tabP = [
-    [cab("Piloto 05 + 27"), cab("R$")],
-    ["A interna — peças", "11.668"],
-    ["A interna — peças + MO", "15.415"],
-    ["B2 — RFID leitor fixo", "16.588"],
-    ["A — placa própria (EMS)", "34.027"],
-    ["A — PTL comercial", "46.363"],
+    [cab("Piloto 05 e 27"), cab("R$")],
+    ["A interna, peças", "11.668"],
+    ["A interna, com mão de obra", "15.415"],
+    ["B2, leitor fixo", "16.588"],
+    ["A, placa própria", "34.027"],
+    ["A, PTL comercial", "46.363"],
   ];
   s.addTable(tabP, { x: 9.15, y: 1.45, w: 3.6, colW: [2.45, 1.15], fontSize: 13, color: C.text2, border: { type: "solid", pt: 0.75, color: "D5DBE3" }, rowH: 0.45, align: "left" });
-  s.addText("Software interno estimado: ≈ 1.080 h (A) e ≈ 1.000 h (B). Mão de obra a R$ 34,93/h (salário médio de técnico + encargos).", { x: 9.15, y: 4.45, w: 3.6, h: 1.6, fontSize: 12, italic: true, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
-  s.addNotes("Fonte: Orcamento_PTL.xlsx. A placa própria (EMS) só se paga em escala por causa do projeto (≈ R$ 15 mil) e da importação. Todas as quantidades e preços são editáveis na planilha.");
+  s.addText("Software interno estimado em cerca de 1.080 h (A) e 1.000 h (B). Mão de obra a R$ 34,93 por hora (salário médio de técnico com encargos).", { x: 9.15, y: 4.45, w: 3.6, h: 1.6, fontSize: 12, italic: true, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
+  s.addNotes("Fonte: Orcamento_PTL.xlsx. A placa própria só compensa em escala, por causa do projeto (cerca de R$ 15 mil) e da importação. Quantidades e preços podem ser alterados na planilha.");
 
   // ================================================================ 16 INTERNO x TERCEIROS
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Orçamento" });
-  titulo(s, "Interno no piloto; placa própria como opção de escala");
+  titulo(s, "Fazer internamente ou comprar");
   const col = [
-    ["Produção interna", C.accent2, "R$ 284 mil", ["Displays e placas comprados no Brasil", "Montagem e manutenção pela equipe", "Reposição imediata, domínio total", "Exige técnico de eletrônica"]],
-    ["Placa própria (EMS)", C.accent3, "R$ 369 mil", ["Projeto da placa ≈ R$ 15 mil", "Fabricação e montagem industrial", "Qualidade e repetibilidade", "Importação e prazo maiores"]],
-    ["PTL comercial", C.accent5, "R$ 906 mil", ["Produto pronto e com garantia", "≈ 3× o custo da produção interna", "Dependência do fornecedor", "Cotação formal necessária"]],
+    ["Produção interna", C.accent2, "R$ 284 mil", ["Displays e placas comprados no Brasil", "Montagem e manutenção pela equipe", "Reposição imediata", "Precisa de técnico de eletrônica"]],
+    ["Placa própria (EMS)", C.accent3, "R$ 369 mil", ["Projeto da placa, cerca de R$ 15 mil", "Fabricação e montagem industrial", "Peças sempre iguais", "Importação e prazo maiores"]],
+    ["PTL comercial", C.accent5, "R$ 906 mil", ["Produto pronto e com garantia", "Cerca de três vezes o custo interno", "Dependência do fornecedor", "Precisa de cotação formal"]],
   ];
   col.forEach(([t1, cor, v, itens], i) => {
     const x = 0.6 + i * 4.1;
@@ -347,18 +348,18 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     s.addText("operação completa", { x: x + 0.3, y: 3.1, w: 3.3, h: 0.35, fontSize: 12, color: C.accent6, margin: 0, isTextBox: true });
     s.addText(itens.map((it, k) => ({ text: it, options: { bullet: true, breakLine: k < itens.length - 1 } })), { x: x + 0.3, y: 3.6, w: 3.35, h: 2.5, fontSize: 14, color: C.text2, paraSpaceAfter: 6, valign: "top", isTextBox: true });
   });
-  s.addNotes("Valores com instalação. 12 V × 5 V: o custo de peças fica praticamente igual (R$ 211 mil × R$ 208 mil), mas 5 V exige mais pontos de alimentação e aumenta a manutenção — por isso a recomendação é 12 V.");
+  s.addNotes("Valores com instalação. 12 V × 5 V: o custo de peças fica praticamente igual (R$ 211 mil × R$ 208 mil), mas o 5 V exige mais pontos de alimentação e aumenta a manutenção. Por isso a indicação é 12 V.");
 
   // ================================================================ 17 PLANO
   pres.addSection({ title: "Próximos passos" });
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Próximos passos" });
-  titulo(s, "Piloto em cerca de 10 semanas, expansão por esteira");
+  titulo(s, "Cronograma");
   const fases = [
-    ["Protótipo de bancada", "3-4 sem.", "1 concentrador, 1 nó, displays, Serviço PTL mínimo"],
-    ["Piloto 05 e 27", "6-8 sem.", "Estações completas, app do coletor, painel, medição antes/depois"],
-    ["Avaliação", "2 sem.", "Indicadores, ajuste das zonas, decisão A/B e produção"],
-    ["Expansão", "10-14 sem.", "Medicamento e depois Perfumaria, em lotes de 5 estações"],
-    ["Estabilização", "4 sem.", "Ajustes finais e passagem para a sustentação"],
+    ["Protótipo de bancada", "3 a 4 sem.", "Um concentrador, um nó, displays e versão mínima do Serviço PTL"],
+    ["Piloto 05 e 27", "6 a 8 sem.", "Estações completas, app do coletor, painel e medição antes e depois"],
+    ["Avaliação", "2 sem.", "Resultados, ajuste das zonas e decisão entre A e B"],
+    ["Expansão", "10 a 14 sem.", "Medicamento e depois Perfumaria, de cinco em cinco estações"],
+    ["Estabilização", "4 sem.", "Ajustes finais e entrega para a sustentação"],
   ];
   s.addShape(pres.shapes.LINE, { x: 0.9, y: 2.55, w: 11.6, h: 0, line: { color: "C9D1DC", width: 3 } });
   fases.forEach(([a, d, b], i) => {
@@ -370,21 +371,21 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     s.addText(b, { x, y: 3.5, w: 2.25, h: 1.6, fontSize: 13, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
   });
   s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 0.6, y: 5.35, w: 12.1, h: 1.15, rectRadius: 0.08, fill: { color: C.background2 }, line: { color: C.background2 } });
-  s.addText([{ text: "Para começar: ", options: { bold: true, color: C.text1 } },
-    { text: "fotos e medidas das estações, média de itens por caixa, acesso à API do BHT e às tabelas de pedido no Sybase, e definição da linguagem do Serviço PTL.", options: { color: C.text2 } }],
+  s.addText([{ text: "Precisamos para começar: ", options: { bold: true, color: C.text1 } },
+    { text: "medidas das estações, média de itens por caixa, acesso à API do BHT e às tabelas de pedido no Sybase e a linguagem do Serviço PTL.", options: { color: C.text2 } }],
   { x: 0.85, y: 5.45, w: 11.6, h: 0.95, fontSize: 15, margin: 0, valign: "middle", isTextBox: true });
-  s.addNotes("Prazos estimados; dependem da disponibilidade da equipe e da compra das peças.");
+  s.addNotes("Os prazos dependem da disponibilidade da equipe e da compra das peças.");
 
   // ================================================================ 18 RISCOS
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Próximos passos" });
-  titulo(s, "Riscos conhecidos já têm mitigação no desenho");
+  titulo(s, "Riscos e como tratar");
   const riscos = [
     ["Dados da caixa na API do BHT", "Validar no protótipo; alternativa por views no Sybase"],
-    ["Manutenção alta (experiência anterior)", "RJ45 em todos os trechos, módulos de troca rápida, auto-teste diário"],
-    ["Poeira e calor", "Gabinete com filtro e cooler; componentes para 0-50 °C"],
+    ["Manutenção alta, como no sistema anterior", "RJ45 em todos os trechos, módulos de troca rápida e teste a cada turno"],
+    ["Poeira e calor", "Gabinete com filtro e cooler e componentes para 0 a 50 °C"],
     ["Itens por caixa fora do esperado", "Medir no piloto e ajustar o tamanho das zonas"],
-    ["Dependência de um técnico", "Documentação, kits de reserva e opção de placa própria"],
-    ["Adoção pelos operadores", "Piloto com operadores-chave e treinamento de 30 min"],
+    ["Depender de um único técnico", "Documentação, kits de reserva e, se necessário, placa própria"],
+    ["Resistência dos operadores", "Piloto com operadores experientes e treinamento de 30 min"],
   ];
   riscos.forEach(([r, m], i) => {
     const x = 0.6 + (i % 2) * 6.15, y = 1.45 + Math.floor(i / 2) * 1.65;
@@ -393,34 +394,34 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     s.addText(r, { x: x + 1.0, y: y + 0.18, w: 4.75, h: 0.45, fontSize: 16, bold: true, color: C.text1, margin: 0, isTextBox: true });
     s.addText(m, { x: x + 1.0, y: y + 0.62, w: 4.75, h: 0.7, fontSize: 13, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
   });
-  s.addNotes("Detalhes completos na seção 14 do documento técnico.");
+  s.addNotes("Detalhes no item 14 do documento técnico.");
 
   // ================================================================ 19 DEMONSTRACAO
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Próximos passos" });
-  titulo(s, "Demonstração: a estação 05 em 3D, com o fluxo completo");
+  titulo(s, "Demonstração no simulador 3D");
   if (fs.existsSync(DEMO)) {
     imagem(s, DEMO, 0.5, 1.3, 8.6, 5.4);
   } else {
     s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 0.5, y: 1.3, w: 8.6, h: 5.2, rectRadius: 0.1, fill: { color: C.background2 }, line: { color: C.background2 } });
   }
   const roteiro = [
-    "Bacia entra pela transferência",
-    "Leitura no coletor virtual (ou modo RFID)",
-    "Alto giro e zonas acendem (endereços reais)",
-    "Confirmação nos botões; zonas avançam",
-    "Nova leitura fecha; bacia volta à esteira",
-    "Painel mostra tempo e produtividade",
+    "A caixa entra pela transferência",
+    "Leitura no coletor virtual ou por RFID",
+    "Alto giro e zonas acendem com os endereços da tabela",
+    "Confirmação nos botões",
+    "Nova leitura fecha e a caixa volta à esteira",
+    "Painel com tempo e produtividade",
   ];
   circuloIcone(s, ic.cubo, 9.4, 1.4, 0.6, C.accent1);
-  s.addText("Roteiro (≈ 5 min)", { x: 10.1, y: 1.45, w: 2.6, h: 0.5, fontSize: 16, bold: true, color: C.text1, margin: 0, valign: "middle", isTextBox: true });
+  s.addText("Roteiro (5 minutos)", { x: 10.1, y: 1.45, w: 2.6, h: 0.5, fontSize: 16, bold: true, color: C.text1, margin: 0, valign: "middle", isTextBox: true });
   s.addText(roteiro.map((r, k) => ({ text: r, options: { bullet: { type: "number" }, breakLine: k < roteiro.length - 1 } })), { x: 9.4, y: 2.2, w: 3.4, h: 4.2, fontSize: 14, color: C.text2, paraSpaceAfter: 8, valign: "top", isTextBox: true });
-  s.addNotes("Abrir o simulador (repositório picking_to_light, pasta simulador-3d): python iniciar_3d.py. Usar a estação 05 com os 209 endereços reais.");
+  s.addNotes("Abrir o simulador pela pasta simulador-3d do repositório picking_to_light (python iniciar_3d.py) e usar a estação 05.");
 
   // ================================================================ 20 DECISAO
   s = pres.addSlide({ masterName: "CAPA", sectionTitle: "Próximos passos" });
-  s.addText("Decisões para hoje", { placeholder: "title" });
-  s.addText("1. Aprovar o piloto nas estações 05 e 27 (≈ R$ 15,4 mil)\n2. Adotar a Arquitetura A como base, com B como evolução\n3. Produção interna em 12 V no piloto\n4. Liberar fotos, dados de volume, API do BHT e acesso ao Sybase", { placeholder: "body" });
-  s.addNotes("Fechamento: as quatro decisões permitem iniciar o protótipo de bancada na próxima semana.");
+  s.addText("Decisões", { placeholder: "title" });
+  s.addText("1. Aprovar o piloto nas estações 05 e 27 (cerca de R$ 15,4 mil)\n2. Usar a Arquitetura A como base e deixar a B para depois\n3. Montar os módulos internamente, em 12 V\n4. Liberar medidas, dados de volume, API do BHT e acesso ao Sybase", { placeholder: "body" });
+  s.addNotes("Com essas quatro decisões, o protótipo de bancada pode começar na semana seguinte.");
 
   await pres.writeFile({ fileName: SAIDA });
   await applyTheme(SAIDA, THEME);

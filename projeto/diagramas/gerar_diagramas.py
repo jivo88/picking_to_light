@@ -64,13 +64,13 @@ def d_arq(rfid=False):
     c.append(caixa(30, 90, 300, 120, "WMS (legado)", ["PowerBuilder 12 + Sybase ASE 16", "Pedidos, itens, wms_endereco", "Ordem da rota (nr_ordem_separacao_flow)"], CZ))
     c.append(caixa(30, 240, 300, 120, "Sistema BHT (terceiro)", ["Controla a esteira", "Lê a etiqueta da caixa", "API com as informações da caixa"], CZ))
     # servico
-    c.append(f"<text x='420' y='78' font-size='13' font-weight='700' fill='{AZ}' {FONT}>NOVO — SERVIDOR PTL (VM)</text>")
+    c.append(f"<text x='420' y='78' font-size='13' font-weight='700' fill='{AZ}' {FONT}>NOVO: SERVIDOR PTL (VM)</text>")
     c.append(caixa(420, 90, 400, 270, "Serviço PTL", [
         "API REST (abre/fecha caixa, status)",
         "Regras: filtra a estação, divide em",
         "  alto giro / andares 4-5 / zonas de baixo giro",
         "  e ordena pela rota de coleta",
-        "Broker MQTT (Mosquitto) — mensagens",
+        "Broker MQTT (Mosquitto)",
         "  com os concentradores",
         "Tabelas PTL no Sybase (sessões, log)",
         "Painel de monitoramento (gestão e TI)",
@@ -80,19 +80,19 @@ def d_arq(rfid=False):
     # identificacao
     if not rfid:
         c.append(caixa(900, 90, 470, 140, "Coletor MovFast (Android, Wi-Fi)", [
-            "A1 — app próprio PTL (Android)", "A2 — tela do WMS no coletor",
+            "A1: app próprio (Android)", "A2: tela do WMS no coletor",
             "Gatilho: 1ª leitura ABRE, 2ª leitura FECHA a caixa", "Mostra o progresso da caixa"], AZ2))
         c.append(seta(900, 165, 820, 165, "HTTPS", dupla=True))
     else:
         c.append(caixa(900, 90, 470, 160, "Identificação por RFID (NFC 13,56 MHz)", [
             "Tag NFC fixa em cada caixa retornável",
-            "B1 — pulseira NFC do operador (Bluetooth/Wi-Fi)",
-            "B2 — leitor fixo na estação, ligado ao concentrador",
+            "B1: pulseira NFC do operador (Wi-Fi)",
+            "B2: leitor fixo ligado ao concentrador",
             "Painel da estação mostra caixa e progresso",
             "Fechamento: nova leitura da tag"], RX, RX2))
         c.append(seta(900, 175, 820, 175, "Wi-Fi", dupla=True))
     # estacao
-    c.append(f"<text x='30' y='418' font-size='13' font-weight='700' fill='{VD}' {FONT}>ESTAÇÃO (× 40) — REDE CABEADA</text>")
+    c.append(f"<text x='30' y='418' font-size='13' font-weight='700' fill='{VD}' {FONT}>ESTAÇÃO (× 40), REDE CABEADA</text>")
     c.append(caixa(420, 430, 400, 150, "Concentrador da estação", [
         "RP2040 + Ethernet W5500 (cabo, VLAN PTL)",
         "2 barramentos RS-485 (alto e baixo giro)",
@@ -127,7 +127,7 @@ def d_arq(rfid=False):
         "VLAN dedicada PTL, IP reservado por estação",
         "Coletores no Wi-Fi existente",
         "NTP, backup e monitoramento centralizados"], CZ))
-    tit = "Arquitetura B — RFID + concentrador + displays" if rfid else "Arquitetura A — Coletor + concentrador + displays"
+    tit = "Arquitetura B: RFID, concentrador e displays" if rfid else "Arquitetura A: coletor, concentrador e displays"
     return svg(w, h, "\n".join(c), tit)
 
 
@@ -159,7 +159,7 @@ def d_sequencia():
         (0, 1, "15. Lê a etiqueta de novo (fecha)"),
         (1, 2, "16. POST leitura → FECHAR"),
         (2, 3, "17. Grava sessão; informa BHT (a validar)"),
-        (2, 1, "18. Caixa fechada — liberar"),
+        (2, 1, "18. Caixa fechada, liberar"),
     ]
     y = 128
     for a, b, txt in passos:
@@ -176,7 +176,7 @@ def d_sequencia():
         c.append(f"<rect x='{tx-len(txt)*3.4-6}' y='{y-19}' width='{len(txt)*6.8+12}' height='17' rx='4' fill='#fff'/>"
                  f"<text x='{tx}' y='{y-6}' text-anchor='middle' font-size='12.5' fill='#1c2430' {FONT}>{txt}</text>")
         y += 37
-    return svg(w, h, "\n".join(c), "Sequência de operação — Arquitetura A")
+    return svg(w, h, "\n".join(c), "Sequência de operação na Arquitetura A")
 
 
 # ---------------------------------------------------------------- D4 layout estacao 05 (elevações, prateleiras alinhadas, andar 0 em cima)
@@ -234,7 +234,7 @@ def d_layout():
     ax, ay, cw, hl = 70, 140, 38, 30
     band = 46
     yb = ay + 4 * hl + band
-    c.append(f"<text x='{ax}' y='{ay-62}' font-size='16' font-weight='700' fill='{AZ}' {FONT}>ALTO GIRO — prédios 001–010 (na frente do operador)</text>")
+    c.append(f"<text x='{ax}' y='{ay-62}' font-size='16' font-weight='700' fill='{AZ}' {FONT}>ALTO GIRO: prédios 001 a 010 (na frente do operador)</text>")
 
     def cor_a(e):
         if e["andar"] <= 3:
@@ -263,7 +263,7 @@ def d_layout():
                      f"<text x='{x+18+(5*cw-50)/2}' y='{yy+9.5}' text-anchor='middle' font-size='8.5' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>E+Q A{an}</text>")
     ly0 = yb + 2 * hl + 38
     c.append(f"<text x='{ax}' y='{ly0}' font-size='12.5' {FONT}>A esteira de transporte passa por baixo do andar 3 e por cima do andar 4.</text>")
-    c.append(f"<rect x='{ax}' y='{ly0+14}' width='16' height='16' rx='3' fill='{VD2}' stroke='{VD}'/><text x='{ax+24}' y='{ly0+27}' font-size='12.5' {FONT}>Andares 0–3: Módulo Q por endereço — 29</text>")
+    c.append(f"<rect x='{ax}' y='{ly0+14}' width='16' height='16' rx='3' fill='{VD2}' stroke='{VD}'/><text x='{ax+24}' y='{ly0+27}' font-size='12.5' {FONT}>Andares 0 a 3: módulo Q por endereço (29)</text>")
     c.append(f"<rect x='{ax}' y='{ly0+38}' width='16' height='16' rx='3' fill='#D6E4F7' stroke='{AZ2}'/><text x='{ax+24}' y='{ly0+51}' font-size='12.5' {FONT}>Andares 4–5: 20 endereços em 4 displays E+Q</text>")
     # ---- baixo giro
     bpred = sorted({e["predio"] for e in END05 if e["cat"] == "baixo" and e["predio"] != 15})
@@ -293,12 +293,12 @@ def d_layout():
                      f"<text x='{(x1+x2)/2}' y='{yv+10.5}' text-anchor='middle' font-size='8.5' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>P{xps[-1][1]:03d} A2 · 1</text>")
             c.append(f"<text x='{(x1+x2)/2}' y='{by-8}' text-anchor='middle' font-size='10.5' font-weight='700' fill='{ZBOR[z%8]}' {FONT}>ZONA {ZORD[z] if z < 8 else ''}</text>")
         c.append(f"<text x='{x0}' y='{by+8*bhl+36}' font-size='11.5' fill='{CZ}' {FONT}>← entrada do corredor                         fundo →</text>")
-    lado(560, esq, "BAIXO GIRO — lado esquerdo (P020–P031)")
+    lado(560, esq, "BAIXO GIRO: lado esquerdo (P020 a P031)")
     lado(980, dirt, "Lado direito (P015, P043 → P032)")
     ly = by + 8 * bhl + 62
     c.append(f"<text x='560' y='{ly}' font-size='12.5' {FONT}>• Prateleiras alinhadas, andar 0 em cima, profundidade ≈ 2 m. Caixas de endereço em geral pequenas (tipo A, B, C, F, N); andar sem endereço fica vazio.</text>")
     c.append(f"<text x='560' y='{ly+22}' font-size='12.5' {FONT}>• 160 endereços em 8 zonas (4 por lado); display de endereço + quantidade na altura dos olhos (≈ 1,5 m). P015 (150–153) entra na zona D1.</text>")
-    return svg(w, h, "\n".join(c), "Elevações da estação 05 (Medicamento) — 209 endereços reais de wms_endereco")
+    return svg(w, h, "\n".join(c), "Vista frontal da estação 05 (Medicamento), com os 209 endereços da tabela wms_endereco")
 
 
 # ---------------------------------------------------------------- D4b planta da estação
@@ -395,7 +395,7 @@ def d_planta():
               "transporte (ex.: começa na 03 e só", "continua na 07 → não entra na 04/05).", "", "A de transporte passa por dentro do alto", "giro (entre o andar 3 e o 4); a de", "separação fica na frente, aberta.", "", "Medidas aproximadas, sem escala."]
     for i, l in enumerate(linhas):
         c.append(f"<text x='{lx}' y='{ty+i*21}' font-size='{13.5 if i==0 else 12.2}' font-weight='{700 if i==0 else 400}' fill='{AZ if i==0 else "#1c2430"}' {FONT}>{l}</text>")
-    return svg(W, H, "\n".join(c), "Planta da estação 05 e vizinhas — alto giro com a esteira de transporte por dentro, separação na frente e corredor do baixo giro")
+    return svg(W, H, "\n".join(c), "Planta da estação 05 e das vizinhas")
 
 
 # ---------------------------------------------------------------- D5 cabeamento
@@ -421,13 +421,13 @@ def d_cabeamento():
     c.append(f"<text x='990' y='142' font-size='22' fill='{CZ}' {FONT}>… até o Nó 10</text>")
     c.append(f"<path d='M290,270 C315,270 315,137 340,137' fill='none' stroke='{VD}' stroke-width='4'/>")
     c.append(f"<rect x='1000' y='190' width='360' height='120' rx='10' fill='#fff' stroke='#d5dbe3'/>"
-             f"<text x='1016' y='214' font-size='13' font-weight='700' fill='{AZ}' {FONT}>Cabo Cat5e — uso dos 4 pares</text>"
+             f"<text x='1016' y='214' font-size='13' font-weight='700' fill='{AZ}' {FONT}>Cabo Cat5e: uso dos 4 pares</text>"
              f"<text x='1016' y='238' font-size='12.5' {FONT}>Par 1: RS-485 A/B (dados)</text>"
              f"<text x='1016' y='258' font-size='12.5' {FONT}>Par 2: +12 V   ·   Par 3: GND</text>"
              f"<text x='1016' y='278' font-size='12.5' {FONT}>Par 4: reserva (sinal de falha / futuro)</text>"
              f"<text x='1016' y='298' font-size='12.5' fill='{CZ}' {FONT}>Módulo Q → nó: cabo curto RJ45 (troca em 1 min)</text>")
     # fundo
-    c.append(f"<text x='330' y='400' font-size='14' font-weight='700' fill='{AZ}' {FONT}>Barramento BAIXO GIRO — 1 Módulo E+Q por zona, em cadeia (eletrocalha sobre o corredor)</text>")
+    c.append(f"<text x='330' y='400' font-size='14' font-weight='700' fill='{AZ}' {FONT}>Barramento BAIXO GIRO: 1 módulo E+Q por zona, em cadeia (eletrocalha sobre o corredor)</text>")
     for i in range(6):
         x = 340 + i * 160
         c.append(f"<rect x='{x}' y='420' width='136' height='70' rx='8' fill='#fff' stroke='{AZ2}' stroke-width='2'/>"
@@ -437,7 +437,7 @@ def d_cabeamento():
         if i < 5:
             c.append(f"<line x1='{x+136}' y1='455' x2='{x+160}' y2='455' stroke='{AZ2}' stroke-width='4'/>")
     c.append(f"<path d='M290,340 C315,340 315,455 340,455' fill='none' stroke='{AZ2}' stroke-width='4'/>")
-    c.append(f"<text x='340' y='560' font-size='12.5' fill='{CZ}' {FONT}>Sem fio quádruplo contínuo atrás das plaquinhas: cada trecho é um cabo com RJ45 nas pontas — um módulo com defeito é trocado sem abrir a canaleta.</text>")
+    c.append(f"<text x='340' y='560' font-size='12.5' fill='{CZ}' {FONT}>Sem fio quádruplo contínuo atrás das plaquinhas: cada trecho é um cabo com RJ45 nas pontas, e o módulo com defeito é trocado sem abrir a canaleta.</text>")
     return svg(w, h, "\n".join(c), "Topologia de cabeamento da estação")
 
 
@@ -471,10 +471,10 @@ def d_telas():
             ("", 12, CZ, 400)], "2ª leitura fecha a caixa"),
         tela(1080, 70, "Atenção", "#B23B3B", [
             ("Caixa com itens pendentes", 15, "#B23B3B", 700), ("3 itens não confirmados", 15, CZ, 400),
-            ("Zona 4: P031 A2 — 2 un", 14, CZ, 400), ("", 12, CZ, 400),
+            ("Zona 4: P031 A2, 2 un", 14, CZ, 400), ("", 12, CZ, 400),
             ("Leia de novo para", 15, "#1c2430", 700), ("fechar mesmo assim", 15, "#1c2430", 700)], "Registrado para a conferência")]
     c.append(f"<text x='60' y='52' font-size='13' fill='{CZ}' {FONT}>Fluxo do operador: leitura → separação guiada pelos displays → leitura de fechamento (sem menu)</text>")
-    return svg(w, h, "\n".join(c), "Telas do coletor (A1 — app PTL)")
+    return svg(w, h, "\n".join(c), "Telas do coletor (app A1)")
 
 
 # ---------------------------------------------------------------- D7 modulos
@@ -482,7 +482,7 @@ def d_modulos():
     w, h = 1400, 470
     c = []
     # modulo Q
-    c.append(f"<text x='60' y='80' font-size='16' font-weight='700' fill='{AZ}' {FONT}>Módulo Q — alto giro (por endereço)</text>")
+    c.append(f"<text x='60' y='80' font-size='16' font-weight='700' fill='{AZ}' {FONT}>Módulo Q: alto giro (por endereço)</text>")
     c.append(f"<rect x='60' y='100' width='300' height='150' rx='14' fill='#2b2f36' filter='url(#sombra)'/>"
              f"<rect x='80' y='122' width='150' height='70' rx='6' fill='#0b0b0b'/>"
              f"<text x='155' y='174' text-anchor='middle' font-size='52' fill='#ff3b2f' font-weight='700' font-family='DejaVu Sans Mono, monospace'> 12</text>"
@@ -492,7 +492,7 @@ def d_modulos():
              f"<text x='60' y='312' font-size='12.5' {FONT}>• Botão confirma e apaga</text>"
              f"<text x='60' y='334' font-size='12.5' {FONT}>• Cabo curto RJ45 até o nó da coluna</text>")
     # modulo E+Q
-    c.append(f"<text x='460' y='80' font-size='16' font-weight='700' fill='{AZ}' {FONT}>Módulo E+Q — andares 4-5 e zonas de baixo giro</text>")
+    c.append(f"<text x='460' y='80' font-size='16' font-weight='700' fill='{AZ}' {FONT}>Módulo E+Q: andares 4-5 e zonas do baixo giro</text>")
     c.append(f"<rect x='460' y='100' width='560' height='150' rx='14' fill='#2b2f36' filter='url(#sombra)'/>"
              f"<rect x='480' y='122' width='300' height='70' rx='6' fill='#0b0b0b'/>"
              f"<text x='630' y='172' text-anchor='middle' font-size='44' fill='#ff3b2f' font-weight='700' font-family='DejaVu Sans Mono, monospace'>P031 A2</text>"
@@ -518,6 +518,111 @@ def d_modulos():
     return svg(w, h, "\n".join(c), "Módulos e gabinete")
 
 
+
+# ---------------------------------------------------------------- D9 arquitetura de componentes
+def _linha(pts, cor=CZ, rot="", rx=None, ry=None, tracejada=False, dupla=False, larg=2):
+    d = "stroke-dasharray='6 5'" if tracejada else ""
+    mi = "marker-start='url(#ini)'" if dupla else ""
+    pp = " ".join(f"{x},{y}" for x, y in pts)
+    s = f"<polyline points='{pp}' fill='none' stroke='{cor}' stroke-width='{larg}' {d} marker-end='url(#fim)' {mi}/>"
+    if rot:
+        if rx is None:
+            (x1, y1), (x2, y2) = pts[len(pts) // 2 - 1], pts[len(pts) // 2]
+            rx, ry = (x1 + x2) / 2, (y1 + y2) / 2
+        w = len(rot) * 6.6 + 12
+        s += (f"<rect x='{rx-w/2}' y='{ry-10}' width='{w}' height='19' rx='4' fill='#fff' stroke='#d5dbe3'/>"
+              f"<text x='{rx}' y='{ry+4}' text-anchor='middle' font-size='11' fill='{CZ}' {FONT}>{rot}</text>")
+    return s
+
+
+def _grupo(x, y, w, h, titulo, cor):
+    return (f"<rect x='{x}' y='{y}' width='{w}' height='{h}' rx='12' fill='{cor}' fill-opacity='0.06' stroke='{cor}' stroke-width='1.6' stroke-dasharray='8 5'/>"
+            f"<text x='{x+14}' y='{y+22}' font-size='13.5' font-weight='700' fill='{cor}' {FONT}>{titulo}</text>")
+
+
+def _comp(x, y, w, h, titulo, linhas, cor=AZ2, fundo="#fff", tracejado=False):
+    d = "stroke-dasharray='6 4'" if tracejado else ""
+    s = [f"<rect x='{x}' y='{y}' width='{w}' height='{h}' rx='8' fill='{fundo}' stroke='{cor}' stroke-width='1.8' {d}/>",
+         f"<rect x='{x}' y='{y}' width='5' height='{h}' rx='2' fill='{cor}'/>",
+         f"<text x='{x+14}' y='{y+21}' font-size='13' font-weight='700' fill='#1c2430' {FONT}>{titulo}</text>"]
+    for i, l in enumerate(linhas):
+        s.append(f"<text x='{x+14}' y='{y+39+i*15.5}' font-size='11.2' fill='{CZ}' {FONT}>{l}</text>")
+    return "\n".join(s)
+
+
+def d_componentes():
+    W, H = 1600, 1010
+    c = []
+    # grupos
+    c.append(_grupo(20, 70, 330, 520, "Usuários e leitores", CZ))
+    c.append(_grupo(390, 70, 790, 500, "Servidor PTL · VM Linux na VLAN PTL", AZ2))
+    c.append(_grupo(1220, 70, 360, 520, "Sistemas existentes", "#8E6C3A"))
+    c.append(_grupo(20, 620, 1560, 370, "Estação de separação (× 40)", VD))
+    # usuários
+    c.append(_comp(40, 105, 290, 92, "Coletor MovFast (A1)", ["App Android próprio", "gatilho abre e fecha a caixa", "mostra o progresso"], AZ2))
+    c.append(_comp(40, 225, 290, 78, "Tela do WMS no coletor (A2)", ["alternativa ao app", "grava a leitura no Sybase"], CZ, tracejado=True))
+    c.append(_comp(40, 330, 290, 78, "Pulseira NFC (B1)", ["ESP32-C3 + PN532, bateria", "envia a tag lida por Wi-Fi"], RX, tracejado=True))
+    c.append(_comp(40, 440, 290, 92, "Navegador (gestão e TI)", ["painel das 40 estações", "indicadores e alarmes", "cadastro do mapa"], CZ))
+    # servidor PTL
+    cx = [415, 670, 925]
+    cw, ch = 235, 92
+    ry = [105, 225, 345]
+    comps = [
+        (0, 0, "API REST /v1", ["leituras, estado, cancelamento", "mapa e indicadores", "HTTPS + JSON"]),
+        (1, 0, "Orquestrador de caixas", ["estado da caixa na estação", "divide itens por display", "ordena pela rota"]),
+        (2, 0, "Adaptador Sybase", ["lê views do pedido", "grava sessões e eventos", "jConnect / ODBC"]),
+        (0, 1, "Painel web", ["páginas do monitoramento", "servidas pela própria API"]),
+        (1, 1, "Mapa de endereços", ["cd_endereco → módulo/zona", "editável pela TI"]),
+        (2, 1, "Adaptador BHT", ["consulta dados da caixa", "aviso de conclusão (a validar)"]),
+        (0, 2, "Monitor e indicadores", ["caixas/h, tempo por caixa", "heartbeat e falhas"]),
+        (1, 2, "Registro de eventos", ["log de leituras e botões", "retenção definida pela TI"]),
+        (2, 2, "Gateway MQTT", ["publica comandos", "assina eventos e status"]),
+    ]
+    for col, lin, tit, ls in comps:
+        c.append(_comp(cx[col], ry[lin], cw, ch, tit, ls, AZ2))
+    c.append(_comp(925, 465, 235, 80, "Broker MQTT (Mosquitto)", ["usuário e ACL por estação", "porta 1883, mesma VM"], "#D68910"))
+    # sistemas existentes
+    c.append(_comp(1240, 105, 320, 108, "Sybase ASE 16", ["tabelas do WMS (pedidos)", "views de leitura para o PTL", "tabelas ptl_* (sessão, mapa, log)"], "#8E6C3A"))
+    c.append(_comp(1240, 245, 320, 92, "Sistema BHT (terceiro)", ["controla a esteira e a transferência", "API com os dados da caixa"], "#8E6C3A"))
+    c.append(_comp(1240, 370, 320, 92, "WMS PowerBuilder 12", ["sistema legado da operação", "tela A2 no coletor (opcional)"], "#8E6C3A"))
+    # estação
+    c.append(_comp(40, 660, 330, 200, "Concentrador da estação", ["RP2040 + Ethernet W5500", "cliente MQTT", "estado da caixa e fila de confirmações", "mestre RS-485 com 2 portas", "watchdog, auto-teste e OTA", "fonte 12 V, gabinete com filtro e cooler", "", ""], VD))
+    c.append(_comp(40, 885, 330, 88, "Leitor NFC fixo + painel (B2)", ["leitor sob a posição de pega", "LCD 20×4 e botão FECHAR"], RX, tracejado=True))
+    c.append(_comp(500, 660, 300, 92, "Nós de coluna (10)", ["um por prédio do alto giro", "liga os módulos Q do prédio"], VD))
+    c.append(_comp(500, 775, 300, 64, "Módulos Q (29 a 35)", ["quantidade + botão, andares 0 a 3"], VD))
+    c.append(_comp(500, 880, 300, 78, "Módulos E+Q andares 4-5 (4)", ["A4 e A5 em cada lado"], VD))
+    c.append(_comp(1000, 660, 300, 92, "Módulos E+Q das zonas (8)", ["4 por lado do corredor", "na altura dos olhos"], VD))
+    c.append(_comp(1000, 775, 300, 78, "LED guia de coluna", ["opcional, 1 por prédio"], CZ, tracejado=True))
+    c.append(_comp(1330, 660, 230, 128, "Cabeamento", ["Cat5e com RJ45 em todo trecho", "par 1: RS-485", "pares 2 e 3: 12 V e GND", "par 4: reserva"], CZ))
+    # ligações
+    c.append(_linha([(330, 150), (415, 150)], AZ2, "HTTPS", 372, 135))
+    c.append(_linha([(330, 375), (372, 375), (372, 168), (415, 168)], RX, "Wi-Fi", 372, 300, tracejada=True))
+    c.append(_linha([(330, 486), (395, 486), (395, 271), (415, 271)], CZ, "HTTPS", 395, 420))
+    c.append(_linha([(650, 151), (670, 151)], AZ2))
+    c.append(_linha([(905, 151), (925, 151)], AZ2))
+    c.append(_linha([(787, 197), (787, 225)], AZ2))
+    c.append(_linha([(905, 182), (915, 182), (915, 391), (925, 391)], AZ2))
+    c.append(_linha([(1160, 151), (1240, 151)], "#8E6C3A", "SQL", 1200, 136, dupla=True))
+    c.append(_linha([(1160, 271), (1240, 291)], "#8E6C3A", "HTTP/REST", 1195, 238))
+    c.append(_linha([(1400, 370), (1400, 213)], "#8E6C3A", "", tracejada=True))
+    c.append(_linha([(1042, 437), (1042, 465)], "#D68910", dupla=True))
+    c.append(_linha([(1042, 545), (1042, 600), (300, 600), (300, 660)], "#D68910", "MQTT · Ethernet cabeada (switch da VLAN)", 620, 600, dupla=True))
+    c.append(_linha([(370, 706), (500, 706)], VD, "RS-485 porta A", 435, 692))
+    c.append(_linha([(650, 752), (650, 775)], VD))
+    c.append(_linha([(440, 706), (440, 919), (500, 919)], VD))
+    c.append(_linha([(370, 852), (930, 852), (930, 706), (1000, 706)], VD, "RS-485 porta B", 930, 780))
+    c.append(_linha([(1150, 752), (1150, 775)], CZ, tracejada=True))
+    c.append(_linha([(205, 885), (205, 860)], RX, "SPI", 232, 873, tracejada=True))
+    # legenda
+    ly = 845
+    for i, (cor, txt, tr) in enumerate(((AZ2, "componente novo (software)", False), (VD, "componente novo (hardware)", False),
+                                        ("#8E6C3A", "sistema existente", False), (RX, "opcional / Arquitetura B", True))):
+        d = "stroke-dasharray='6 4'" if tr else ""
+        c.append(f"<rect x='{1330}' y='{ly+i*28}' width='20' height='16' rx='3' fill='#fff' stroke='{cor}' stroke-width='1.8' {d}/>"
+                 f"<text x='{1360}' y='{ly+i*28+13}' font-size='12' {FONT}>{txt}</text>")
+    return svg(W, H, "\n".join(c), "Arquitetura de componentes do sistema pick-to-light")
+
+
 def main():
     figuras = {
         "arquitetura_a": d_arq(False),
@@ -528,6 +633,7 @@ def main():
         "cabeamento": d_cabeamento(),
         "telas_coletor": d_telas(),
         "modulos": d_modulos(),
+        "componentes": d_componentes(),
     }
     html = ["<html><body style='margin:0;background:#fff'>"]
     for nome, s in figuras.items():

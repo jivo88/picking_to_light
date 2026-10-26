@@ -1,4 +1,4 @@
-// Gera o documento tecnico de arquitetura (.docx) do projeto Pick-to-Light
+// Gera o documento técnico de arquitetura (.docx) do projeto Pick-to-Light
 const fs = require("fs");
 const {
   Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell,
@@ -87,86 +87,84 @@ const tot = ests.reduce((a, e) => { for (const k of ["total", "alto_0a3", "alto_
 const c = [];
 
 // CAPA
-c.push(new Paragraph({ spacing: { before: 2400 }, children: [t("PROJETO PICK-TO-LIGHT", { size: 24, bold: true, color: "F2A33A" })] }));
-c.push(new Paragraph({ spacing: { before: 120, after: 120 }, children: [t("Documento de Arquitetura", { size: 56, bold: true, color: AZ })] }));
-c.push(new Paragraph({ spacing: { after: 600 }, children: [t("Separação guiada por luz no flow rack — Medicamento e Perfumaria", { size: 28, color: CZ })] }));
-c.push(tabela(["Item", "Conteúdo"], [
-  ["Arquiteturas", "A — Coletor de dados + concentrador + displays\nB — Identificação por RFID + concentrador + displays"],
-  ["Abrangência", "40 estações (20 Medicamento, ruas 03-22; 20 Perfumaria, ruas 26-45) — 7.981 endereços"],
-  ["Piloto proposto", "Estação 05 (Medicamento, comum) e Estação 27 (Perfumaria, comum)"],
-  ["Documentos relacionados", "Orcamento_PTL.xlsx · Apresentacao_PTL.pptx · Simulador 3D (repositório picking_to_light)"],
-  ["Versão", "1.0 — 23/10/2026 — rascunho para revisão (TI, arquitetura e diretoria)"],
+c.push(new Paragraph({ spacing: { before: 2600, after: 120 }, children: [t("Projeto Pick-to-Light", { size: 30, bold: true, color: CZ })] }));
+c.push(new Paragraph({ spacing: { after: 120 }, children: [t("Documento de Arquitetura", { size: 52, bold: true, color: AZ })] }));
+c.push(new Paragraph({ spacing: { after: 700 }, children: [t("Separação por luz nas estações de flow rack de Medicamento e Perfumaria", { size: 26, color: CZ })] }));
+c.push(tabela(["Item", "Descrição"], [
+  ["Arquiteturas", "A: coletor de dados, concentrador e displays\nB: identificação por RFID, concentrador e displays"],
+  ["Abrangência", "40 estações (20 de Medicamento, ruas 03 a 22, e 20 de Perfumaria, ruas 26 a 45), 7.981 endereços"],
+  ["Piloto", "Estações 05 (Medicamento) e 27 (Perfumaria)"],
+  ["Material de apoio", "Orcamento_PTL.xlsx, Apresentacao_PTL.pptx e simulador 3D (repositório picking_to_light)"],
+  ["Versão", "1.1, de 26/10/2026, em revisão pela TI, arquitetura de software e diretoria"],
+  ["Elaboração", "Equipe de TI"],
 ], [1, 3]));
 c.push(quebra());
 
 // SUMARIO
 c.push(new Paragraph({ children: [t("Sumário", { size: 32, bold: true, color: AZ })], spacing: { after: 200 } }));
 c.push(new TableOfContents("Sumário", { hyperlink: true, headingStyleRange: "1-2" }));
-c.push(P("Para atualizar o sumário no Word: clique com o botão direito sobre ele e escolha \"Atualizar campo\".", { italic: true, size: 18, color: CZ }));
+c.push(P("Se o sumário aparecer vazio, clique nele com o botão direito e escolha \"Atualizar campo\".", { italic: true, size: 18, color: CZ }));
 c.push(quebra());
 
 // 1 OBJETIVO
 c.push(H1("1. Objetivo e escopo"));
-c.push(R("O projeto substitui a busca visual do endereço pelo operador por **separação guiada por luz** (pick-to-light): ao ler a etiqueta da caixa, os displays dos endereços com itens daquela caixa acendem com a **quantidade** a pegar; o operador pega, confirma no botão e o display apaga. O objetivo é reduzir o tempo por caixa e os erros de separação na linha, que hoje movimenta cerca de **3.000 volumes e 250 a 270 mil produtos por dia**."));
-c.push(H2("1.1 Dentro do escopo"));
+c.push(P("Hoje o operador procura cada endereço na estante e confere a quantidade na tela. Com o pick-to-light, a leitura da etiqueta da caixa acende os displays dos endereços que têm itens daquela caixa, já com a quantidade. O operador pega, aperta o botão do display e passa ao próximo. O objetivo é reduzir o tempo por caixa e os erros de separação em uma linha que movimenta cerca de 3.000 volumes e 250 a 270 mil produtos por dia."));
+c.push(H2("1.1 O que está no escopo"));
 [
-  "Duas arquiteturas de identificação da caixa: **A — coletor de dados** (MovFast Android, já existente) e **B — RFID** (tag fixa na caixa retornável).",
-  "Infraestrutura de displays comum às duas: concentrador por estação, displays de quantidade no alto giro, displays de endereço + quantidade nos andares 4-5 do alto giro e nas zonas de baixo giro.",
-  "Serviço PTL (servidor) integrado ao Sybase ASE e à API do sistema BHT, com painel de monitoramento para gestão e TI.",
-  "Dois caminhos de produção: **interna** (equipe própria) e **terceiros** (placas montadas por fábrica ou sistema comercial importado).",
-  "Orçamento do **piloto** (estações 05 e 27) e da **operação completa** (40 estações), em 12 V e 5 V.",
-  "Simulador 3D de uma estação completa (alto giro, área de espera e corredor do baixo giro, com as vizinhas) para demonstração.",
+  "Duas formas de identificar a caixa: pelo coletor de dados MovFast que já usamos (Arquitetura A) ou por uma tag RFID fixa na caixa retornável (Arquitetura B).",
+  "A parte de displays é a mesma nas duas: um concentrador por estação, displays de quantidade no alto giro e displays de endereço e quantidade nos andares 4 e 5 do alto giro e nas zonas do baixo giro.",
+  "Um serviço no servidor (Serviço PTL) ligado ao Sybase e à API do sistema BHT, com um painel de acompanhamento para a gestão e para a TI.",
+  "Comparação entre fazer os módulos internamente e comprar de terceiros.",
+  "Orçamento do piloto (estações 05 e 27) e da operação completa (40 estações), em 12 V e em 5 V.",
+  "Simulador 3D de uma estação, usado na apresentação.",
 ].forEach((x) => c.push(B(x)));
-c.push(H2("1.2 Fora do escopo (nesta fase)"));
+c.push(H2("1.2 O que fica fora nesta fase"));
 [
-  "**Controle da esteira**: continua com o sistema BHT, que já lê a etiqueta da caixa e movimenta a esteira.",
-  "**Tratamento de falta no display**: a falta de produto continua sendo identificada na **conferência**, operação que já existe após a separação.",
-  "**Reposição/reabastecimento** guiado pelos displays: sugerido como melhoria futura (o hardware já comporta).",
-  "Reaproveitamento da interface MFC de terceiros (192.168.254.4:8080): não será usada; as informações da caixa virão por API.",
+  "Controle da esteira. Continua com o sistema BHT, que já lê a etiqueta e movimenta as caixas.",
+  "Tratamento de falta no display. A falta continua sendo apontada na conferência, como acontece hoje.",
+  "Reposição guiada pelos displays. Fica como melhoria futura; o hardware já permite.",
+  "Interface MFC do fornecedor anterior (192.168.254.4:8080). Não será usada; os dados da caixa virão por API.",
 ].forEach((x) => c.push(B(x)));
 
 // 2 SITUACAO ATUAL
-c.push(H1("2. Situação atual e premissas da operação"));
-c.push(tabela(["Tema", "Situação levantada"], [
-  ["Sistemas", "WMS legado próprio em PowerBuilder 12 com banco Sybase ASE 16. Sistema BHT (terceiro) controla a esteira e lê a etiqueta da caixa."],
-  ["Coletores", "MovFast com Android na versão mais recente, conectados por Wi-Fi."],
-  ["Operadores", "1 operador por estação; uma caixa por vez em cada estação."],
-  ["Volume", "≈ 3.000 volumes/dia e 250.000 a 270.000 produtos/dia. Itens por caixa variam bastante (Perfumaria tem menos itens por caixa) — número médio a confirmar."],
-  ["Caixas", "Retornáveis (permite tag RFID fixa na Arquitetura B)."],
-  ["Rede", "Concentradores ligados por cabo; apenas os coletores usam Wi-Fi."],
-  ["Energia", "Preferência por 12 V para displays e concentrador; 5 V avaliado em paralelo (seção 9.4)."],
-  ["Ambiente", "Poeira e calor; sem limpeza com água. Gabinete com ventilação e filtro."],
-  ["Instalação", "É possível instalar canaletas nas estações. Fotos e medidas das prateleiras serão enviadas para refinar o layout."],
-  ["Experiência anterior", "Sistema SmartPicking com fios quádruplos contínuos na canaleta, atrás das plaquinhas: muita manutenção por falta de espaço e encaixe difícil. Requisito: reduzir ao máximo a manutenção."],
+c.push(H1("2. Situação atual"));
+c.push(tabela(["Tema", "Como é hoje"], [
+  ["Sistemas", "WMS próprio em PowerBuilder 12 com banco Sybase ASE 16. O sistema BHT, de terceiro, controla a esteira e lê a etiqueta da caixa."],
+  ["Coletores", "MovFast com Android atualizado, na rede Wi-Fi."],
+  ["Operadores", "Um operador por estação, uma caixa por vez."],
+  ["Volume", "Cerca de 3.000 volumes e 250 a 270 mil produtos por dia. A média de itens por caixa ainda precisa ser levantada; em Perfumaria ela é menor."],
+  ["Caixas", "Retornáveis, o que permite fixar uma tag RFID na Arquitetura B."],
+  ["Rede", "Os concentradores serão ligados por cabo. Só os coletores usam Wi-Fi."],
+  ["Energia", "Preferência por 12 V para displays e concentrador. O 5 V foi avaliado junto (item 9.4)."],
+  ["Ambiente", "Poeira e calor, sem lavagem com água. O gabinete precisa de ventilação com filtro."],
+  ["Instalação", "É possível instalar canaletas nas estações."],
+  ["Sistema anterior", "No SmartPicking, quatro fios corriam direto pela canaleta atrás das plaquinhas. Faltava espaço, o encaixe era difícil e a manutenção era frequente. Reduzir manutenção é requisito deste projeto."],
 ], [1, 4]));
 
 // 3 LEVANTAMENTO FISICO
-c.push(H1("3. Levantamento físico (tabela wms_endereco)"));
-c.push(R("A tabela **wms_endereco** (esteiras 1 e 2, exportada em 23/10/2026) tem **7.981 endereços** em **40 ruas — cada rua é uma estação**. A rua 90 (Marketing/Almoxarifado, 2 endereços) foi desconsiderada. Formato do endereço: bairro (1) + rua (2) + prédio (3) + andar (1) + apartamento (1), por exemplo **0050230A** = rua 05, prédio 023, andar 0."));
+c.push(H1("3. Levantamento físico"));
+c.push(P("Os números vêm da tabela wms_endereco (esteiras 1 e 2), exportada em 23/10/2026: 7.981 endereços em 40 ruas, e cada rua é uma estação. A rua 90 (Marketing/Almoxarifado, 2 endereços) ficou de fora. O endereço tem 8 posições: bairro (1), rua (2), prédio (3), andar (1) e apartamento (1). Exemplo: 0050230A é a rua 05, prédio 023, andar 0."));
 c.push(H2("3.1 Estrutura de uma estação"));
-c.push(tabela(["Área", "Prédios", "Andares", "Uso proposto"], [
-  ["Alto giro (na frente do operador; esteira de transporte por dentro)", "001 a 010", "0 a 3 (acima das esteiras)", "1 display de quantidade (Módulo Q) por endereço"],
-  ["Alto giro (níveis de baixo)", "001 a 010", "4 e 5 (abaixo das esteiras)", "4 displays de endereço + quantidade por estação: um por andar (A4 e A5) em cada lado (prédios 001-005 e 006-010), como no sistema atual"],
-  ["Início do lado direito do corredor (\"150-153\")", "015", "0 a 3 (esquinas de Medicamento: até 7)", "Entram na zona 1 do baixo giro"],
-  ["Baixo giro (corredor perpendicular)", "Lado esquerdo: 020/022-031 · lado direito: 032 até o último", "0 a 7 (de cima)", "4 zonas por lado do corredor (≈ 3 prédios cada), cada uma com 1 display de endereço + 1 de quantidade na altura dos olhos"],
-  ["Esquinas", "060-063 (Med.) / 060-071 (Perf.)", "0 a 7", "Zonas adicionais de baixo giro (+1 em Medicamento, +3 em Perfumaria)"],
-], [2.2, 1.6, 1.7, 4]));
-c.push(R("O campo **nr_ordem_separacao_flow** indica a ordem de percurso das seções. Nas estações 10 e 16 a ordem é invertida (estações espelhadas) — a rota de cada zona respeita esse campo, depois prédio e andar."));
+c.push(tabela(["Área", "Prédios", "Andares", "Display proposto"], [
+  ["Alto giro, na frente do operador", "001 a 010", "0 a 3, acima das esteiras", "Um display de quantidade (módulo Q) por endereço"],
+  ["Alto giro, parte de baixo", "001 a 010", "4 e 5, abaixo das esteiras", "Quatro displays de endereço e quantidade: um por andar em cada lado (prédios 001 a 005 e 006 a 010), como no sistema atual"],
+  ["Início do lado direito do corredor (150 a 153)", "015", "0 a 3 (até 7 nas esquinas de Medicamento)", "Entra na zona D1 do baixo giro"],
+  ["Baixo giro, corredor atrás do operador", "Esquerdo: 020 (ou 022) a 031\nDireito: 032 até o último", "0 a 7", "Quatro zonas por lado, cada uma com um display de endereço e quantidade na altura dos olhos"],
+  ["Esquinas", "060 a 063 (Medicamento)\n060 a 071 (Perfumaria)", "0 a 7", "Zonas a mais no baixo giro: 1 em Medicamento e 3 em Perfumaria"],
+], [2.2, 1.8, 1.7, 3.8]));
+c.push(P("O campo nr_ordem_separacao_flow define a ordem de percurso. Nas estações 10 e 16 essa ordem é invertida, porque são espelhadas. A rota de cada zona segue esse campo e, depois, prédio e andar."));
 c.push(H2("3.2 Disposição física"));
-c.push(R("O **alto giro** fica na frente do operador. A **esteira de transporte** passa **por dentro do alto giro, por baixo do andar 3 e por cima do andar 4**; a **esteira de separação** fica na frente da estante, aberta, cerca de 20 cm à frente da de transporte, com os endereços logo acima e abaixo dela. O **corredor do baixo giro** fica atrás do operador, perpendicular às esteiras. As prateleiras são alinhadas (mesmos níveis em toda a estante)."));
+c.push(P("O alto giro fica na frente do operador. A esteira de transporte passa por dentro dele, entre o andar 3 e o andar 4. A esteira de separação fica do lado de fora, aberta, uns 20 cm à frente da de transporte, com os endereços logo acima e logo abaixo dela. O corredor do baixo giro fica atrás do operador, perpendicular às esteiras. As prateleiras são alinhadas: os níveis são os mesmos em toda a estante."));
 [
-  "**Transferência:** cada transferência alimenta até 4 estações. A bacia passa da esteira de transporte para a de separação e, na zona de espera, um **rolete direcionador** manda a bacia para a esquerda (2 estações) ou para a direita (2 estações). Ex.: transferência entre 11 e 12 atende 10 e 11 (esquerda) e 12 e 13 (direita). Nas pontas, a transferência entre 3 e 4 atende 3 (esquerda) ou 4 e 5 (direita); na Perfumaria, entre 26 e 27 atende 26 ou 27 e 28.",
-  "**Pedido:** a bacia só entra nas estações em que o pedido tem itens. Se o pedido começa na 3 e continua só na 7, depois da 3 a bacia volta à esteira de transporte e não entra na 4 nem na 5.",
-  "**Saída:** terminada a separação, o operador empurra a bacia de volta para a esteira de transporte a partir de qualquer ponto da estação.",
+  "Transferência: cada transferência atende até quatro estações. A caixa passa da esteira de transporte para a de separação e um rolete direcionador a manda para as duas estações da esquerda ou para as duas da direita. A transferência entre a 11 e a 12, por exemplo, atende a 10 e a 11 de um lado e a 12 e a 13 do outro. Nas pontas, a transferência entre a 3 e a 4 atende a 3 de um lado e a 4 e a 5 do outro; em Perfumaria, a que fica entre a 26 e a 27 atende a 26 de um lado e a 27 e a 28 do outro.",
+  "A caixa só entra nas estações em que o pedido tem itens. Se o pedido começa na 3 e só continua na 7, depois da 3 a caixa volta para a esteira de transporte e passa direto pela 4 e pela 5.",
+  "Terminada a separação, o operador empurra a caixa de volta para a esteira de transporte de qualquer ponto da estação.",
+  "No corredor, olhando a partir da esteira, o lado esquerdo tem os prédios 020 (ou 022) a 031 e o lado direito vai do 032 até o último. O percurso é em U: entra pelo lado esquerdo e volta pelo direito. O prédio 015 (150 a 153) é o primeiro do lado direito, na entrada do corredor.",
+  "Os blocos do baixo giro ficam de costas um para o outro: cada bloco tem um lado de uma estação e o outro lado da estação vizinha. A profundidade é de cerca de 2 m.",
+  "O andar 0 é o de cima. As prateleiras não mudam de altura; o que muda é a caixa do endereço, conforme o tipo (A, B, C, F ou N), e a maioria é pequena. Andar sem endereço fica vazio. As caixas que circulam na esteira têm tamanho único.",
 ].forEach((x) => c.push(B(x)));
-[
-  "No corredor, olhando a partir da área de espera: **lado esquerdo** com os prédios 020 (ou 022) a 031 (\"210 a 310\") e **lado direito** do 032 até o último (\"320 em diante\"). A rota é em U: desce pelo lado esquerdo e volta pelo direito.",
-  "O **prédio 015** (\"150 a 153\") é o primeiro prédio do lado direito, logo na entrada do corredor.",
-  "Os blocos do baixo giro são de costas: cada bloco tem um lado de uma estação e o outro lado da estação vizinha.",
-  "**O andar 0 é o de cima.** As prateleiras são alinhadas; o que muda de tamanho é a caixa do endereço, conforme o tipo (A, B, C, F, N). Andar que o prédio não usa fica vazio. As bacias que percorrem as esteiras têm tamanho único.",
-].forEach((x) => c.push(B(x)));
-c.push(...img("planta_estacao", 640, 324, "Figura 1 — Planta da estação 05 e das vizinhas: alto giro com a esteira de transporte por dentro, esteira de separação, transferência, operador e corredor do baixo giro (sem escala)"));
-c.push(...img("layout_estacao", 640, 230, "Figura 2 — Elevações da estação 05 com os 209 endereços reais (andar 0 em cima) e as 8 zonas do baixo giro (4 por lado)"));
+c.push(...img("planta_estacao", 640, 324, "Figura 1. Planta da estação 05 e das vizinhas (sem escala)"));
+c.push(...img("layout_estacao", 640, 230, "Figura 2. Vista frontal da estação 05 com os 209 endereços da tabela e as 8 zonas do baixo giro"));
 c.push(H2("3.3 Totais por tipo de estação"));
 c.push(tabela(["Tipo", "Estações", "Alto giro 0-3", "Alto giro 4-5", "Baixo giro", "Zonas baixo giro"], [
   ["Medicamento comum", "04-08, 11-14, 17-21 (14)", "29", "10 a 20", "156-160", "8"],
@@ -175,337 +173,341 @@ c.push(tabela(["Tipo", "Estações", "Alto giro 0-3", "Alto giro 4-5", "Baixo gi
   ["Perfumaria comum", "27-31, 34-37, 40-44 (14)", "35", "7 a 15", "131", "8"],
   ["Perfumaria esquina", "32, 33, 38, 39", "35", "9 a 15", "227-230", "11"],
   ["Perfumaria ponta", "26 / 45", "35", "13 / 15", "128 / 131", "8"],
-  ["**TOTAL (40 estações)**", "", fmt(tot.alto_0a3), fmt(tot.alto_45), fmt(tot.baixo), fmt(tot.zonas_baixo)],
-], [2.2, 2.6, 1.2, 1.2, 1.2, 1.3]));
-c.push(nota("**Divergências com os números informados (para conferência):** Perfumaria esquina tem 227-230 endereços de baixo giro na tabela (informado: 203); a estação 26 tem 48 endereços de alto giro (informado: 49); Medicamento tem 20 estações na tabela (informado: 21). A planilha de orçamento usa a tabela, mas **todos os números são editáveis** na aba Estações."));
-c.push(H2("3.4 Zoneamento do baixo giro"));
-c.push(R("Para ficar visual e ergonômico, cada lado do corredor tem **4 zonas** (cerca de 3 prédios cada), e cada zona tem **1 display de endereço + 1 de quantidade + botão**, preso na longarina **na altura dos olhos (≈ 1,5 m)**, no meio da zona. Assim, olhando um lado do corredor, o operador vê **8 displays** (4 de endereço e 4 de quantidade). Cada zona mostra **um item por vez**, na ordem da rota; o botão confirma e o display passa para o próximo item da zona. Todas as zonas com itens trabalham ao mesmo tempo."));
+  ["Total (40 estações)", "", fmt(tot.alto_0a3), fmt(tot.alto_45), fmt(tot.baixo), fmt(tot.zonas_baixo)],
+], [2.2, 2.6, 1.2, 1.2, 1.2, 1.3], { destacarUltima: true }));
+c.push(nota("Conferir com a operação: na tabela, as esquinas de Perfumaria têm 227 a 230 endereços de baixo giro (o número informado foi 203); a estação 26 tem 48 endereços de alto giro (informado: 49); e Medicamento tem 20 estações (informado: 21). A planilha usa os números da tabela, e todos podem ser alterados na aba Estações."));
+c.push(H2("3.4 Zonas do baixo giro"));
+c.push(P("Cada lado do corredor tem quatro zonas de cerca de três prédios. Cada zona tem um display de endereço, um de quantidade e um botão, presos na longarina à altura dos olhos (cerca de 1,5 m), no meio da zona. Olhando um lado do corredor, o operador vê oito displays: quatro de endereço e quatro de quantidade. A zona mostra um item por vez, na ordem da rota. O botão confirma a retirada e o display passa ao item seguinte. Todas as zonas com itens trabalham ao mesmo tempo."));
 [
-  "Estação comum: lado esquerdo 020-031 em 4 zonas (E1 a E4) e lado direito 015 + 043 → 032 em 4 zonas (D1 a D4): **8 zonas por estação**. Esquinas mantêm zonas extras de 4 prédios (060-063 / 060-071).",
-  "Com 3 prédios por zona, cada zona tem até 24 endereços; o display mostra prédio e andar (ex.: **P031 A2**).",
-  "Profundidade do baixo giro ≈ 2 m; as caixas dos endereços são, em geral, pequenas.",
-  "Opcional de baixo custo: **LED guia** no topo de cada prédio, que acende a coluna do item atual da zona (≈ R$ 1.000 para toda a operação).",
-  "O número de zonas por lado é parâmetro do sistema e pode ser ajustado no piloto conforme a produtividade medida.",
+  "Estação comum: lado esquerdo 020 a 031 em quatro zonas (E1 a E4) e lado direito 015 e 043 a 032 em quatro zonas (D1 a D4), oito zonas no total. As esquinas têm zonas a mais, de quatro prédios.",
+  "Com três prédios por zona, uma zona tem até 24 endereços. O display mostra prédio e andar, por exemplo P031 A2.",
+  "Opcional: um LED guia no topo de cada prédio, que acende a coluna do item atual da zona. Custa cerca de R$ 1.000 para a operação toda.",
+  "O número de zonas por lado é configurável e pode mudar depois do piloto, conforme a produtividade.",
 ].forEach((x) => c.push(B(x)));
 
 // 4 REQUISITOS
 c.push(H1("4. Requisitos"));
 c.push(tabela(["Código", "Requisito funcional"], [
-  ["RF01", "Abrir a caixa com a **leitura da etiqueta** (gatilho do coletor ou leitura RFID), sem toque na tela."],
-  ["RF02", "Acender, na estação, todos os endereços de alto giro com itens da caixa, com a quantidade."],
-  ["RF03", "Nos andares 4-5 do alto giro e nas zonas de baixo giro, mostrar endereço e quantidade de um item por vez, na ordem da rota."],
-  ["RF04", "Confirmar cada retirada no botão do display; apagar o display quando não houver mais item."],
-  ["RF05", "Mostrar o progresso da caixa no coletor (A) ou no painel da estação (B)."],
-  ["RF06", "Fechar a caixa com **nova leitura** da etiqueta; com itens pendentes, alertar e exigir confirmação por nova leitura."],
-  ["RF07", "Registrar no Sybase a sessão da caixa e cada confirmação (estação, endereço, quantidade, horário, operador)."],
-  ["RF08", "Informar ao sistema BHT a conclusão da caixa na estação (a validar com o fornecedor)."],
-  ["RF09", "Painel de monitoramento: status de cada estação e módulo, caixas/hora, tempo médio por caixa, alarmes."],
-  ["RF10", "Cadastro do mapa endereço → módulo/zona, editável pela TI sem alterar firmware."],
+  ["RF01", "Abrir a caixa na estação com a leitura da etiqueta (gatilho do coletor ou tag RFID), sem tocar na tela."],
+  ["RF02", "Acender todos os endereços de alto giro (andares 0 a 3) que têm itens da caixa, com a quantidade."],
+  ["RF03", "Nos andares 4 e 5 do alto giro e nas zonas do baixo giro, mostrar endereço e quantidade de um item por vez, na ordem da rota."],
+  ["RF04", "Confirmar cada retirada no botão do display e apagar o display quando não houver mais itens."],
+  ["RF05", "Mostrar o andamento da caixa no coletor (A) ou no painel da estação (B)."],
+  ["RF06", "Fechar a caixa com uma nova leitura. Se houver itens pendentes, avisar e só fechar após outra leitura."],
+  ["RF07", "Gravar no Sybase a sessão da caixa e cada confirmação: estação, endereço, quantidade, horário e operador."],
+  ["RF08", "Informar ao BHT que a caixa terminou na estação, se o fornecedor permitir."],
+  ["RF09", "Painel com a situação de cada estação e módulo, caixas por hora, tempo médio por caixa e alarmes."],
+  ["RF10", "Cadastro do mapa endereço/display pela TI, sem mexer no firmware."],
 ], [1, 7]));
 c.push(tabela(["Código", "Requisito não funcional"], [
-  ["RNF01", "Tempo entre a leitura e o acendimento < 1 segundo (rede cabeada até o concentrador)."],
-  ["RNF02", "Troca de um módulo com defeito em < 5 minutos, sem ferramenta especial e sem abrir a canaleta."],
-  ["RNF03", "Operação em ambiente com poeira e calor: gabinete com filtro e ventilação; componentes de 0 a 50 °C."],
-  ["RNF04", "Se a rede cair, o concentrador mantém a caixa aberta e guarda as confirmações até reconectar."],
-  ["RNF05", "Atualização remota de firmware (OTA) dos concentradores e configuração centralizada."],
-  ["RNF06", "Rede PTL isolada em VLAN; autenticação no broker MQTT e controle de acesso por estação."],
-  ["RNF07", "Reserva técnica de 10% de módulos e concentradores."],
+  ["RNF01", "Menos de 1 segundo entre a leitura e o acendimento."],
+  ["RNF02", "Trocar um módulo com defeito em menos de 5 minutos, sem ferramenta especial e sem abrir a canaleta."],
+  ["RNF03", "Funcionar com poeira e calor: gabinete com filtro e ventilação e componentes para 0 a 50 °C."],
+  ["RNF04", "Se a rede cair, o concentrador mantém a caixa aberta e guarda as confirmações até a rede voltar."],
+  ["RNF05", "Atualização remota do firmware dos concentradores e configuração centralizada."],
+  ["RNF06", "Rede do PTL separada em VLAN, com usuário no broker MQTT e acesso restrito por estação."],
+  ["RNF07", "Reserva de 10% de módulos e concentradores."],
 ], [1, 7]));
 
 // 5 ARQUITETURA A
-c.push(H1("5. Arquitetura A — Coletor + concentrador + displays"));
-c.push(...img("arquitetura_a", 640, 347, "Figura 3 — Visão geral da Arquitetura A"));
+c.push(H1("5. Arquitetura A: coletor, concentrador e displays"));
+c.push(...img("arquitetura_a", 640, 347, "Figura 3. Visão geral da Arquitetura A"));
 c.push(H2("5.1 Componentes"));
-c.push(tabela(["Componente", "Responsabilidade", "Tecnologia proposta"], [
-  ["Serviço PTL", "Abre/fecha caixas, consulta itens, divide por estação/área/zona, ordena pela rota, envia comandos, recebe confirmações, grava log, alimenta o painel.", "Serviço em VM (Linux ou Windows) com API REST; linguagem a definir pela TI (Java, .NET ou Node). Driver jConnect/ODBC para Sybase."],
-  ["Broker MQTT", "Canal de mensagens entre o serviço e os 40 concentradores (comando e eventos).", "Eclipse Mosquitto na mesma VM, com usuário e ACL por estação."],
-  ["Banco Sybase ASE", "Tabelas PTL (estação, mapa de módulos, zonas, sessões, eventos) e views de leitura dos itens da caixa.", "Sybase ASE 16 existente."],
-  ["Integração BHT", "Consulta das informações da caixa pela API do fornecedor; aviso de conclusão (a validar).", "API do sistema BHT."],
-  ["Coletor (A1 ou A2)", "Leitura da etiqueta com o gatilho (abre e fecha) e exibição do progresso.", "A1: app Android próprio. A2: tela do WMS PowerBuilder no coletor."],
-  ["Concentrador", "Recebe a caixa, comanda os 2 barramentos, devolve as confirmações; mantém o estado em queda de rede.", "RP2040 + Ethernet W5500, 2 transceptores RS-485, fonte 12 V Mean Well, gabinete IP54 ventilado."],
-  ["Nó de coluna", "Liga os Módulos Q de um prédio do alto giro ao barramento.", "RP2040 + RS-485 + regulador 12→5 V; RJ45 de entrada/saída e por módulo."],
-  ["Módulo Q", "Quantidade (3 dígitos) + botão com LED, um por endereço de alto giro (andares 0-3).", "Display 7 segmentos 0,56\" + botão 16 mm com LED."],
-  ["Módulo E+Q", "Endereço (8 dígitos) + quantidade (3 dígitos) + botão; andares 4-5 do alto giro (4 por estação) e zonas de baixo giro.", "MAX7219 8 dígitos + display 3 dígitos + RP2040 + RS-485."],
-  ["Painel de monitoramento", "Visão em tempo real para gestão e TI.", "Página web servida pelo Serviço PTL."],
+c.push(P("A Figura 4 mostra os componentes do sistema e como se comunicam. Os blocos em azul são o software novo, os verdes são o hardware novo de cada estação e os marrons são os sistemas que já existem. Os tracejados são opcionais ou só valem para a Arquitetura B."));
+c.push(...img("componentes", 640, 404, "Figura 4. Arquitetura de componentes"));
+c.push(tabela(["Componente", "Função", "Tecnologia proposta"], [
+  ["API REST", "Recebe as leituras do coletor e do RFID, informa o estado da estação, permite cancelar uma caixa e atualizar o mapa.", "HTTPS com JSON. Linguagem a definir pela arquitetura (Java, .NET ou Node)."],
+  ["Orquestrador de caixas", "Controla o estado da caixa na estação, separa os itens por display e ordena pela rota.", "Módulo do Serviço PTL."],
+  ["Mapa de endereços", "Relaciona cada cd_endereco a um módulo Q ou a uma zona.", "Tabela no Sybase, editável pela TI."],
+  ["Adaptador Sybase", "Lê os itens da caixa por views e grava sessões e eventos.", "jConnect ou ODBC."],
+  ["Adaptador BHT", "Consulta os dados da caixa e, se possível, avisa a conclusão.", "API do sistema BHT."],
+  ["Gateway MQTT e broker", "Envia os comandos para os 40 concentradores e recebe os eventos.", "Eclipse Mosquitto na mesma VM, com usuário e permissão por estação."],
+  ["Painel e monitor", "Mostra a situação das estações e os indicadores.", "Páginas web servidas pelo próprio serviço."],
+  ["Registro de eventos", "Guarda leituras, botões e falhas.", "Tabela ptl_evento, com retenção definida pela TI."],
+  ["Coletor (A1 ou A2)", "Lê a etiqueta com o gatilho (abre e fecha) e mostra o andamento.", "A1: app Android próprio. A2: tela do WMS no coletor."],
+  ["Concentrador", "Recebe a caixa, comanda os dois barramentos e devolve as confirmações. Mantém o estado se a rede cair.", "RP2040 com Ethernet W5500, duas saídas RS-485, fonte Mean Well de 12 V e gabinete IP54 ventilado."],
+  ["Nó de coluna", "Liga os módulos Q de um prédio do alto giro ao barramento.", "RP2040, RS-485 e regulador de 12 para 5 V, com RJ45 de entrada, saída e por módulo."],
+  ["Módulo Q", "Quantidade de 3 dígitos e botão com LED, um por endereço do alto giro (andares 0 a 3).", "Display de 7 segmentos de 0,56\" e botão de 16 mm com LED."],
+  ["Módulo E+Q", "Endereço de 8 dígitos, quantidade de 3 dígitos e botão. Usado nos andares 4 e 5 (quatro por estação) e nas zonas do baixo giro.", "MAX7219, display de 3 dígitos, RP2040 e RS-485."],
 ], [1.4, 3, 2.6], { size: 17 }));
-c.push(H2("5.2 Duas alternativas para o coletor"));
-c.push(tabela(["Critério", "A1 — App Android próprio", "A2 — Tela do WMS no coletor"], [
-  ["Como funciona", "App leve no MovFast; lê com o gatilho e chama a API do Serviço PTL.", "Tela PowerBuilder acessada no coletor; grava a leitura em tabela que o Serviço PTL consome."],
-  ["Experiência do operador", "Tela dedicada, letras grandes, sem toque; feedback imediato (som/vibração).", "Depende do acesso atual ao WMS no coletor; mais lenta para responder."],
-  ["Esforço de desenvolvimento", "≈ 160 h", "≈ 80 h"],
-  ["Dependências", "Distribuição do app (MDM ou instalação manual).", "Sessão do WMS no coletor; polling do banco aumenta latência."],
-  ["Recomendação", "**Recomendada** para a operação", "Alternativa rápida para o piloto, se o app atrasar"],
+c.push(H2("5.2 Duas opções para o coletor"));
+c.push(tabela(["Critério", "A1: app Android próprio", "A2: tela do WMS no coletor"], [
+  ["Como funciona", "App simples no MovFast. Lê com o gatilho e chama a API do Serviço PTL.", "Tela em PowerBuilder aberta no coletor. Grava a leitura numa tabela que o Serviço PTL lê."],
+  ["Para o operador", "Tela própria, letra grande, sem toque, com som e vibração.", "Depende do acesso ao WMS no coletor e responde mais devagar."],
+  ["Desenvolvimento", "Cerca de 160 h", "Cerca de 80 h"],
+  ["Dependências", "Instalar o app nos coletores (MDM ou manual).", "Sessão do WMS aberta no coletor; a consulta periódica ao banco aumenta o tempo de resposta."],
+  ["Indicação", "Melhor opção para a operação", "Pode servir no piloto se o app atrasar"],
 ], [1.4, 2.4, 2.4]));
-c.push(H2("5.3 Fluxo de operação"));
-c.push(...img("sequencia", 640, 375, "Figura 4 — Sequência de mensagens de uma caixa na estação"));
+c.push(H2("5.3 Fluxo de uma caixa"));
+c.push(...img("sequencia", 640, 375, "Figura 5. Mensagens trocadas durante uma caixa na estação"));
 [
-  "A bacia vem pela esteira de transporte, passa pela transferência para a esteira de separação e o rolete direcionador a leva até a estação (controle do sistema BHT).",
-  "O operador aponta o coletor para a etiqueta e aperta o gatilho: a leitura **abre** a caixa na estação.",
-  "O Serviço PTL busca os itens da caixa (Sybase/API), filtra os endereços daquela estação, separa em alto giro, andares 4-5 e zonas, e ordena pela rota.",
-  "O concentrador acende todos os displays de alto giro com a quantidade e o primeiro item de cada display E+Q (andares 4-5 e zonas).",
-  "O operador pega a quantidade e aperta o botão; o display apaga (alto giro) ou passa ao próximo item (andares 4-5 e zonas). O coletor mostra o progresso.",
-  "Ao apagar o último display, o coletor mostra **Estação concluída**. O operador lê a etiqueta de novo: a caixa **fecha**, o Serviço PTL grava a sessão e (se validado) avisa o BHT, e o operador empurra a bacia de volta para a esteira de transporte.",
+  "A caixa vem pela esteira de transporte, passa pela transferência para a esteira de separação e o rolete direcionador a leva até a estação. Essa parte é do BHT.",
+  "O operador aponta o coletor para a etiqueta e aperta o gatilho. A caixa abre na estação.",
+  "O Serviço PTL busca os itens da caixa, separa os que são daquela estação, divide entre alto giro, andares 4 e 5 e zonas, e ordena pela rota.",
+  "O concentrador acende todos os displays de alto giro com a quantidade e mostra o primeiro item de cada display de endereço e quantidade.",
+  "O operador pega e aperta o botão. No alto giro o display apaga; nos outros, passa ao próximo item. O coletor mostra o andamento.",
+  "Quando o último display apaga, o coletor mostra \"Estação concluída\". O operador lê a etiqueta de novo, a caixa fecha, o Serviço PTL grava a sessão e o operador empurra a caixa de volta para a esteira de transporte.",
 ].forEach((x) => c.push(N(x)));
 
 // 6 ARQUITETURA B
-c.push(H1("6. Arquitetura B — Identificação por RFID"));
-c.push(R("A Arquitetura B mantém **toda a infraestrutura de displays, concentradores e Serviço PTL** da Arquitetura A e troca apenas a forma de identificar a caixa: cada caixa retornável recebe uma **tag NFC (13,56 MHz) fixa**, e a leitura acontece sem o coletor."));
-c.push(...img("arquitetura_b", 640, 347, "Figura 5 — Visão geral da Arquitetura B"));
+c.push(H1("6. Arquitetura B: identificação por RFID"));
+c.push(P("A Arquitetura B usa os mesmos displays, concentradores e Serviço PTL da A. Muda só a forma de identificar a caixa: cada caixa retornável recebe uma tag NFC (13,56 MHz) fixa e a leitura acontece sem o coletor."));
+c.push(...img("arquitetura_b", 640, 347, "Figura 6. Visão geral da Arquitetura B"));
 c.push(H2("6.1 Opções de leitura"));
-c.push(tabela(["Opção", "Como funciona", "Prós", "Contras"], [
-  ["B1 — Pulseira NFC", "Leitor no pulso (ESP32-C3 + PN532 + bateria). O operador encosta o pulso na tag da caixa para abrir e para fechar.", "Mãos livres; leitura em < 1 s; baixo custo por unidade (≈ R$ 130).", "Pode atrapalhar o operador; bateria e carga diária; higiene/conforto."],
-  ["B2 — Leitor fixo na estação", "Leitor NFC sob a posição de pega na esteira de separação, ligado ao concentrador. Painel LCD mostra caixa e itens restantes; fechar com nova leitura ou botão FECHAR.", "Nada no corpo do operador; sem bateria; abre automaticamente.", "Exige posição de parada definida para a caixa; instalação mecânica na esteira."],
-  ["B3 — Produtos de mercado", "Leitores de pulso comerciais (em geral UHF, ex.: FEIG HyWEAR ≈ US$ 997) ou leitores HF industriais.", "Robustez e garantia.", "Custo muito maior; UHF lê de longe (risco de ler a caixa vizinha) e exige tags UHF."],
+c.push(tabela(["Opção", "Como funciona", "Vantagens", "Desvantagens"], [
+  ["B1: pulseira NFC", "Leitor no pulso (ESP32-C3, PN532 e bateria). O operador encosta o pulso na tag para abrir e para fechar.", "Mãos livres, leitura em menos de 1 s, cerca de R$ 130 por unidade.", "Pode atrapalhar o operador; precisa de carga diária; higiene e conforto."],
+  ["B2: leitor fixo na estação", "Leitor NFC sob a posição de pega na esteira de separação, ligado ao concentrador. Um painel LCD mostra a caixa e os itens que faltam; fecha com nova leitura ou com o botão FECHAR.", "Nada no corpo do operador e sem bateria. Abre sozinho.", "A caixa precisa parar sempre no mesmo ponto; exige instalação mecânica na esteira."],
+  ["B3: produto de mercado", "Leitores de pulso comerciais (em geral UHF, como o FEIG HyWEAR, cerca de US$ 997) ou leitores HF industriais.", "Robustez e garantia.", "Custo muito maior. O UHF lê de longe e pode pegar a caixa vizinha; exige tags UHF."],
 ], [1.2, 2.6, 1.8, 1.8], { size: 17 }));
-c.push(nota("**Recomendação para a Arquitetura B:** opção **B2 (leitor fixo)**, porque atende à preocupação de que a pulseira atrapalhe o operador e elimina bateria. B1 fica como alternativa para estações onde a caixa não tenha posição fixa."));
+c.push(nota("Para a Arquitetura B, indicamos o leitor fixo (B2): ele resolve a preocupação de a pulseira atrapalhar o operador e não tem bateria. A pulseira (B1) fica como alternativa para estações em que a caixa não pare sempre no mesmo lugar."));
 c.push(H2("6.2 Tag na caixa retornável"));
 [
-  "Tag NFC NTAG213 adesiva (≈ R$ 2,37/un em lote) aplicada em local protegido da caixa, com cobertura/suporte contra atrito.",
-  "Cadastro inicial: associar o UID da tag ao número da caixa (≈ 30 s por caixa) em tabela do Sybase.",
-  "Frota de caixas estimada em 5.000 (≈ 1,7 × o volume diário) — **confirmar com a operação**; o custo das tags escala com a frota.",
-  "Caixas danificadas: substituir a tag no processo de manutenção de caixas.",
+  "Tag NFC NTAG213 adesiva, cerca de R$ 2,37 a unidade em lote, colada em um ponto protegido da caixa.",
+  "Cadastro inicial: associar o código da tag ao número da caixa no Sybase, cerca de 30 segundos por caixa.",
+  "A frota estimada é de 5.000 caixas, mas precisa ser confirmada com a operação, porque o custo das tags depende dela.",
+  "Caixa danificada: a tag é trocada na manutenção de caixas.",
 ].forEach((x) => c.push(B(x)));
-c.push(H2("6.3 Comparativo A × B"));
-c.push(tabela(["Critério", "A — Coletor", "B — RFID (B2)"], [
-  ["Equipamento de leitura", "Coletores MovFast já existentes", "Leitor fixo por estação + tag por caixa"],
-  ["Ação do operador para abrir/fechar", "Apontar e apertar o gatilho (2×)", "Colocar a caixa na posição (abre); nova leitura/botão (fecha)"],
-  ["Custo de hardware (40 estações)*", "R$ 284 mil", "R$ 308 mil"],
-  ["Custo recorrente", "Nenhum novo", "Tags para caixas novas/danificadas"],
-  ["Riscos", "Disponibilidade e bateria dos coletores; Wi-Fi", "Posição de leitura da caixa; frota de tags"],
-  ["Prazo", "Menor (reaproveita coletores)", "Maior (tags, cadastro, mecânica)"],
+c.push(H2("6.3 Comparação entre A e B"));
+c.push(tabela(["Critério", "A: coletor", "B: RFID (B2)"], [
+  ["Leitura", "Coletores MovFast que já temos", "Leitor fixo por estação e tag em cada caixa"],
+  ["O que o operador faz", "Aponta e aperta o gatilho, uma vez para abrir e outra para fechar", "Coloca a caixa na posição (abre) e faz nova leitura ou aperta o botão (fecha)"],
+  ["Hardware, 40 estações*", "R$ 284 mil", "R$ 308 mil"],
+  ["Custo contínuo", "Nenhum novo", "Tags para caixas novas ou danificadas"],
+  ["Riscos", "Disponibilidade e bateria dos coletores; Wi-Fi", "Posição da caixa na leitura; tamanho da frota"],
+  ["Prazo", "Menor, porque usa os coletores atuais", "Maior por causa das tags, do cadastro e da instalação"],
 ], [1.6, 2.2, 2.2]));
-c.push(P("* Hardware com mão de obra interna; detalhes na seção 12 e na planilha Orcamento_PTL.xlsx.", { italic: true, size: 18, color: CZ }));
+c.push(P("* Com mão de obra interna. O detalhamento está no item 12 e na planilha Orcamento_PTL.xlsx.", { italic: true, size: 18, color: CZ }));
 
 // 7 FUNCIONAMENTO
 c.push(H1("7. Funcionamento e regras"));
 c.push(H2("7.1 Estados da caixa na estação"));
-c.push(tabela(["Estado", "Entrada", "Saída"], [
-  ["Aguardando", "Estação livre", "1ª leitura da etiqueta/tag → Aberta"],
-  ["Aberta", "Itens enviados aos displays", "Último display confirmado → Concluída\n2ª leitura com pendências → Alerta"],
-  ["Concluída", "Todos os itens confirmados", "2ª leitura → Fechada"],
-  ["Alerta (fechamento antecipado)", "Leitura de fechamento com itens pendentes", "Nova leitura confirma → Fechada com pendência (registrada para a conferência)"],
-  ["Fechada", "Sessão gravada no Sybase", "Estação volta a Aguardando"],
-  ["Sem itens", "Caixa sem endereços nesta estação", "Coletor/painel avisa \"nada nesta estação\"; caixa segue"],
+c.push(tabela(["Estado", "Quando começa", "Próximo passo"], [
+  ["Aguardando", "Estação livre", "Primeira leitura: passa para Aberta"],
+  ["Aberta", "Itens enviados aos displays", "Último display confirmado: Concluída\nNova leitura com itens pendentes: Alerta"],
+  ["Concluída", "Todos os itens confirmados", "Nova leitura: Fechada"],
+  ["Alerta", "Leitura de fechamento com itens pendentes", "Outra leitura confirma e fecha com pendência, que fica registrada para a conferência"],
+  ["Fechada", "Sessão gravada no Sybase", "Estação volta para Aguardando"],
+  ["Sem itens", "Caixa sem endereços nesta estação", "Coletor ou painel mostra \"nada nesta estação\" e a caixa segue"],
 ], [1.6, 2.2, 3]));
 c.push(H2("7.2 Regras de separação"));
 [
-  "**Alto giro (andares 0-3):** todos os endereços da caixa acendem juntos, cada um com a sua quantidade.",
-  "**Andares 4-5 e zonas de baixo giro:** um item por vez em cada display E+Q; todos os displays com itens ficam ativos ao mesmo tempo.",
-  "**Ordem da rota:** nr_ordem_separacao_flow, depois prédio e andar (respeitando estações espelhadas).",
-  "**Mesmo endereço repetido na caixa:** as quantidades são somadas em um único acendimento.",
-  "**Confirmação:** o botão confirma a quantidade pedida. A falta é apontada na conferência, como hoje.",
+  "Alto giro, andares 0 a 3: todos os endereços da caixa acendem juntos, cada um com a sua quantidade.",
+  "Andares 4 e 5 e zonas do baixo giro: cada display mostra um item por vez. Todos os displays com itens ficam ativos ao mesmo tempo.",
+  "Ordem: nr_ordem_separacao_flow, depois prédio e andar, respeitando as estações espelhadas.",
+  "Endereço repetido na mesma caixa: as quantidades são somadas e o endereço acende uma vez só.",
+  "O botão confirma a quantidade pedida. Falta é apontada na conferência, como hoje.",
 ].forEach((x) => c.push(B(x)));
 c.push(H2("7.3 Exceções"));
-c.push(tabela(["Situação", "Comportamento do sistema"], [
-  ["Caixa lida sem itens nesta estação", "Mensagem \"nada nesta estação\"; nenhum display acende; caixa pode seguir."],
-  ["Caixa não encontrada na API/banco", "Alerta no coletor/painel; registro no log; operador segue o procedimento manual."],
-  ["Leitura de outra caixa com uma aberta", "Bloqueia e informa a caixa em andamento (1 caixa por estação)."],
-  ["Fechamento com itens pendentes", "Alerta com a lista do que falta; nova leitura confirma; pendência registrada para a conferência."],
-  ["Botão apertado sem item", "Ignorado; registro de diagnóstico."],
-  ["Módulo sem resposta (defeito)", "Concentrador avisa o Serviço PTL; coletor mostra o endereço e a quantidade daquele item; alerta no painel para a manutenção."],
-  ["Queda de rede do concentrador", "Displays continuam; confirmações ficam em memória e são enviadas ao reconectar. Nova caixa só abre com rede."],
-  ["Queda do Serviço PTL", "Coletor informa indisponibilidade; operação manual de contingência; alarme para a TI."],
-  ["Queda de energia na estação", "Ao voltar, o concentrador pede ao Serviço PTL o estado da caixa aberta e reacende o que falta."],
-  ["Troca de operador no meio da caixa", "A caixa continua; o fechamento registra o operador que leu."],
-  ["Cancelamento pela supervisão", "Endpoint de cancelamento apaga a estação e registra o motivo."],
+c.push(tabela(["Situação", "O que o sistema faz"], [
+  ["Caixa sem itens nesta estação", "Mostra \"nada nesta estação\", não acende nenhum display e a caixa pode seguir."],
+  ["Caixa não encontrada", "Avisa no coletor ou no painel, registra no log e o operador segue o procedimento manual."],
+  ["Leitura de outra caixa com uma aberta", "Não abre e informa qual caixa está em andamento. É uma caixa por estação."],
+  ["Fechamento com itens pendentes", "Mostra o que falta; uma nova leitura confirma e a pendência fica registrada para a conferência."],
+  ["Botão apertado sem item", "Ignora e registra para diagnóstico."],
+  ["Módulo sem resposta", "O concentrador avisa o Serviço PTL, o coletor mostra o endereço e a quantidade daquele item e o painel gera alerta para a manutenção."],
+  ["Concentrador sem rede", "Os displays continuam funcionando e as confirmações ficam guardadas até a rede voltar. Nova caixa só abre com rede."],
+  ["Serviço PTL fora do ar", "O coletor informa e a estação passa para a operação manual. A TI recebe o alarme."],
+  ["Falta de energia na estação", "Quando a energia volta, o concentrador pede ao Serviço PTL o estado da caixa aberta e acende o que falta."],
+  ["Troca de operador no meio da caixa", "A caixa continua; o fechamento registra quem fez a leitura."],
+  ["Cancelamento pela supervisão", "Apaga a estação e registra o motivo."],
 ], [2.2, 5]));
 
 // 8 INTERFACES
 c.push(H1("8. Interfaces"));
 c.push(H2("8.1 Telas do coletor (A1)"));
-c.push(...img("telas_coletor", 640, 302, "Figura 6 — Telas do app PTL: espera, separação, conclusão e alerta"));
+c.push(...img("telas_coletor", 640, 302, "Figura 7. Telas do app: espera, separação, conclusão e alerta"));
 c.push(H2("8.2 Displays"));
-c.push(...img("modulos", 640, 215, "Figura 7 — Módulo Q, Módulo E+Q e gabinete do concentrador"));
+c.push(...img("modulos", 640, 215, "Figura 8. Módulo Q, módulo E+Q e gabinete do concentrador"));
 [
-  "**Formato do endereço no display de 8 dígitos:** \"P031 A2\" (prédio 031, andar 2); a rua não aparece porque é a própria estação.",
-  "**Displays de 0,56\" (14 mm)** de altura de dígito para leitura a 2-3 m; cor vermelha (melhor contraste em 7 segmentos).",
-  "**LED do botão:** aceso = item a pegar; piscando = item novo na zona; apagado = nada a fazer.",
+  "O display de 8 dígitos mostra o endereço como \"P031 A2\" (prédio 031, andar 2). A rua não aparece porque é a própria estação.",
+  "Dígitos de 0,56\" (14 mm), legíveis a 2 ou 3 m, em vermelho, que tem o melhor contraste em 7 segmentos.",
+  "LED do botão: aceso quando há item para pegar, piscando quando chega item novo na zona e apagado quando não há nada.",
 ].forEach((x) => c.push(B(x)));
 c.push(H2("8.3 API REST do Serviço PTL"));
 c.push(tabela(["Método e rota", "Uso"], [
-  ["POST /v1/estacoes/{est}/leituras", "Leitura do coletor/RFID {caixa, operador}. Abre ou fecha conforme o estado; responde estado e progresso."],
-  ["GET /v1/estacoes/{est}", "Estado da estação, caixa aberta, itens pendentes por área/zona."],
+  ["POST /v1/estacoes/{est}/leituras", "Leitura do coletor ou do RFID {caixa, operador}. Abre ou fecha conforme o estado e devolve o andamento."],
+  ["GET /v1/estacoes/{est}", "Estado da estação, caixa aberta e itens pendentes por área e zona."],
   ["GET /v1/caixas/{caixa}", "Histórico da caixa nas estações."],
   ["POST /v1/estacoes/{est}/cancelar", "Cancelamento pela supervisão {motivo}."],
-  ["GET /v1/monitor/resumo", "Indicadores para o painel (caixas/h, tempo médio, módulos com falha)."],
-  ["PUT /v1/estacoes/{est}/mapa", "Atualiza o mapa endereço → módulo/zona (uso da TI)."],
+  ["GET /v1/monitor/resumo", "Indicadores do painel: caixas por hora, tempo médio e módulos com falha."],
+  ["PUT /v1/estacoes/{est}/mapa", "Atualiza o mapa endereço/display (uso da TI)."],
 ], [2.4, 4.6]));
-c.push(H2("8.4 Mensagens MQTT (Serviço ↔ concentrador)"));
+c.push(H2("8.4 Mensagens MQTT entre o serviço e o concentrador"));
 c.push(tabela(["Tópico", "Mensagem (JSON)"], [
-  ["ptl/est05/cmd", "SEPARAR {caixa, alto_giro:[{mod, qtd}], blocos:[{bloco, itens:[{end, qtd}]}], zonas:[{zona, itens:[…]}]}"],
+  ["ptl/est05/cmd", "SEPARAR {caixa, alto_giro:[{mod, qtd}], andares_45:[{display, itens:[{end, qtd}]}], zonas:[{zona, itens:[…]}]}"],
   ["ptl/est05/cmd", "CANCELAR {caixa} · CONFIG {mapa} · PING"],
   ["ptl/est05/evt", "ACK {caixa, acesos} · BTN {caixa, end, qtd} · ZONA_FIM {zona} · CONCLUIDA {caixa}"],
   ["ptl/est05/evt", "FALHA_MODULO {mod} · HEARTBEAT {uptime, temperatura, versão}"],
-  ["ptl/est05/status", "Mensagem retida: online/offline (last will), caixa aberta"],
+  ["ptl/est05/status", "Mensagem retida: online ou offline (last will) e caixa aberta"],
 ], [1.6, 5.4]));
-c.push(H2("8.5 Barramento RS-485 (concentrador ↔ nós e módulos)"));
+c.push(H2("8.5 Barramento RS-485 entre o concentrador e os módulos"));
 [
-  "Dois barramentos por estação (alto giro e baixo giro), 38.400 bps, protocolo mestre-escravo com endereço de 1 byte por dispositivo (dip switch ou gravado na instalação).",
-  "Comandos: MOSTRAR (endereço, quantidade, modo), APAGAR, PISCAR, LER_BOTOES, AUTO_TESTE. O concentrador consulta todos os dispositivos a cada 50 ms.",
-  "Terminação de 120 Ω nas pontas e polarização no concentrador; cabo Cat5e com par trançado para o sinal.",
+  "Dois barramentos por estação, um para o alto giro e outro para o baixo giro, a 38.400 bps. O concentrador é o mestre e cada dispositivo tem um endereço de 1 byte, definido por chave ou na instalação.",
+  "Comandos: MOSTRAR (endereço, quantidade, modo), APAGAR, PISCAR, LER_BOTOES e AUTO_TESTE. O concentrador consulta todos os dispositivos a cada 50 ms.",
+  "Resistor de terminação de 120 Ω nas pontas e polarização no concentrador. O sinal vai em um par trançado do Cat5e.",
 ].forEach((x) => c.push(B(x)));
 c.push(H2("8.6 Tabelas no Sybase (proposta)"));
 c.push(tabela(["Tabela", "Conteúdo"], [
-  ["ptl_estacao", "rua, segmento, tipo, IP/ID do concentrador, ativo"],
-  ["ptl_dispositivo", "estação, barramento, endereço RS-485, tipo (Q, E+Q, nó), situação"],
-  ["ptl_endereco_mapa", "cd_endereco → dispositivo/posição (alto giro) ou bloco/zona (E+Q)"],
-  ["ptl_caixa_sessao", "caixa, estação, operador, abertura, conclusão, fechamento, situação"],
-  ["ptl_caixa_item", "sessão, cd_endereco, quantidade, confirmado em, dispositivo"],
-  ["ptl_evento", "log de eventos e falhas (com retenção definida)"],
-  ["ptl_tag_caixa (B)", "UID da tag → número da caixa"],
+  ["ptl_estacao", "Rua, segmento, tipo, identificação do concentrador e se está ativa"],
+  ["ptl_dispositivo", "Estação, barramento, endereço RS-485, tipo (Q, E+Q ou nó) e situação"],
+  ["ptl_endereco_mapa", "cd_endereco e o display correspondente (módulo Q ou zona)"],
+  ["ptl_caixa_sessao", "Caixa, estação, operador, abertura, conclusão, fechamento e situação"],
+  ["ptl_caixa_item", "Sessão, cd_endereco, quantidade, horário da confirmação e dispositivo"],
+  ["ptl_evento", "Log de eventos e falhas, com prazo de retenção"],
+  ["ptl_tag_caixa (B)", "Código da tag e número da caixa"],
 ], [1.8, 5.2]));
-c.push(P("A origem dos itens da caixa (tabelas do pedido no WMS ou API do BHT) será definida com o DBA e o fornecedor do BHT; o Serviço PTL lê por views para não acoplar ao modelo do WMS.", { size: 19 }));
-c.push(H2("8.7 Painel de monitoramento"));
+c.push(P("A origem dos itens da caixa (tabelas do pedido no WMS ou API do BHT) será definida com o DBA e com o fornecedor do BHT. O Serviço PTL lê por views para não depender do modelo interno do WMS.", { size: 19 }));
+c.push(H2("8.7 Painel de acompanhamento"));
 [
-  "Mapa das 40 estações: livre, separando, alerta, offline.",
-  "Indicadores: caixas/hora por estação e total, tempo médio por caixa, itens/hora, tempo de espera da caixa.",
-  "Saúde: módulos sem resposta, concentradores offline, temperatura do gabinete, versão de firmware.",
-  "Usuários: gestão da operação (indicadores) e TI (saúde e diagnóstico).",
+  "Mapa das 40 estações: livre, separando, alerta ou sem comunicação.",
+  "Indicadores: caixas por hora por estação e no total, tempo médio por caixa, itens por hora e tempo de espera da caixa.",
+  "Saúde do sistema: módulos sem resposta, concentradores sem comunicação, temperatura do gabinete e versão do firmware.",
+  "Quem usa: a gestão da operação acompanha os indicadores e a TI acompanha a saúde e faz o diagnóstico.",
 ].forEach((x) => c.push(B(x)));
 
 // 9 HARDWARE
 c.push(H1("9. Hardware"));
 c.push(H2("9.1 Quantidades"));
-c.push(tabela(["Item", "Por estação comum (Med.)", "Piloto (05 + 27)", "Operação completa"], [
-  ["Módulos Q (alto giro 0-3)", "29", "64", fmt(tot.alto_0a3)],
+c.push(tabela(["Item", "Estação comum (Medicamento)", "Piloto (05 e 27)", "Operação completa"], [
+  ["Módulos Q (alto giro, andares 0 a 3)", "29", "64", fmt(tot.alto_0a3)],
   ["Nós de coluna", "10", "20", "400"],
-  ["Módulos E+Q (andares 4-5 + zonas)", "4 + 8 = 12", "24", fmt(tot.blocos_alto_45 + tot.zonas_baixo)],
+  ["Módulos E+Q (andares 4 e 5 e zonas)", "4 + 8 = 12", "24", fmt(tot.blocos_alto_45 + tot.zonas_baixo)],
   ["Concentradores", "1", "2", "40"],
-  ["Reserva técnica", "—", "+10%", "+10%"],
+  ["Reserva", "", "10%", "10%"],
 ], [2.6, 1.6, 1.4, 1.6], { direita: [1, 2, 3] }));
-c.push(H2("9.2 Cabeamento — foco em manutenção"));
-c.push(...img("cabeamento", 640, 274, "Figura 8 — Topologia de cabeamento: barramento do alto giro com nós de coluna e do baixo giro com módulos em cadeia (eletrocalha sobre o corredor)"));
+c.push(H2("9.2 Cabeamento"));
+c.push(...img("cabeamento", 640, 274, "Figura 9. Cabeamento da estação: barramento do alto giro com nós de coluna e barramento do baixo giro com os módulos em cadeia pela eletrocalha"));
 [
-  "**Cabo Cat5e com RJ45** em todos os trechos: par 1 RS-485, par 2 +12 V, par 3 GND, par 4 reserva.",
-  "**Sem fio contínuo atrás das plaquinhas:** cada trecho é um cabo curto com conector; trocar um módulo = desconectar dois RJ45 e encaixar o reserva.",
-  "Canaleta/perfil fixado na prateleira apenas para conduzir e proteger os cabos; os módulos ficam presos por encaixe na frente da canaleta.",
-  "Etiquetas com o código do dispositivo em cada módulo e cabo; mapa de cada estação no Serviço PTL.",
+  "Cabo Cat5e com RJ45 em todos os trechos. Par 1: RS-485; par 2: 12 V; par 3: GND; par 4: reserva.",
+  "Não há fio contínuo atrás das plaquinhas. Cada trecho é um cabo curto com conector, e trocar um módulo é soltar dois RJ45 e encaixar o reserva.",
+  "A canaleta só conduz e protege os cabos. Os módulos ficam encaixados na frente dela.",
+  "Cada módulo e cada cabo têm etiqueta com o código do dispositivo, e o mapa de cada estação fica no Serviço PTL.",
 ].forEach((x) => c.push(B(x)));
 c.push(H2("9.3 Concentrador e gabinete"));
 [
-  "Placa RP2040 + W5500 (Ethernet), 2 transceptores RS-485, regulador 12→5 V, auto-teste na partida e watchdog.",
-  "Fonte Mean Well LRS-150-12 (12 V, 12,5 A) — consumo estimado da estação ≈ 1,5 A em 12 V; a folga permite LEDs guia e expansão.",
-  "Gabinete IP54 com cooler 40 mm 12 V com termostato, entrada de ar com filtro lavável, trilho DIN e disjuntor de 2 A.",
+  "Placa RP2040 com Ethernet W5500, duas saídas RS-485, regulador de 12 para 5 V, auto-teste ao ligar e watchdog.",
+  "Fonte Mean Well LRS-150-12 (12 V, 12,5 A). A estação consome cerca de 1,5 A, o que deixa folga para os LEDs guia e para ampliações.",
+  "Gabinete IP54 com cooler de 40 mm com termostato, entrada de ar com filtro lavável, trilho DIN e disjuntor de 2 A.",
 ].forEach((x) => c.push(B(x)));
-c.push(H2("9.4 12 V × 5 V"));
-c.push(R("Exemplo de cálculo: 10 m de Cat5e (24 AWG ≈ 0,084 Ω/m por condutor), usando um par para positivo e outro para negativo (0,042 Ω/m cada), com 2 A: resistência do laço ≈ 0,84 Ω → **queda de 1,7 V**. Em 5 V isso é **34%** (inviável sem várias injeções de energia); em 12 V são **14%**, absorvidos pelos reguladores locais, que aceitam de 7 a 24 V."));
-c.push(tabela(["Critério", "12 V (recomendado)", "5 V"], [
-  ["Queda de tensão em cabos longos", "Tolerada pelos reguladores locais", "Crítica: exige cabos de força extras e várias injeções"],
-  ["Componentes", "+1 regulador por nó/módulo (≈ R$ 8)", "Sem reguladores"],
-  ["Custo de peças (operação completa)", "≈ R$ 211 mil", "≈ R$ 208 mil (economia nos reguladores compensada pelo cabo de força)"],
-  ["Manutenção", "Baixa: um único cabo por trecho", "Maior: mais pontos de conexão de energia"],
-  ["Recomendação", "**Adotar**", "Apenas para trechos curtos"],
+c.push(H2("9.4 12 V ou 5 V"));
+c.push(P("Cálculo de referência: 10 m de Cat5e (24 AWG, cerca de 0,084 Ω/m por condutor), com um par para o positivo e outro para o negativo (0,042 Ω/m cada) e 2 A de corrente. A resistência do circuito fica em torno de 0,84 Ω e a queda de tensão em 1,7 V. Em 5 V isso é 34%, o que exigiria vários pontos de alimentação. Em 12 V são 14%, que os reguladores dos módulos absorvem, porque aceitam de 7 a 24 V."));
+c.push(tabela(["Critério", "12 V (indicado)", "5 V"], [
+  ["Queda de tensão em cabo longo", "Os reguladores dos módulos compensam", "Crítica; exige cabos de força extras"],
+  ["Componentes", "Um regulador por nó ou módulo, cerca de R$ 8", "Sem reguladores"],
+  ["Custo das peças (operação completa)", "Cerca de R$ 211 mil", "Cerca de R$ 208 mil; a economia nos reguladores vai para o cabo de força"],
+  ["Manutenção", "Menor: um cabo só por trecho", "Maior: mais pontos de ligação de energia"],
+  ["Indicação", "Adotar", "Só em trechos curtos"],
 ], [2, 2.4, 2.4]));
-c.push(H2("9.5 Produção interna × terceiros"));
-c.push(tabela(["Caminho", "Descrição", "Prós", "Contras"], [
-  ["Interna", "Módulos montados pela equipe com placas e displays comprados no Brasil.", "Menor custo; domínio total; reposição rápida.", "Exige técnico de eletrônica; padronização manual."],
-  ["Terceiros T1 — placa própria (EMS)", "Projeto de PCB próprio, fabricado e montado por fábrica (ex.: JLCPCB) e importado.", "Qualidade industrial e repetibilidade; menor mão de obra.", "Projeto da placa (≈ R$ 15 mil); importação e prazo."],
-  ["Terceiros T2 — PTL comercial", "Módulos e controladores prontos de fornecedor de pick-to-light.", "Produto testado e com garantia.", "Custo ≈ 3× maior; dependência do fornecedor."],
+c.push(H2("9.5 Fazer internamente ou comprar"));
+c.push(tabela(["Caminho", "Como seria", "Vantagens", "Desvantagens"], [
+  ["Interno", "A equipe monta os módulos com placas e displays comprados no Brasil.", "Menor custo, controle total e reposição rápida.", "Precisa de técnico de eletrônica; padronização manual."],
+  ["Terceiros: placa própria (EMS)", "Projeto de placa nosso, fabricado e montado por uma fábrica (JLCPCB, por exemplo) e importado.", "Qualidade industrial e peças iguais; menos mão de obra.", "Projeto da placa (cerca de R$ 15 mil), importação e prazo."],
+  ["Terceiros: PTL comercial", "Módulos e controladores prontos de um fornecedor de pick-to-light.", "Produto testado e com garantia.", "Custa cerca de três vezes mais; dependência do fornecedor."],
 ], [1.4, 2.4, 1.8, 1.8], { size: 17 }));
 
 // 10 REDE
-c.push(H1("10. Rede, segurança e confiabilidade"));
+c.push(H1("10. Rede, segurança e disponibilidade"));
 [
-  "Um ponto de rede cabeado por estação ligado a switches de 24 portas (2 para a operação completa), em **VLAN dedicada** ao PTL; IP reservado por concentrador.",
-  "Broker MQTT com usuário por estação e ACL (cada concentrador só publica/assina os próprios tópicos); TLS opcional na rede interna.",
-  "Heartbeat a cada 10 s; estação sem heartbeat por 30 s aparece como offline no painel.",
-  "Atualização de firmware remota (OTA) com retorno automático à versão anterior se falhar.",
-  "Backup diário das tabelas PTL; logs com retenção definida pela TI.",
-  "Sincronização de horário (NTP) no Serviço PTL e nos concentradores para correlacionar eventos.",
+  "Um ponto de rede por estação, ligado a switches de 24 portas (dois para a operação completa), em uma VLAN só do PTL, com IP reservado para cada concentrador.",
+  "Broker MQTT com um usuário por estação e permissão restrita: cada concentrador só publica e lê os próprios tópicos. TLS é opcional na rede interna.",
+  "Sinal de vida a cada 10 s. Estação sem sinal por 30 s aparece como sem comunicação no painel.",
+  "Atualização remota do firmware, com volta automática para a versão anterior se a nova falhar.",
+  "Backup diário das tabelas do PTL e prazo de retenção dos logs definido pela TI.",
+  "Horário sincronizado por NTP no servidor e nos concentradores, para cruzar os eventos.",
 ].forEach((x) => c.push(B(x)));
 
 // 11 MANUTENCAO
 c.push(H1("11. Operação e manutenção"));
 [
-  "Auto-teste diário no início do turno (todos os displays acendem 8888) para detectar falhas antes da operação.",
-  "Kit de reserva por esteira: módulos Q e E+Q, nós, 1 concentrador completo e cabos.",
-  "Procedimento de troca de módulo em 3 passos (desconectar, encaixar o reserva, confirmar o auto-teste no painel).",
-  "Treinamento de operadores (≈ 30 min) e de manutenção (≈ 4 h).",
+  "Teste no início de cada turno: todos os displays mostram 8888 por alguns segundos, para achar falhas antes de começar.",
+  "Kit de reserva por esteira com módulos Q e E+Q, nós, um concentrador completo e cabos.",
+  "Troca de módulo em três passos: desconectar, encaixar o reserva e conferir o teste no painel.",
+  "Treinamento de cerca de 30 minutos para operadores e de 4 horas para a manutenção.",
 ].forEach((x) => c.push(B(x)));
 
 // 12 ORCAMENTO
-c.push(H1("12. Orçamento (resumo)"));
-c.push(R("Valores de hardware calculados na planilha **Orcamento_PTL.xlsx** com preços cotados em lojas brasileiras em 23/10/2026; itens sem preço público estão marcados como estimativa a cotar. Câmbio US$ 1 = R$ 5,04; fator de importação 1,9 (estimativa)."));
-c.push(tabela(["Cenário", "Piloto (05 + 27)", "Operação completa", "Por estação"], [
-  ["A — interna, só peças (12 V)", "R$ 11.668", "R$ 210.829", "R$ 5.271"],
-  ["A — interna, só peças (5 V)", "R$ 11.508", "R$ 207.866", "R$ 5.197"],
-  ["A — interna, peças + mão de obra", "R$ 15.415", "R$ 284.323", "R$ 7.108"],
-  ["A — terceiros T1 (placa própria via EMS)", "R$ 34.027", "R$ 368.696", "R$ 9.217"],
-  ["A — terceiros T2 (PTL comercial importado)", "R$ 46.363", "R$ 906.305", "R$ 22.658"],
-  ["B1 — RFID com pulseira", "R$ 16.745", "R$ 308.765", "R$ 7.719"],
-  ["B2 — RFID com leitor fixo", "R$ 16.588", "R$ 307.779", "R$ 7.694"],
+c.push(H1("12. Orçamento"));
+c.push(P("Os valores de hardware estão na planilha Orcamento_PTL.xlsx, com preços pesquisados em lojas brasileiras em 23/10/2026. Os itens sem preço público aparecem como estimativa e precisam de cotação. Câmbio usado: US$ 1 = R$ 5,04. Fator de importação estimado: 1,9."));
+c.push(tabela(["Cenário", "Piloto (05 e 27)", "Operação completa", "Por estação"], [
+  ["A interno, só peças (12 V)", "R$ 11.668", "R$ 210.829", "R$ 5.271"],
+  ["A interno, só peças (5 V)", "R$ 11.508", "R$ 207.866", "R$ 5.197"],
+  ["A interno, peças e mão de obra", "R$ 15.415", "R$ 284.323", "R$ 7.108"],
+  ["A com placa própria (EMS)", "R$ 34.027", "R$ 368.696", "R$ 9.217"],
+  ["A com PTL comercial importado", "R$ 46.363", "R$ 906.305", "R$ 22.658"],
+  ["B1, RFID com pulseira", "R$ 16.745", "R$ 308.765", "R$ 7.719"],
+  ["B2, RFID com leitor fixo", "R$ 16.588", "R$ 307.779", "R$ 7.694"],
 ], [3, 1.5, 1.7, 1.3], { direita: [1, 2, 3] }));
-c.push(R("**Software (desenvolvimento interno, estimativa):** Arquitetura A ≈ 1.080 h; Arquitetura B ≈ 1.000 h. Na planilha, o custo é calculado a R$ 60/h (premissa ajustável)."));
-c.push(R("**Mão de obra interna:** custo-hora de técnico de R$ 34,93 (salário médio de R$ 2.846,84 — salario.com.br, CBO 313215, out/2026 — × 2,0 de encargos ÷ 163 h)."));
+c.push(P("Software, com desenvolvimento interno: cerca de 1.080 h para a Arquitetura A e 1.000 h para a B. A planilha usa R$ 60 por hora, valor que pode ser ajustado."));
+c.push(P("Mão de obra interna: R$ 34,93 por hora de técnico, calculados com salário médio de R$ 2.846,84 (salario.com.br, CBO 313215, outubro de 2026), encargos de 100% e 163 horas por mês."));
 
 // 13 IMPLANTACAO
 c.push(H1("13. Plano de implantação"));
 c.push(tabela(["Fase", "Entregas", "Duração estimada"], [
-  ["0 — Demonstração", "Arquitetura, orçamento e simulador 3D (este pacote)", "Concluída"],
-  ["1 — Protótipo de bancada", "1 concentrador, 1 nó com 4 Módulos Q, 2 Módulos E+Q; firmware e Serviço PTL mínimo", "3 a 4 semanas"],
-  ["2 — Piloto", "Estações 05 e 27 completas; app do coletor; painel; medição de tempo por caixa antes/depois", "6 a 8 semanas"],
-  ["3 — Avaliação", "Indicadores do piloto, ajustes de zona/rota, decisão A/B e interna/terceiros", "2 semanas"],
-  ["4 — Expansão", "Medicamento (esteira 2) e depois Perfumaria (esteira 1), em lotes de 5 estações", "10 a 14 semanas"],
-  ["5 — Estabilização", "Ajustes finais, documentação e passagem para a sustentação", "4 semanas"],
+  ["0. Proposta", "Arquitetura, orçamento e simulador 3D", "Concluída"],
+  ["1. Protótipo de bancada", "Um concentrador, um nó com quatro módulos Q e dois módulos E+Q; firmware e versão mínima do Serviço PTL", "3 a 4 semanas"],
+  ["2. Piloto", "Estações 05 e 27 completas, app do coletor e painel; medição do tempo por caixa antes e depois", "6 a 8 semanas"],
+  ["3. Avaliação", "Resultados do piloto, ajuste de zonas e rota, decisão entre A e B e entre fazer e comprar", "2 semanas"],
+  ["4. Expansão", "Medicamento e depois Perfumaria, em lotes de cinco estações", "10 a 14 semanas"],
+  ["5. Estabilização", "Ajustes finais, documentação e entrega para a sustentação", "4 semanas"],
 ], [1.6, 4, 1.4]));
 
 // 14 RISCOS
-c.push(H1("14. Riscos e mitigação"));
-c.push(tabela(["Risco", "Impacto", "Mitigação"], [
-  ["Dados da caixa indisponíveis na API do BHT", "Alto", "Validar a API no protótipo; alternativa de leitura direta por views no Sybase."],
-  ["Itens por caixa diferentes do esperado", "Médio", "Medir no piloto; ajustar o tamanho das zonas."],
-  ["Poeira/calor reduzindo a vida útil", "Médio", "Gabinete com filtro e cooler; displays e placas com faixa de temperatura adequada."],
-  ["Manutenção alta (experiência SmartPicking)", "Alto", "Conectores RJ45 em todos os trechos; módulos de troca rápida; auto-teste diário."],
-  ["Dependência de um único técnico de eletrônica", "Médio", "Documentação, padronização e kits de reserva; opção T1 (placa própria) para escala."],
-  ["Prazo de importação (T1/T2)", "Médio", "Piloto com produção interna enquanto a placa própria é fabricada."],
-  ["Adoção pelos operadores", "Médio", "Piloto com operadores-chave; treinamento curto; feedback no coletor."],
+c.push(H1("14. Riscos"));
+c.push(tabela(["Risco", "Impacto", "Como tratar"], [
+  ["API do BHT sem os dados necessários da caixa", "Alto", "Testar a API já no protótipo; ter como alternativa a leitura por views no Sybase."],
+  ["Itens por caixa diferentes do previsto", "Médio", "Medir no piloto e ajustar o tamanho das zonas."],
+  ["Poeira e calor reduzindo a vida útil", "Médio", "Gabinete com filtro e cooler; componentes adequados à temperatura."],
+  ["Manutenção alta, como no SmartPicking", "Alto", "RJ45 em todos os trechos, módulos de troca rápida e teste diário."],
+  ["Depender de um único técnico de eletrônica", "Médio", "Documentação, padronização e kits de reserva; placa própria (EMS) se a escala justificar."],
+  ["Prazo de importação", "Médio", "Fazer o piloto com produção interna enquanto a placa própria é fabricada."],
+  ["Resistência dos operadores", "Médio", "Piloto com operadores experientes, treinamento curto e retorno no coletor."],
 ], [2.6, 0.8, 3.6]));
 
 // 15 PONTOS EM ABERTO
-c.push(H1("15. Premissas e pontos em aberto"));
-c.push(tabela(["#", "Ponto", "Responsável sugerido"], [
-  ["1", "Fotos e medidas das estações (largura do prédio, altura dos andares, canaletas)", "Operação"],
-  ["2", "Número médio de itens por caixa por segmento", "Operação / BI"],
-  ["3", "Campos e limites da API do BHT; possibilidade de liberar a caixa ao fechar", "TI / fornecedor BHT"],
-  ["4", "Origem dos itens da caixa no WMS (tabelas/views) e acesso do Serviço PTL ao Sybase", "DBA"],
+c.push(H1("15. Pontos em aberto"));
+c.push(tabela(["#", "Ponto", "Responsável"], [
+  ["1", "Medidas das estações (largura do prédio, altura dos andares, canaletas)", "Operação"],
+  ["2", "Média de itens por caixa em cada segmento", "Operação / BI"],
+  ["3", "Campos e limites da API do BHT e possibilidade de liberar a caixa ao fechar", "TI / fornecedor BHT"],
+  ["4", "Origem dos itens da caixa no WMS (tabelas e views) e acesso do Serviço PTL ao Sybase", "DBA"],
   ["5", "Divergências de contagem (esquinas de Perfumaria, estação 26, 21ª estação de Medicamento)", "Operação"],
-  ["6", "Frota de caixas retornáveis (Arquitetura B)", "Operação"],
-  ["7", "Fator de importação e fornecedores para T1/T2", "Compras / Comex"],
-  ["8", "Linguagem e hospedagem do Serviço PTL; pontos de rede e VLAN", "Arquitetura de software / Infra"],
-  ["9", "Custo-hora interno de técnico e de desenvolvimento", "RH / TI"],
+  ["6", "Tamanho da frota de caixas retornáveis (Arquitetura B)", "Operação"],
+  ["7", "Fator de importação e fornecedores para placa própria ou PTL comercial", "Compras / Comex"],
+  ["8", "Linguagem e servidor do Serviço PTL; pontos de rede e VLAN", "Arquitetura / Infraestrutura"],
+  ["9", "Custo por hora de técnico e de desenvolvimento", "RH / TI"],
 ], [0.4, 4.6, 2]));
 
 // ANEXO A
 c.push(quebra());
-c.push(H1("Anexo A — Estações (fonte: wms_endereco, 23/10/2026)"));
+c.push(H1("Anexo A. Estações (tabela wms_endereco, 23/10/2026)"));
 c.push(tabela(["Rua", "Segmento", "Tipo", "Total", "Alto 0-3", "Alto 4-5", "Baixo", "Zonas", "E+Q"],
   ests.map((e) => [e.rua, e.segmento, e.tipo, e.total, e.alto_0a3, e.alto_45, e.baixo, e.zonas_baixo, e.blocos_alto_45 + e.zonas_baixo].map(String))
-    .concat([["TOTAL", "", "", fmt(tot.total), fmt(tot.alto_0a3), fmt(tot.alto_45), fmt(tot.baixo), fmt(tot.zonas_baixo), fmt(tot.blocos_alto_45 + tot.zonas_baixo)]]),
+    .concat([["Total", "", "", fmt(tot.total), fmt(tot.alto_0a3), fmt(tot.alto_45), fmt(tot.baixo), fmt(tot.zonas_baixo), fmt(tot.blocos_alto_45 + tot.zonas_baixo)]]),
   [0.7, 1.4, 1.1, 0.8, 0.9, 0.9, 0.8, 0.8, 0.7], { size: 16, destacarUltima: true, direita: [3, 4, 5, 6, 7, 8] }));
 
 // ANEXO B
-c.push(H1("Anexo B — Glossário"));
+c.push(H1("Anexo B. Glossário"));
 c.push(tabela(["Termo", "Significado"], [
-  ["Pick-to-light (PTL)", "Separação guiada por luz: displays indicam onde e quanto pegar."],
-  ["Alto giro / baixo giro", "Endereços com muita / pouca saída. Alto giro na frente do operador (prédios 001-010), com a esteira de transporte passando por dentro entre os andares 3 e 4; baixo giro no corredor atrás do operador."],
-  ["Andar", "Nível do prédio; o andar 0 é o de cima."],
-  ["Esteira de separação", "Esteira aberta na frente do alto giro, ≈ 20 cm da de transporte, onde a bacia fica durante a separação."],
-  ["Transferência", "Desvio da esteira de transporte para a de separação; com o rolete direcionador atende até 4 estações."],
+  ["Pick-to-light (PTL)", "Separação guiada por displays que mostram onde e quanto pegar."],
+  ["Alto giro e baixo giro", "Endereços com muita e com pouca saída. O alto giro (prédios 001 a 010) fica na frente do operador, com a esteira de transporte passando por dentro; o baixo giro fica no corredor atrás dele."],
+  ["Andar", "Nível do prédio. O andar 0 é o de cima."],
+  ["Esteira de separação", "Esteira aberta na frente do alto giro, a uns 20 cm da de transporte, onde a caixa fica durante a separação."],
+  ["Transferência", "Desvio da esteira de transporte para a de separação. Com o rolete direcionador, atende até quatro estações."],
   ["Concentrador", "Controlador da estação, ligado à rede e aos barramentos de displays."],
-  ["Módulo Q / E+Q", "Display de quantidade / display de endereço + quantidade, ambos com botão de confirmação."],
-  ["Nó de coluna", "Placa que liga os Módulos Q de um prédio do alto giro ao barramento."],
-  ["Zona", "Grupo de 4 prédios do baixo giro atendido por um Módulo E+Q."],
-  ["RS-485", "Padrão de comunicação serial robusto para cabos longos em ambiente industrial."],
-  ["MQTT", "Protocolo de mensagens leve entre o Serviço PTL e os concentradores."],
-  ["NFC / RFID", "Identificação por radiofrequência; NFC (13,56 MHz) lê a poucos centímetros."],
-  ["EMS", "Empresa que fabrica e monta placas eletrônicas sob encomenda."],
+  ["Módulo Q e módulo E+Q", "Display de quantidade e display de endereço e quantidade, os dois com botão."],
+  ["Nó de coluna", "Placa que liga os módulos Q de um prédio do alto giro ao barramento."],
+  ["Zona", "Grupo de cerca de três prédios do baixo giro com um display de endereço e quantidade."],
+  ["RS-485", "Padrão de comunicação serial próprio para cabos longos em ambiente industrial."],
+  ["MQTT", "Protocolo de mensagens usado entre o Serviço PTL e os concentradores."],
+  ["NFC / RFID", "Identificação por radiofrequência. O NFC (13,56 MHz) lê a poucos centímetros."],
+  ["EMS", "Empresa que fabrica e monta placas eletrônicas por encomenda."],
 ], [1.8, 5.2]));
 
 // ---------------------------------------------------------------- documento
 const doc = new Document({
   features: { updateFields: true },
   creator: "Projeto Pick-to-Light",
-  title: "Pick-to-Light — Documento de Arquitetura",
+  title: "Pick-to-Light: Documento de Arquitetura",
   styles: {
     default: { document: { run: { font: FONTE, size: 21 } } },
     paragraphStyles: [
@@ -527,7 +529,7 @@ const doc = new Document({
   sections: [{
     properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 } } },
     headers: { default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT,
-      children: [t("Pick-to-Light — Documento de Arquitetura · v1.0", { size: 16, color: CZ })] })] }) },
+      children: [t("Projeto Pick-to-Light · Documento de Arquitetura · versão 1.1", { size: 16, color: CZ })] })] }) },
     footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER,
       children: [new TextRun({ children: ["Página ", PageNumber.CURRENT, " de ", PageNumber.TOTAL_PAGES], font: FONTE, size: 16, color: CZ })] })] }) },
     children: c,
