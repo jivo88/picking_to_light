@@ -441,6 +441,26 @@
     const ys = new Set();
     o.niveis.forEach((n) => { ys.add(Math.round(n.yb * 1000) / 1000); ys.add(Math.round((n.yb + n.h) * 1000) / 1000); });
     const r = aleat(o.seed || 7);
+    // caixa dupla: um vão sem endereço naquele andar fica com a caixa do vizinho (primeiro o da esquerda na ordem
+    // da lista, senão o da direita). Nos dados: tipo B no alto giro (001+002, 003+004…) e F no baixo giro (020+021…)
+    const largura = {};   // "ci:a" -> [x central, largura total]
+    if (!cinza) {
+      o.niveis.forEach((nv, a) => {
+        if (!nv) return;
+        const tem = colunas.map((c) => !!c.ends[a]);
+        const dono = colunas.map((_, i) => (tem[i] ? [i] : null));
+        colunas.forEach((_, i) => {
+          if (tem[i]) return;
+          if (i > 0 && tem[i - 1] && dono[i - 1].length === 1) dono[i - 1].push(i);
+          else if (i < colunas.length - 1 && tem[i + 1] && dono[i + 1].length === 1) dono[i + 1].push(i);
+        });
+        dono.forEach((ls, i) => {
+          if (!ls || ls.length < 2) return;
+          const xs = ls.map((k) => colunas[k].x);
+          largura[i + ':' + a] = [(Math.min(...xs) + Math.max(...xs)) / 2, ls.reduce((t, k) => t + colunas[k].w, 0)];
+        });
+      });
+    }
     colunas.forEach((c, ci) => {
       c.i = ci;
       ys.forEach((y) => {
@@ -455,22 +475,24 @@
         if (!tipo) return;
         const [fw0, fh0] = CFG.caixaTipo[tipo] || [0.5, 0.5];
         const fa = o.lado === 'alto' ? CFG.fatorCaixaAlto : 1;
-        const wt = c.w * fw0 - 0.006, ht = h * Math.min(0.8, fh0 * fa), dt = o.lado === 'alto' ? 0.38 : 0.3;
+        const dup = largura[ci + ':' + a];
+        const xb = dup ? dup[0] : c.x;
+        const wt = (dup ? dup[1] : c.w) * fw0 - 0.006, ht = h * Math.min(0.8, fh0 * fa), dt = o.lado === 'alto' ? 0.38 : 0.3;
         const yc = (zz) => yb + 0.012 + ht / 2 - zz * Math.tan(CFG.tilt);
-        profs.forEach((zz) => reservas.push(matriz(c.x, yc(zz), zz, CFG.tilt, 0, 0, wt, ht, dt)));
+        profs.forEach((zz) => reservas.push(matriz(xb, yc(zz), zz, CFG.tilt, 0, 0, wt, ht, dt)));
         if (cinza) { caixas.push(matriz(c.x, yc(-0.2), -0.2, CFG.tilt, 0, 0, wt, ht, dt)); return; }
         const tm = M.caixaPapelao.clone();
         const caixa = new THREE.Mesh(BOX1, tm);
         caixa.scale.set(wt, ht, dt);
-        caixa.position.set(c.x, yc(-0.2), -0.2);
+        caixa.position.set(xb, yc(-0.2), -0.2);
         caixa.rotation.x = CFG.tilt;
         g.add(caixa);
         const lw = Math.min(0.15, wt * 0.82);
-        etiquetas.push({ m: matriz(c.x, yc(-0.2) - ht * 0.12, -0.2 + dt / 2 + 0.003, CFG.tilt, 0, 0, lw, Math.min(lw * 0.28, ht * 0.4), 1), txt: fmtEnd(e.end) });
+        etiquetas.push({ m: matriz(xb, yc(-0.2) - ht * 0.12, -0.2 + dt / 2 + 0.003, CFG.tilt, 0, 0, lw, Math.min(lw * 0.28, ht * 0.4), 1), txt: fmtEnd(e.end) });
         e.tote = caixa;
         e.toteMat = tm;
         if (c.i % pv === 0) rotPorAndar[Math.min(7, a)].push(matriz(c.x - c.w / 2 + 0.04, yb - 0.022, 0.024));
-        if (e.cat === 'alto_0a3') { e.modulo = criarModulo('Q', g, c.x, yb - 0.036, 0.04, 0, rotEnd(e), 'alto'); e.modulo.end = e; }
+        if (e.cat === 'alto_0a3') { e.modulo = criarModulo('Q', g, xb, yb - 0.036, 0.04, 0, rotEnd(e), 'alto'); e.modulo.end = e; }
       });
       if (!cinza && !o.semTopo) {
         const lb = placa(pad(c.predio, 3), Math.min(0.2, c.w - 0.06), 0.065, { fundo: '#ffffff', cor: '#1B2638' });
