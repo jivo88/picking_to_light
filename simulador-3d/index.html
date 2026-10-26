@@ -33,6 +33,7 @@
       <button data-v="planta">Planta</button>
       <button data-v="alto">Alto giro</button>
       <button data-v="baixo">Baixo giro</button>
+      <button data-v="concentrador">Concentrador</button>
       <button data-v="operador">Operador</button>
     </div>
   </div>
@@ -102,15 +103,16 @@
 <div id="ajuda" class="modal">
   <div class="caixaModal">
     <h2>Simulador 3D — estação de flow rack com pick-to-light</h2>
-    <p>Estação montada com os endereços reais da tabela <code>wms_endereco</code>, no layout da operação: a <b>esteira de transporte</b> e a <b>esteira de separação</b> correm lado a lado (≈ 20 cm); a <b>transferência</b> (a cada 4 estações) passa a bacia para a separação e o <b>rolete direcionador</b> manda para 2 estações à esquerda ou 2 à direita. A esteira de transporte passa <b>por dentro do alto giro</b>, por baixo do andar 3 e por cima do andar 4, e a de separação fica na frente, aberta; o alto giro fica na frente do operador e o <b>corredor do baixo giro</b> atrás dele (020–031 à esquerda; 015 e 043 → 032 à direita). Prateleiras alinhadas, andar 0 em cima.</p>
+    <p>Estação montada com os endereços reais da tabela <code>wms_endereco</code>, no layout da operação: a <b>esteira de transporte</b> passa <b>por dentro do alto giro</b> (por baixo do andar 3 e por cima do andar 4) e a <b>esteira de separação</b> fica na frente, aberta, a cerca de 20 cm. A <b>transferência</b> (a cada 4 estações) passa a bacia para a separação e o <b>rolete direcionador</b> manda para 2 estações à esquerda ou 2 à direita. Cada estação tem 2,5 m de alto giro na frente do operador e, atrás dele, um <b>corredor de 1,2 m</b> com prateleiras de 50 cm × 2 m (020–031 à esquerda, 043 → 032 à direita) e o prédio <b>015</b> na frente do bloco da direita. O <b>concentrador</b> fica atrás da estação, do outro lado do alto giro. Endereços no formato da etiqueta, por exemplo <b>0.05.0421.A</b>.</p>
     <ol>
       <li><b>A bacia chega</b> pela esteira de separação, vinda da transferência.</li>
       <li><b>Leitura abre a bacia:</b> gatilho do coletor (arquitetura A), tag lida pelo leitor fixo (B2) ou pela pulseira (B1).</li>
-      <li><b>Displays acendem:</b> no alto giro, todos os endereços dos andares 0–3 com a quantidade; nos 4 displays dos andares 4–5 e nas zonas do baixo giro (4 por lado do corredor, displays na altura dos olhos), um item por vez na ordem da rota.</li>
+      <li><b>Displays acendem:</b> no alto giro, todos os endereços dos andares 0–3 com a quantidade; nos 4 displays dos andares 4–5 e nas zonas do baixo giro (4 por lado do corredor, na altura dos olhos), um item por vez na ordem da rota.</li>
       <li><b>Confirmação:</b> clique no botão verde do módulo. O display apaga ou passa ao próximo item.</li>
-      <li><b>Nova leitura fecha a bacia</b>, e o operador a empurra de volta para a esteira de transporte. Com itens pendentes aparece um alerta; uma terceira leitura fecha e registra a pendência para a conferência.</li>
+      <li><b>Nova leitura fecha a bacia</b>, e o operador a empurra de volta para a esteira de transporte.</li>
+      <li><b>Falha e troca:</b> "Simular falha de módulo" mostra qual LED falhou (endereço, nó e porta ou endereço RS-485). "Trocar e cadastrar" põe o módulo novo piscando <b>CAd</b>; clique no botão dele para cadastrar no endereço.</li>
     </ol>
-    <p class="nota">As estações vizinhas aparecem em cinza. Medidas são premissas até chegarem as medidas reais; ficam no bloco <code>CFG</code> de <code>sim.js</code>. Tempos e produtividade são simulados.</p>
+    <p class="nota">As estações vizinhas aparecem em cinza. As medidas ficam no bloco <code>CFG</code> de <code>sim.js</code>. Tempos e produtividade são simulados.</p>
     <button id="btnFecharAjuda" class="gatilho">Começar</button>
   </div>
 </div>

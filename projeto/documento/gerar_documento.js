@@ -95,7 +95,7 @@ c.push(tabela(["Item", "Descrição"], [
   ["Abrangência", "40 estações (20 de Medicamento, ruas 03 a 22, e 20 de Perfumaria, ruas 26 a 45), 7.981 endereços"],
   ["Piloto", "Estações 05 (Medicamento) e 27 (Perfumaria)"],
   ["Material de apoio", "Orcamento_PTL.xlsx, Apresentacao_PTL.pptx e simulador 3D (repositório picking_to_light)"],
-  ["Versão", "1.2, de 26/10/2026 (orçamento revisado), em revisão pela TI, arquitetura de software e diretoria"],
+  ["Versão", "1.3, de 26/10/2026 (layout do desenho, interface de controle e cadastro de LED), em revisão pela TI, arquitetura de software e diretoria"],
   ["Elaboração", "Equipe de TI"],
 ], [1, 3]));
 c.push(quebra());
@@ -143,24 +143,25 @@ c.push(tabela(["Tema", "Como é hoje"], [
 
 // 3 LEVANTAMENTO FISICO
 c.push(H1("3. Levantamento físico"));
-c.push(P("Os números vêm da tabela wms_endereco (esteiras 1 e 2), exportada em 23/10/2026: 7.981 endereços em 40 ruas, e cada rua é uma estação. A rua 90 (Marketing/Almoxarifado, 2 endereços) ficou de fora. O endereço tem 8 posições: bairro (1), rua (2), prédio (3), andar (1) e apartamento (1). Exemplo: 0050230A é a rua 05, prédio 023, andar 0."));
+c.push(P("Os números vêm da tabela wms_endereco (esteiras 1 e 2), exportada em 23/10/2026: 7.981 endereços em 40 ruas, e cada rua é uma estação. A rua 90 (Marketing/Almoxarifado, 2 endereços) ficou de fora. O endereço tem 8 posições: bairro (1), rua (2), prédio (3), andar (1) e apartamento (1). Exemplo: 0050230A é a rua 05, prédio 023, andar 0. Nas etiquetas, nos displays e nas telas ele aparece como 0.05.0230.A (bairro.rua.prédio+andar.apto)."));
 c.push(H2("3.1 Estrutura de uma estação"));
 c.push(tabela(["Área", "Prédios", "Andares", "Display proposto"], [
   ["Alto giro, na frente do operador", "001 a 010", "0 a 3, acima das esteiras", "Um display de quantidade (módulo Q) por endereço"],
   ["Alto giro, parte de baixo", "001 a 010", "4 e 5, abaixo das esteiras", "Quatro displays de endereço e quantidade: um por andar em cada lado (prédios 001 a 005 e 006 a 010), como no sistema atual"],
-  ["Início do lado direito do corredor (150 a 153)", "015", "0 a 3 (até 7 nas esquinas de Medicamento)", "Entra na zona D1 do baixo giro"],
+  ["Frente do bloco da direita, virada para a esteira (150 a 153)", "015", "0 a 3 (até 7 nas esquinas de Medicamento)", "Entra na zona D1 do baixo giro"],
   ["Baixo giro, corredor atrás do operador", "Esquerdo: 020 (ou 022) a 031\nDireito: 032 até o último", "0 a 7", "Quatro zonas por lado, cada uma com um display de endereço e quantidade na altura dos olhos"],
   ["Esquinas", "060 a 063 (Medicamento)\n060 a 071 (Perfumaria)", "0 a 7", "Zonas a mais no baixo giro: 1 em Medicamento e 3 em Perfumaria"],
 ], [2.2, 1.8, 1.7, 3.8]));
 c.push(P("O campo nr_ordem_separacao_flow define a ordem de percurso. Nas estações 10 e 16 essa ordem é invertida, porque são espelhadas. A rota de cada zona segue esse campo e, depois, prédio e andar."));
 c.push(H2("3.2 Disposição física"));
-c.push(P("O alto giro fica na frente do operador. A esteira de transporte passa por dentro dele, entre o andar 3 e o andar 4. A esteira de separação fica do lado de fora, aberta, uns 20 cm à frente da de transporte, com os endereços logo acima e logo abaixo dela. O corredor do baixo giro fica atrás do operador, perpendicular às esteiras. As prateleiras são alinhadas: os níveis são os mesmos em toda a estante."));
+c.push(P("O alto giro fica na frente do operador. A esteira de transporte passa por dentro dele, entre o andar 3 e o andar 4. A esteira de separação fica do lado de fora, aberta, uns 20 cm à frente da de transporte, com os endereços logo acima e logo abaixo dela. O corredor do baixo giro fica atrás do operador, perpendicular às esteiras. As prateleiras são alinhadas: os níveis são os mesmos em toda a estante. O concentrador fica atrás da estação, do outro lado do alto giro."));
 [
   "Transferência: cada transferência atende até quatro estações. A caixa passa da esteira de transporte para a de separação e um rolete direcionador a manda para as duas estações da esquerda ou para as duas da direita. A transferência entre a 11 e a 12, por exemplo, atende a 10 e a 11 de um lado e a 12 e a 13 do outro. Nas pontas, a transferência entre a 3 e a 4 atende a 3 de um lado e a 4 e a 5 do outro; em Perfumaria, a que fica entre a 26 e a 27 atende a 26 de um lado e a 27 e a 28 do outro.",
   "A caixa só entra nas estações em que o pedido tem itens. Se o pedido começa na 3 e só continua na 7, depois da 3 a caixa volta para a esteira de transporte e passa direto pela 4 e pela 5.",
   "Terminada a separação, o operador empurra a caixa de volta para a esteira de transporte de qualquer ponto da estação.",
-  "No corredor, olhando a partir da esteira, o lado esquerdo tem os prédios 020 (ou 022) a 031 e o lado direito vai do 032 até o último. O percurso é em U: entra pelo lado esquerdo e volta pelo direito. O prédio 015 (150 a 153) é o primeiro do lado direito, na entrada do corredor.",
-  "Os blocos do baixo giro ficam de costas um para o outro: cada bloco tem um lado de uma estação e o outro lado da estação vizinha. A profundidade é de cerca de 2 m.",
+  "No corredor, olhando a partir da esteira, o lado esquerdo tem os prédios 020 (ou 022) a 031 e o lado direito vai do 032 até o último. O percurso é em U: entra pelo lado esquerdo e volta pelo direito. O prédio 015 (150 a 153) fica na frente do bloco da direita, virado para a esteira, e entra na zona D1. A estação 03 também tem o 015 na tabela e ele entra como zona normal.",
+  "Medidas aproximadas (desenho de 26/10/2026): a frente do alto giro tem 2,5 m por estação (prédios de 25 cm); o corredor tem 1,2 m; as prateleiras têm 50 cm de profundidade e 2 m de comprimento, com 12 prédios de 8 andares por lado. Os 0,3 m que sobram ficam entre as prateleiras de estações vizinhas.",
+  "Concentrador atrás da estação: o barramento do alto giro sai direto para os nós de coluna, e o do baixo giro sobe e passa por cima das esteiras, numa eletrocalha, até o corredor.",
   "O andar 0 é o de cima. As prateleiras não mudam de altura; o que muda é a caixa do endereço, conforme o tipo (A, B, C, F ou N), e a maioria é pequena. Andar sem endereço fica vazio. As caixas que circulam na esteira têm tamanho único.",
 ].forEach((x) => c.push(B(x)));
 c.push(...img("planta_estacao", 640, 324, "Figura 1. Planta da estação 05 e das vizinhas (sem escala)"));
@@ -180,7 +181,7 @@ c.push(H2("3.4 Zonas do baixo giro"));
 c.push(P("Cada lado do corredor tem quatro zonas de cerca de três prédios. Cada zona tem um display de endereço, um de quantidade e um botão, presos na longarina à altura dos olhos (cerca de 1,5 m), no meio da zona. Olhando um lado do corredor, o operador vê oito displays: quatro de endereço e quatro de quantidade. A zona mostra um item por vez, na ordem da rota. O botão confirma a retirada e o display passa ao item seguinte. Todas as zonas com itens trabalham ao mesmo tempo."));
 [
   "Estação comum: lado esquerdo 020 a 031 em quatro zonas (E1 a E4) e lado direito 015 e 043 a 032 em quatro zonas (D1 a D4), oito zonas no total. As esquinas têm zonas a mais, de quatro prédios.",
-  "Com três prédios por zona, uma zona tem até 24 endereços. O display mostra prédio e andar, por exemplo P031 A2.",
+  "Com três prédios por zona, uma zona tem até 24 endereços. O display mostra o endereço como na etiqueta, por exemplo 0.05.0312.A, usando o ponto decimal dos dígitos.",
   "Opcional: um LED guia no topo de cada prédio, que acende a coluna do item atual da zona. Custa cerca de R$ 1.000 para a operação toda.",
   "O número de zonas por lado é configurável e pode mudar depois do piloto, conforme a produtividade.",
 ].forEach((x) => c.push(B(x)));
@@ -271,7 +272,7 @@ c.push(H2("6.3 Comparação entre A e B"));
 c.push(tabela(["Critério", "A: coletor", "B: RFID (B2)"], [
   ["Leitura", "Coletores MovFast que já temos", "Leitor fixo por estação e tag em cada caixa"],
   ["O que o operador faz", "Aponta e aperta o gatilho, uma vez para abrir e outra para fechar", "Coloca a caixa na posição (abre) e faz nova leitura ou aperta o botão (fecha)"],
-  ["Hardware, 40 estações*", "R$ 364 mil", "R$ 391 mil"],
+  ["Hardware, 40 estações*", "R$ 356 mil", "R$ 383 mil"],
   ["Custo contínuo", "Nenhum novo", "Tags para caixas novas ou danificadas"],
   ["Riscos", "Disponibilidade e bateria dos coletores; Wi-Fi", "Posição da caixa na leitura; tamanho da frota"],
   ["Prazo", "Menor, porque usa os coletores atuais", "Maior por causa das tags, do cadastro e da instalação"],
@@ -304,7 +305,7 @@ c.push(tabela(["Situação", "O que o sistema faz"], [
   ["Leitura de outra caixa com uma aberta", "Não abre e informa qual caixa está em andamento. É uma caixa por estação."],
   ["Fechamento com itens pendentes", "Mostra o que falta; uma nova leitura confirma e a pendência fica registrada para a conferência."],
   ["Botão apertado sem item", "Ignora e registra para diagnóstico."],
-  ["Módulo sem resposta", "O concentrador avisa o Serviço PTL, o coletor mostra o endereço e a quantidade daquele item e o painel gera alerta para a manutenção."],
+  ["Falha de LED", "Módulo sem resposta, display sem ACK ou botão travado. O concentrador avisa o Serviço PTL com o endereço e o módulo (nó e porta, ou endereço RS-485); a interface de controle mostra qual LED falhou e onde ele fica; o coletor mostra o endereço e a quantidade daquele item."],
   ["Concentrador sem rede", "Os displays continuam funcionando e as confirmações ficam guardadas até a rede voltar. Nova caixa só abre com rede."],
   ["Serviço PTL fora do ar", "O coletor informa e a estação passa para a operação manual. A TI recebe o alarme."],
   ["Falta de energia na estação", "Quando a energia volta, o concentrador pede ao Serviço PTL o estado da caixa aberta e acende o que falta."],
@@ -319,7 +320,7 @@ c.push(...img("telas_coletor", 640, 302, "Figura 7. Telas do app: espera, separa
 c.push(H2("8.2 Displays"));
 c.push(...img("modulos", 640, 215, "Figura 8. Módulo Q, módulo E+Q e gabinete do concentrador"));
 [
-  "O display de 8 dígitos mostra o endereço como \"P031 A2\" (prédio 031, andar 2). A rua não aparece porque é a própria estação.",
+  "O display de 8 dígitos mostra o endereço igual à etiqueta, \"0.05.0312.A\" (bairro 0, rua 05, prédio 031, andar 2, apartamento A). Os pontos usam o ponto decimal de cada dígito, então o endereço completo cabe nos 8 dígitos.",
   "Dígitos de 0,56\" (14 mm), legíveis a 2 ou 3 m, em vermelho, que tem o melhor contraste em 7 segmentos.",
   "LED do botão: aceso quando há item para pegar, piscando quando chega item novo na zona e apagado quando não há nada.",
 ].forEach((x) => c.push(B(x)));
@@ -331,37 +332,43 @@ c.push(tabela(["Método e rota", "Uso"], [
   ["POST /v1/estacoes/{est}/cancelar", "Cancelamento pela supervisão {motivo}."],
   ["GET /v1/monitor/resumo", "Indicadores do painel: caixas por hora, tempo médio e módulos com falha."],
   ["PUT /v1/estacoes/{est}/mapa", "Atualiza o mapa endereço/display (uso da TI)."],
+  ["GET /v1/estacoes/{est}/leds", "LEDs cadastrados por endereço: módulo, nó e porta ou endereço RS-485, serial e situação."],
+  ["POST /v1/estacoes/{est}/cadastro", "Inicia o cadastro de LED de um endereço {endereco}; DELETE na mesma rota cancela."],
+  ["POST /v1/estacoes/{est}/identificar", "Mostra 888 no LED do endereço por 3 s, para conferir a posição."],
 ], [2.4, 4.6]));
 c.push(H2("8.4 Mensagens MQTT entre o serviço e o concentrador"));
 c.push(tabela(["Tópico", "Mensagem (JSON)"], [
   ["ptl/est05/cmd", "SEPARAR {caixa, alto_giro:[{mod, qtd}], andares_45:[{display, itens:[{end, qtd}]}], zonas:[{zona, itens:[…]}]}"],
-  ["ptl/est05/cmd", "CANCELAR {caixa} · CONFIG {mapa} · PING"],
+  ["ptl/est05/cmd", "CANCELAR {caixa} · CONFIG {mapa} · CONFIG CADASTRO {disp, porta} · CONFIG IDENTIFICAR {disp, porta} · PING"],
   ["ptl/est05/evt", "ACK {caixa, acesos} · BTN {caixa, end, qtd} · ZONA_FIM {zona} · CONCLUIDA {caixa}"],
-  ["ptl/est05/evt", "FALHA_MODULO {mod} · HEARTBEAT {uptime, temperatura, versão}"],
+  ["ptl/est05/evt", "FALHA_MODULO {disp, porta, enderecos, falha} · CADASTRO_OK {disp, porta, serial} · HEARTBEAT {uptime, temperatura, versão}"],
   ["ptl/est05/status", "Mensagem retida: online ou offline (last will) e caixa aberta"],
 ], [1.6, 5.4]));
 c.push(H2("8.5 Barramento RS-485 entre o concentrador e os módulos"));
 [
   "Dois barramentos por estação, um para o alto giro e outro para o baixo giro, a 38.400 bps. O concentrador é o mestre e cada dispositivo tem um endereço de 1 byte, definido por chave ou na instalação.",
-  "Comandos: MOSTRAR (endereço, quantidade, modo), APAGAR, PISCAR, LER_BOTOES e AUTO_TESTE. O concentrador consulta todos os dispositivos a cada 50 ms.",
+  "Comandos: MOSTRAR (endereço em 8 caracteres + máscara dos pontos, quantidade, modo), APAGAR, PISCAR, LER_BOTOES, LER_STATUS (falhas por porta), AUTO_TESTE, IDENTIFICAR, MODO_CADASTRO e DEF_ENDERECO. O concentrador consulta todos os dispositivos a cada 50 ms.",
   "Resistor de terminação de 120 Ω nas pontas e polarização no concentrador. O sinal vai em um par trançado do Cat5e.",
 ].forEach((x) => c.push(B(x)));
 c.push(H2("8.6 Tabelas no Sybase (proposta)"));
 c.push(tabela(["Tabela", "Conteúdo"], [
   ["ptl_estacao", "Rua, segmento, tipo, identificação do concentrador e se está ativa"],
   ["ptl_dispositivo", "Estação, barramento, endereço RS-485, tipo (Q, E+Q ou nó) e situação"],
-  ["ptl_endereco_mapa", "cd_endereco e o display correspondente (módulo Q ou zona)"],
+  ["ptl_mapa_led", "cd_endereco, estação, tipo (Q ou E+Q), nó e porta ou endereço RS-485, serial, data e usuário do cadastro"],
   ["ptl_caixa_sessao", "Caixa, estação, operador, abertura, conclusão, fechamento e situação"],
   ["ptl_caixa_item", "Sessão, cd_endereco, quantidade, horário da confirmação e dispositivo"],
-  ["ptl_evento", "Log de eventos e falhas, com prazo de retenção"],
+  ["ptl_evento", "Log de eventos, com prazo de retenção"],
+  ["ptl_evento_falha", "Estação, cd_endereco, módulo, tipo de falha, abertura e solução"],
   ["ptl_tag_caixa (B)", "Código da tag e número da caixa"],
 ], [1.8, 5.2]));
 c.push(P("A origem dos itens da caixa (tabelas do pedido no WMS ou API do BHT) será definida com o DBA e com o fornecedor do BHT. O Serviço PTL lê por views para não depender do modelo interno do WMS.", { size: 19 }));
-c.push(H2("8.7 Painel de acompanhamento"));
+c.push(H2("8.7 Painel de acompanhamento e interface de controle"));
 [
   "Mapa das 40 estações: livre, separando, alerta ou sem comunicação.",
   "Indicadores: caixas por hora por estação e no total, tempo médio por caixa, itens por hora e tempo de espera da caixa.",
   "Saúde do sistema: módulos sem resposta, concentradores sem comunicação, temperatura do gabinete e versão do firmware.",
+  "Interface de controle: quando um LED falha, mostra o endereço (por exemplo 0.05.0042.A), o módulo (nó 0x04, porta 3, ou E+Q 0x52), onde ele fica e o tipo de falha.",
+  "Cadastro de LED por endereço: tabela de todos os endereços com o LED de cada um, busca por endereço, teste (888) e cadastro na troca de módulo (item 11).",
   "Quem usa: a gestão da operação acompanha os indicadores e a TI acompanha a saúde e faz o diagnóstico.",
 ].forEach((x) => c.push(B(x)));
 
@@ -381,7 +388,7 @@ c.push(...img("cabeamento", 640, 274, "Figura 9. Cabeamento da estação: barram
   "Cabo Cat5e com RJ45 em todos os trechos. Par 1: RS-485; par 2: 12 V; par 3: GND; par 4: reserva.",
   "Não há fio contínuo atrás das plaquinhas. Cada trecho é um cabo curto com conector, e trocar um módulo é soltar dois RJ45 e encaixar o reserva.",
   "A canaleta só conduz e protege os cabos. Os módulos ficam encaixados na frente dela.",
-  "Cada módulo e cada cabo têm etiqueta com o código do dispositivo, e o mapa de cada estação fica no Serviço PTL.",
+  "Cada módulo tem etiqueta com o endereço (0.05.0421.A) e, no E+Q, o serial. O vínculo entre LED e endereço fica na tabela ptl_mapa_led e é refeito pela interface de controle quando o módulo é trocado.",
 ].forEach((x) => c.push(B(x)));
 c.push(H2("9.3 Concentrador e gabinete"));
 [
@@ -394,7 +401,7 @@ c.push(P("Cálculo de referência: 10 m de Cat5e (24 AWG, cerca de 0,084 Ω/m po
 c.push(tabela(["Critério", "12 V (indicado)", "5 V"], [
   ["Queda de tensão em cabo longo", "Os reguladores dos módulos compensam", "Crítica; exige cabos de força extras"],
   ["Componentes", "Um regulador por nó ou módulo, cerca de R$ 8", "Sem reguladores"],
-  ["Custo dos materiais (operação completa)", "Cerca de R$ 266 mil", "Cerca de R$ 269 mil; o cabo de força extra custa mais do que os reguladores economizados"],
+  ["Custo dos materiais (operação completa)", "Cerca de R$ 260 mil", "Cerca de R$ 263 mil; o cabo de força extra custa mais do que os reguladores economizados"],
   ["Manutenção", "Menor: um cabo só por trecho", "Maior: mais pontos de ligação de energia"],
   ["Indicação", "Adotar", "Só em trechos curtos"],
 ], [2, 2.4, 2.4]));
@@ -421,25 +428,28 @@ c.push(H1("11. Operação e manutenção"));
 [
   "Teste no início de cada turno: todos os displays mostram 8888 por alguns segundos, para achar falhas antes de começar.",
   "Kit de reserva por esteira com módulos Q e E+Q, nós, um concentrador completo e cabos.",
-  "Troca de módulo em três passos: desconectar, encaixar o reserva e conferir o teste no painel.",
+  "A falha chega na interface de controle com o endereço e o módulo. Dá para detectar módulo sem resposta, display do módulo Q desconectado, botão travado e cabo rompido; segmento queimado aparece no teste 8888.",
+  "Troca e cadastro: o técnico solta o RJ45 e encaixa o reserva, escolhe o endereço na tela (ou lê a etiqueta com o coletor), o módulo novo pisca CAd e ele aperta o botão desse módulo. O sistema grava o LED no endereço e o display volta ao item que estava aceso.",
+  "Módulo Q não tem microcontrolador, então é reconhecido pelo nó e pela porta. Módulo E+Q chega com o endereço de fábrica 0xF0 e recebe o endereço do antigo no cadastro.",
   "Treinamento de cerca de 2 horas por operador, com prática na estação, e de 16 horas para a equipe de manutenção.",
 ].forEach((x) => c.push(B(x)));
+c.push(...img("manutencao", 640, 273, "Figura 10. Aviso de falha e cadastro de LED por endereço"));
 
 // 12 ORCAMENTO
 c.push(H1("12. Orçamento"));
 c.push(P("Os valores de hardware estão na planilha Orcamento_PTL.xlsx, com preços pesquisados em lojas brasileiras em 23 e 26/10/2026. Os itens sem preço público aparecem como estimativa e precisam de cotação. Câmbio usado: US$ 1 = R$ 5,04. Fator de importação estimado: 1,9."));
 c.push(tabela(["Cenário", "Piloto (05 e 27)", "Operação completa", "Por estação"], [
-  ["A interno, só materiais (12 V)", "R$ 16.707", "R$ 266.040", "R$ 6.651"],
-  ["A interno, só materiais (5 V)", "R$ 16.824", "R$ 268.636", "R$ 6.716"],
-  ["A interno, materiais e mão de obra", "R$ 22.204", "R$ 364.094", "R$ 9.102"],
-  ["A com placa própria (EMS)", "R$ 38.859", "R$ 412.582", "R$ 10.315"],
-  ["A com PTL comercial importado", "R$ 50.447", "R$ 936.605", "R$ 23.415"],
-  ["B1, RFID com pulseira", "R$ 23.964", "R$ 397.134", "R$ 9.928"],
-  ["B2, RFID com leitor fixo", "R$ 23.542", "R$ 390.862", "R$ 9.772"],
+  ["A interno, só materiais (12 V)", "R$ 16.431", "R$ 260.373", "R$ 6.509"],
+  ["A interno, só materiais (5 V)", "R$ 16.548", "R$ 262.970", "R$ 6.574"],
+  ["A interno, materiais e mão de obra", "R$ 21.806", "R$ 355.914", "R$ 8.898"],
+  ["A com placa própria (EMS)", "R$ 38.473", "R$ 404.672", "R$ 10.117"],
+  ["A com PTL comercial importado", "R$ 50.062", "R$ 928.695", "R$ 23.217"],
+  ["B1, RFID com pulseira", "R$ 23.566", "R$ 388.954", "R$ 9.724"],
+  ["B2, RFID com leitor fixo", "R$ 23.144", "R$ 382.682", "R$ 9.567"],
 ], [3, 1.5, 1.7, 1.3], { direita: [1, 2, 3] }));
-c.push(P("Os materiais incluem, além dos módulos: canaleta calculada pelo layout de cada estação (cerca de 42 m por estação), cabos, alimentação e protetor de surto dos concentradores, pontos de tomada novos onde faltar, switches com nobreak e mini rack, cabo de uplink, ferramentas de montagem e 5% de frete. A mão de obra inclui montagem, instalação fora do horário de separação (hora extra de 50%), comissionamento e treinamento."));
-c.push(P("Software, com desenvolvimento interno: cerca de 1.104 h para a Arquitetura A e 1.024 h para a B, a R$ 103,78 por hora (salário médio de analista de desenvolvimento, R$ 8.458,30, salario.com.br, CBO 212405, com encargos), ou cerca de R$ 115 mil e R$ 106 mil. É custo da equipe interna, não desembolso novo, a menos que o desenvolvimento seja contratado."));
-c.push(P("Com 10% de contingência sobre o hardware e somando o software, o investimento total fica em cerca de R$ 515 mil na Arquitetura A e R$ 536 mil na B2."));
+c.push(P("Os materiais incluem, além dos módulos: canaleta calculada pelo layout de cada estação (cerca de 27 m por estação, com as medidas do desenho), cabos, alimentação e protetor de surto dos concentradores, pontos de tomada novos onde faltar, switches com nobreak e mini rack, cabo de uplink, ferramentas de montagem e 5% de frete. A mão de obra inclui montagem, instalação fora do horário de separação (hora extra de 50%), comissionamento e treinamento."));
+c.push(P("Software, com desenvolvimento interno: cerca de 1.144 h para a Arquitetura A e 1.064 h para a B, a R$ 103,78 por hora (salário médio de analista de desenvolvimento, R$ 8.458,30, salario.com.br, CBO 212405, com encargos), ou cerca de R$ 119 mil e R$ 110 mil. Inclui a interface de controle com o cadastro de LED. É custo da equipe interna, não desembolso novo, a menos que o desenvolvimento seja contratado."));
+c.push(P("Com 10% de contingência sobre o hardware e somando o software, o investimento total fica em cerca de R$ 510 mil na Arquitetura A e R$ 531 mil na B2."));
 c.push(P("Mão de obra interna: R$ 34,93 por hora de técnico, calculados com salário médio de R$ 2.846,84 (salario.com.br, CBO 313215, outubro de 2026), encargos de 100% e 163 horas por mês."));
 
 // 13 IMPLANTACAO
@@ -468,7 +478,7 @@ c.push(tabela(["Risco", "Impacto", "Como tratar"], [
 // 15 PONTOS EM ABERTO
 c.push(H1("15. Pontos em aberto"));
 c.push(tabela(["#", "Ponto", "Responsável"], [
-  ["1", "Medidas das estações (largura do prédio, altura dos andares, canaletas)", "Operação"],
+  ["1", "Confirmar altura dos andares, ponto de energia atrás das estações e passagem da eletrocalha por cima das esteiras", "Operação / Manutenção"],
   ["2", "Média de itens por caixa em cada segmento", "Operação / BI"],
   ["3", "Campos e limites da API do BHT e possibilidade de liberar a caixa ao fechar", "TI / fornecedor BHT"],
   ["4", "Origem dos itens da caixa no WMS (tabelas e views) e acesso do Serviço PTL ao Sybase", "DBA"],
@@ -495,7 +505,9 @@ c.push(tabela(["Termo", "Significado"], [
   ["Andar", "Nível do prédio. O andar 0 é o de cima."],
   ["Esteira de separação", "Esteira aberta na frente do alto giro, a uns 20 cm da de transporte, onde a caixa fica durante a separação."],
   ["Transferência", "Desvio da esteira de transporte para a de separação. Com o rolete direcionador, atende até quatro estações."],
-  ["Concentrador", "Controlador da estação, ligado à rede e aos barramentos de displays."],
+  ["Concentrador", "Controlador da estação, ligado à rede e aos barramentos de displays. Fica atrás da estação."],
+  ["Etiqueta do endereço", "Endereço no formato 0.05.0421.A: bairro, rua, prédio + andar e apartamento."],
+  ["Cadastro de LED", "Vínculo entre o LED (nó e porta, ou módulo E+Q) e o endereço, feito na interface de controle com o botão do módulo novo."],
   ["Módulo Q e módulo E+Q", "Display de quantidade e display de endereço e quantidade, os dois com botão."],
   ["Nó de coluna", "Placa que liga os módulos Q de um prédio do alto giro ao barramento."],
   ["Zona", "Grupo de cerca de três prédios do baixo giro com um display de endereço e quantidade."],
@@ -531,7 +543,7 @@ const doc = new Document({
   sections: [{
     properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 } } },
     headers: { default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT,
-      children: [t("Projeto Pick-to-Light · Documento de Arquitetura · versão 1.2", { size: 16, color: CZ })] })] }) },
+      children: [t("Projeto Pick-to-Light · Documento de Arquitetura · versão 1.3", { size: 16, color: CZ })] })] }) },
     footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER,
       children: [new TextRun({ children: ["Página ", PageNumber.CURRENT, " de ", PageNumber.TOTAL_PAGES], font: FONTE, size: 16, color: CZ })] })] }) },
     children: c,

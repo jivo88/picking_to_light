@@ -3,7 +3,8 @@
 ## Como abrir
 
 **No VS Code:** abra esta pasta, aperte **F5** e escolha **Simulador unificado (3D + comunicação)**.
-O navegador abre em http://127.0.0.1:8780 com as abas *Estação 3D*, *Comunicação* e *Lado a lado*.
+O navegador abre em http://127.0.0.1:8780 com as abas *Estação 3D*, *Comunicação*, *Lado a lado* e *Controle*
+(falhas de LED e cadastro de LED por endereço).
 
 **Pelo terminal:** `python iniciar.py` (ou `--3d`, `--comunicacao`, `--placas`).
 
@@ -11,7 +12,7 @@ O navegador abre em http://127.0.0.1:8780 com as abas *Estação 3D*, *Comunica�
 
 | Pasta | Conteúdo |
 |---|---|
-| [`simulador-unificado/`](simulador-unificado/) | **Versão unificada**: estação 3D e comunicação sincronizadas, com abas para alternar (3D, comunicação, lado a lado). Abra `index.html`. |
+| [`simulador-unificado/`](simulador-unificado/) | **Versão unificada**: estação 3D, comunicação e interface de controle sincronizadas, com abas para alternar (3D, comunicação, lado a lado, controle). Abra `index.html`. |
 | [`demo-comunicacao/`](demo-comunicacao/) | **Demonstração da comunicação** entre coletor, Serviço PTL, broker MQTT, concentrador e módulos de LED, com os bytes de cada mensagem. Abra `index.html`. |
 | [`simulador-3d/`](simulador-3d/) | **Simulador 3D da estação completa** (estações 05 e 27, endereços reais, arquiteturas A e B). Abra `index.html`. |
 | [`projeto/entregaveis/`](projeto/entregaveis/) | Apresentação (.pptx), documento técnico (.docx) e orçamento (.xlsx) |

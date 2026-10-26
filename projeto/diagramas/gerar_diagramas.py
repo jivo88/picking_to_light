@@ -87,7 +87,7 @@ def d_arq(rfid=False):
         c.append(caixa(900, 90, 470, 160, "Identificação por RFID (NFC 13,56 MHz)", [
             "Tag NFC fixa em cada caixa retornável",
             "B1: pulseira NFC do operador (Wi-Fi)",
-            "B2: leitor fixo ligado ao concentrador",
+            "B2: leitor fixo no barramento da estação",
             "Painel da estação mostra caixa e progresso",
             "Fechamento: nova leitura da tag"], RX, RX2))
         c.append(seta(900, 175, 820, 175, "Wi-Fi", dupla=True))
@@ -290,37 +290,41 @@ def d_layout():
             x1, x2 = min(xs), max(xs) + bw - 3
             yv = by + 2 * bhl - 7
             c.append(f"<rect x='{x1+3}' y='{yv}' width='{x2-x1-6}' height='14' rx='3' fill='#111' stroke='{ZBOR[z % 8]}' stroke-width='1.5'/>"
-                     f"<text x='{(x1+x2)/2}' y='{yv+10.5}' text-anchor='middle' font-size='8.5' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>P{xps[-1][1]:03d} A2 · 1</text>")
+                     f"<text x='{(x1+x2)/2}' y='{yv+10.5}' text-anchor='middle' font-size='8' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>0.05.{xps[-1][1]:03d}2.A 1</text>")
             c.append(f"<text x='{(x1+x2)/2}' y='{by-8}' text-anchor='middle' font-size='10.5' font-weight='700' fill='{ZBOR[z%8]}' {FONT}>ZONA {ZORD[z] if z < 8 else ''}</text>")
         c.append(f"<text x='{x0}' y='{by+8*bhl+36}' font-size='11.5' fill='{CZ}' {FONT}>← entrada do corredor                         fundo →</text>")
     lado(560, esq, "BAIXO GIRO: lado esquerdo (P020 a P031)")
-    lado(980, dirt, "Lado direito (P015, P043 → P032)")
+    lado(980, dirt, "Lado direito (P015 na frente; P043 → P032)")
     ly = by + 8 * bhl + 62
-    c.append(f"<text x='560' y='{ly}' font-size='12.5' {FONT}>• Prateleiras alinhadas, andar 0 em cima, profundidade ≈ 2 m. Caixas de endereço em geral pequenas (tipo A, B, C, F, N); andar sem endereço fica vazio.</text>")
-    c.append(f"<text x='560' y='{ly+22}' font-size='12.5' {FONT}>• 160 endereços em 8 zonas (4 por lado); display de endereço + quantidade na altura dos olhos (≈ 1,5 m). P015 (150–153) entra na zona D1.</text>")
+    c.append(f"<text x='560' y='{ly}' font-size='12.5' {FONT}>• Prateleiras alinhadas de 50 cm × 2 m, andar 0 em cima. Caixas de endereço em geral pequenas (tipo A, B, C, F, N).</text>")
+    c.append(f"<text x='560' y='{ly+22}' font-size='12.5' {FONT}>• 160 endereços em 8 zonas (4 por lado); display E+Q na altura dos olhos (≈ 1,5 m). P015 fica na frente do bloco da direita e entra na zona D1.</text>")
+    c.append(f"<text x='70' y='{ly+22}' font-size='12.5' fill='{CZ}' {FONT}>Endereço no formato da etiqueta: 0.05.0421.A = bairro.rua.prédio+andar.apto</text>")
     return svg(w, h, "\n".join(c), "Vista frontal da estação 05 (Medicamento), com os 209 endereços da tabela wms_endereco")
 
 
 # ---------------------------------------------------------------- D4b planta da estação
+# medidas do desenho de 26/10/2026: estação 2,5 m; corredor 1,2 m; prateleiras 0,5 m × 2 m; 015 na frente do bloco da direita
 def d_planta():
-    W, H = 1500, 760
-    s = 46
-    P, hc, pb = 5.5, 0.75, 2.0
-    zF, zFace, zBack = 1.35, -0.93, -2.05
+    W, H = 1500, 860
+    s = 92
+    P, hc, pb, comp, f15 = 2.5, 0.6, 0.5, 2.0, 0.3
+    zFace, zBack = -0.95, -2.15
+    zT, zS, lT, lS = -1.29, -0.535, 0.55, 0.55
+    zF = 1.35
+    zC = zF + f15
     est0, est1 = 3, 6
-    xa = (est0 - 5 - 0.5) * P - 0.3
-    X = lambda x: 30 + (x - xa) * s
-    Y = lambda z: 100 + (z + 2.3) * s
+    xa = (est0 - 5) * P - P / 2 - 0.35
+    xb = (est1 - 5) * P + P / 2 + 0.25
+    X = lambda x: 40 + (x - xa) * s
+    Y = lambda z: 110 + (z + 2.75) * s
     pp = _por_predio(END05)
     bpred = sorted({e["predio"] for e in END05 if e["cat"] == "baixo" and e["predio"] != 15})
     esq = [p for p in bpred if p < 32]
-    dirt = [15] + sorted([p for p in bpred if p >= 32], reverse=True)
-    L = max(len(esq), len(dirt)) * 0.6
-    xb = (est1 - 5 + 0.5) * P + 0.3
+    dirt = sorted([p for p in bpred if p >= 32], reverse=True)
     c = []
 
-    def r(x1, z1, x2, z2, fill, stroke=CZ, sw=1.4, op=1):
-        c.append(f"<rect x='{X(min(x1,x2))}' y='{Y(min(z1,z2))}' width='{abs(x2-x1)*s}' height='{abs(z2-z1)*s}' fill='{fill}' fill-opacity='{op}' stroke='{stroke}' stroke-width='{sw}'/>")
+    def r(x1, z1, x2, z2, fill, stroke=CZ, sw=1.4, op=1, rx=0):
+        c.append(f"<rect x='{X(min(x1,x2))}' y='{Y(min(z1,z2))}' width='{abs(x2-x1)*s}' height='{abs(z2-z1)*s}' rx='{rx}' fill='{fill}' fill-opacity='{op}' stroke='{stroke}' stroke-width='{sw}'/>")
 
     def t(x, z, txt, size=12, cor="#1c2430", peso=400, anchor="middle", rot=None):
         tr = f"transform='rotate({rot} {X(x)} {Y(z)})'" if rot else ""
@@ -328,81 +332,137 @@ def d_planta():
 
     def seta(x1, z1, x2, z2, cor, larg=3):
         c.append(f"<line x1='{X(x1)}' y1='{Y(z1)}' x2='{X(x2)}' y2='{Y(z2)}' stroke='{cor}' stroke-width='{larg}' marker-end='url(#fim)'/>")
-    # alto giro (faixa de estantes) por estação
-    for st in range(est0, est1 + 1):
-        xc = (st - 5) * P
-        nosso = st == 5
-        r(xc - 2.8, zBack, xc + 2.8, zFace, "#DEE6F2" if nosso else "#EEF0F3", AZ2 if nosso else "#AAB2BC", 1.8 if nosso else 1.2)
-    # esteiras por dentro do alto giro
-    for z1, z2, nome in ((-1.665, -1.115, "ESTEIRA DE TRANSPORTE  →"), (-0.915, -0.365, "ESTEIRA DE SEPARAÇÃO")):
-        r(xa, z1, xb, z2, "#C9D0D8", CZ, 1.2, 0.85)
-        x = xa
-        while x < xb:
-            c.append(f"<line x1='{X(x)}' y1='{Y(z1)}' x2='{X(x)}' y2='{Y(z2)}' stroke='#AEB7C1'/>")
-            x += 0.3
-        t(xa + 0.6, (z1 + z2) / 2 + 0.1, nome, 11.5, AZ, 700, "start")
-    # transferência 03|04
-    xt = (3.5 - 5) * P
-    r(xt - 0.3, -1.115, xt + 0.3, -0.915, "#E3F1E8", VD)
-    seta(xt, -1.5, xt, -0.75, VD)
-    c.append(f"<circle cx='{X(xt)}' cy='{Y(-0.64)}' r='7' fill='{AM}' stroke='#9a6413'/>")
-    seta(xt - 0.25, -0.64, xt - 1.6, -0.64, "#B9770E", 2.5)
-    seta(xt + 0.25, -0.64, xt + 1.6, -0.64, "#B9770E", 2.5)
-    for s0, s1, txt in ((3, 3, "esquerda: 03"), (4, 5, "direita: 04 e 05")):
-        x1, x2 = (s0 - 5 - 0.5) * P + 0.15, (s1 - 5 + 0.5) * P - 0.15
-        c.append(f"<path d='M{X(x1)},{Y(-0.22)} L{X(x1)},{Y(-0.12)} L{X(x2)},{Y(-0.12)} L{X(x2)},{Y(-0.22)}' fill='none' stroke='#B9770E' stroke-width='1.6'/>")
-        t((x1 + x2) / 2, 0.18, txt, 10.5, "#B9770E", 700)
-    t(xt, -2.42, "transferência 03|04 · rolete direcionador", 11, VD, 700)
-    # bacia na estação 05 e empurrão de volta
-    r(-0.3, -0.84, 0.3, -0.44, "#2E9E4F", "#1d6b35")
-    seta(0.45, -0.6, 0.45, -1.35, "#C0392B", 2.5)
-    t(0.75, -2.42, "empurra de volta à esteira de transporte (de qualquer ponto)", 10.5, "#C0392B", 700, "start")
-    # operador e corredor
-    c.append(f"<line x1='{X(xa)}' y1='{Y(-0.2)}' x2='{X(xb)}' y2='{Y(-0.2)}' stroke='#F4C430' stroke-width='3'/>")
-    c.append(f"<circle cx='{X(0.35)}' cy='{Y(0.35)}' r='9' fill='#2E9E4F' stroke='#111'/>")
-    t(0.35, 0.85, "operador", 10.5, CZ)
+
+    def cota(x1, z1, x2, z2, txt, lado=-14):
+        horiz = abs(z1 - z2) < 1e-6
+        c.append(f"<line x1='{X(x1)}' y1='{Y(z1)}' x2='{X(x2)}' y2='{Y(z2)}' stroke='#7B4FA0' stroke-width='1.4' marker-end='url(#fim)' marker-start='url(#ini)'/>")
+        if horiz:
+            c.append(f"<text x='{(X(x1)+X(x2))/2}' y='{Y(z1)+lado}' text-anchor='middle' font-size='11.5' font-weight='700' fill='#7B4FA0' {FONT}>{txt}</text>")
+        else:
+            c.append(f"<text x='{X(x1)+lado}' y='{(Y(z1)+Y(z2))/2}' text-anchor='middle' font-size='11.5' font-weight='700' fill='#7B4FA0' transform='rotate(-90 {X(x1)+lado} {(Y(z1)+Y(z2))/2})' {FONT}>{txt}</text>")
+
+    zid = lambda p: _zidx(next(iter(pp[p].values()))["zona"])
     for st in range(est0, est1 + 1):
         xc = (st - 5) * P
         nosso = st == 5
         fill, bor = ("#DEE6F2", AZ2) if nosso else ("#EEF0F3", "#AAB2BC")
-        r(xc - hc - pb, zF, xc - hc, zF + L, fill, bor)
-        r(xc + hc, zF, xc + hc + pb, zF + L, fill, bor)
-        t(xc - 1.9, 1.1, f"ESTAÇÃO {st:02d}", 12, AZ if nosso else CZ, 700)
-    zid = lambda p: _zidx(next(iter(pp[p].values()))["zona"])
+        # alto giro
+        r(xc - P / 2, zBack, xc + P / 2, zFace, fill, bor, 1.8 if nosso else 1.1)
+        # concentrador atrás da estação
+        r(xc + 0.5, zBack - 0.26, xc + 0.9, zBack - 0.06, VD if nosso else "#B5BCC5", "#1d5e3a" if nosso else "#8A939E", 1.2)
+        # prateleiras do corredor e faixa do 015
+        r(xc - hc - pb, zC, xc - hc, zC + comp, fill, bor)
+        r(xc + hc, zC, xc + hc + pb, zC + comp, fill, bor)
+        r(xc - hc - pb, zF, xc - hc, zC, "#FCE8CC" if nosso else "#F3F4F6", AM if nosso else "#AAB2BC", 1.4)
+        t(xc - hc - pb / 2, zF + 0.2, "015", 10, AM if nosso else CZ, 700)
+        t(xc, zF - 0.25, f"ESTAÇÃO {st:02d}", 12.5, AZ if nosso else CZ, 700)
+        t(xc, zBack + 0.35, f"alto giro {st:02d} · P001–P010", 10.5, AZ if nosso else CZ, 700)
+    # prédios da estação 05 coloridos pela zona
+    wbE, wbD = comp / len(esq), comp / len(dirt)
     for i, p in enumerate(esq):
         z = zid(p)
-        r(hc, zF + i * 0.6, hc + 0.35, zF + (i + 1) * 0.6, ZBOR[z % 8], "#fff")
-        t(hc + 0.55, zF + i * 0.6 + 0.4, f"{p:03d}", 9.5, CZ, 400, "start")
+        r(hc, zC + i * wbE, hc + 0.22, zC + (i + 1) * wbE, ZBOR[z % 8], "#fff", 0.8)
+        t(hc + 0.27, zC + i * wbE + wbE * 0.75, f"{p:03d}", 8.5, CZ, 400, "start")
     for i, p in enumerate(dirt):
         z = zid(p)
-        r(-hc - 0.35, zF + i * 0.6, -hc, zF + (i + 1) * 0.6, ZBOR[z % 8], "#fff")
-        t(-hc - 0.55, zF + i * 0.6 + 0.4, f"{p:03d}", 9.5, CZ, 400, "end")
-    t(hc + 1.6, zF + L / 2, "LADO ESQUERDO · P020–P031", 11.5, AZ, 700, rot=90)
-    t(-hc - 1.6, zF + L / 2, "LADO DIREITO · P015, P043 → P032", 11.5, AZ, 700, rot=-90)
-    pts = [(0.15, 0.55), (0.25, zF + 0.2), (0.25, zF + L - 0.25), (-0.25, zF + L - 0.25), (-0.25, zF + 0.3)]
+        r(-hc - 0.22, zC + i * wbD, -hc, zC + (i + 1) * wbD, ZBOR[z % 8], "#fff", 0.8)
+        t(-hc - 0.27, zC + i * wbD + wbD * 0.75, f"{p:03d}", 8.5, CZ, 400, "end")
+    # esteiras
+    for zc_, lg, nome in ((zT, lT, "ESTEIRA DE TRANSPORTE (por dentro do alto giro)  →"), (zS, lS, "ESTEIRA DE SEPARAÇÃO (aberta, na frente)")):
+        r(xa, zc_ - lg / 2, xb, zc_ + lg / 2, "#C9D0D8", CZ, 1.2, 0.85)
+        x = xa
+        while x < xb:
+            c.append(f"<line x1='{X(x)}' y1='{Y(zc_-lg/2)}' x2='{X(x)}' y2='{Y(zc_+lg/2)}' stroke='#AEB7C1'/>")
+            x += 0.25
+        if zc_ == zT:
+            t(xa + 0.15, zc_ + 0.07, nome, 11, AZ, 700, "start")
+        else:
+            t(xb - 0.15, zc_ + 0.07, nome, 11, AZ, 700, "end")
+    # transferência 03|04
+    xt = (3.5 - 5) * P
+    r(xt - 0.3, zT + lT / 2, xt + 0.3, zS - lS / 2, "#E3F1E8", VD)
+    seta(xt, zT, xt, zS - 0.05, VD)
+    c.append(f"<circle cx='{X(xt)}' cy='{Y(zS)}' r='7' fill='{AM}' stroke='#9a6413'/>")
+    seta(xt - 0.2, zS, xt - 1.3, zS, "#B9770E", 2.5)
+    seta(xt + 0.2, zS, xt + 1.3, zS, "#B9770E", 2.5)
+    t(xt, zBack - 0.42, "transferência 03|04 · rolete direcionador (esq.: 03 · dir.: 04 e 05)", 11, VD, 700)
+    # bacia, operador e rota
+    r(-0.28, zS - 0.2, 0.28, zS + 0.2, "#2E9E4F", "#1d6b35", 1.4)
+    c.append(f"<circle cx='{X(0.3)}' cy='{Y(0.15)}' r='9' fill='#2E9E4F' stroke='#111'/>")
+    t(0.3, 0.5, "operador", 10.5, CZ)
+    pts = [(0.15, 0.3), (0.0, zF + 0.1), (0.25, zC + 0.2), (0.25, zC + comp - 0.2), (-0.25, zC + comp - 0.2), (-0.25, zC + 0.2), (-0.85, zF - 0.15)]
     c.append("<polyline points='" + " ".join(f"{X(x)},{Y(z)}" for x, z in pts) + f"' fill='none' stroke='{AM}' stroke-width='3' stroke-dasharray='7 6' marker-end='url(#fim)'/>")
-    r(2.4, 0.95, 2.75, 1.18, VD, "#1d5e3a")
-    t(2.58, 0.85, "concentrador", 9.5, VD, 700)
+    # barramento 2 por cima até o corredor
+    c.append(f"<polyline points='{X(0.8)},{Y(zBack-0.16)} {X(0.45)},{Y(zBack-0.16)} {X(0.45)},{Y(zC+comp)}' fill='none' stroke='#E67E22' stroke-width='2.4' stroke-dasharray='3 4'/>")
+    t(1.62, zBack - 0.66, "barramento 2 (baixo giro) sobe e passa", 10, "#B9590E", 700, "start")
+    t(1.62, zBack - 0.48, "por cima das esteiras até o corredor", 10, "#B9590E", 700, "start")
+    t(0.7, zBack - 0.32, "concentrador", 10, VD, 700)
+    # cotas
+    cota(-P / 2, zBack - 0.62, P / 2, zBack - 0.62, "2,5 m (10 prédios de 25 cm)")
+    cota(-hc, zC + comp + 0.25, hc, zC + comp + 0.25, "corredor 1,2 m", 18)
+    cota(hc, zC + comp + 0.25, hc + pb, zC + comp + 0.25, "0,5 m", 18)
+    cota(hc + pb, zC + comp + 0.25, P - hc - pb, zC + comp + 0.25, "0,3 m", 18)
+    cota(P / 2 + 0.95, zC, P / 2 + 0.95, zC + comp, "2 m (12 prédios × 8 andares)", -14)
     # legenda
-    lx, ly = 1180, 110
-    itens = [("#DEE6F2", AZ2, "Estação 05 (piloto)"), ("#EEF0F3", "#AAB2BC", "Estações vizinhas"), ("#C9D0D8", CZ, "Esteiras (transporte por dentro do alto giro)"),
-             ("#E3F1E8", VD, "Transferência"), (AM, "#9a6413", "Rolete direcionador"), ("#2E9E4F", "#1d6b35", "Bacia (verde, tamanho único)")]
+    lx, ly = 1110, 120
+    itens = [("#DEE6F2", AZ2, "Estação 05 (piloto)"), ("#EEF0F3", "#AAB2BC", "Estações vizinhas"), ("#FCE8CC", AM, "P015 na frente do bloco (zona D1)"),
+             (VD, "#1d5e3a", "Concentrador atrás da estação"), ("#C9D0D8", CZ, "Esteiras"), ("#E3F1E8", VD, "Transferência"), ("#2E9E4F", "#1d6b35", "Bacia (verde)")]
     for i, (f, b_, txt) in enumerate(itens):
-        c.append(f"<rect x='{lx}' y='{ly+i*28}' width='20' height='20' rx='3' fill='{f}' stroke='{b_}' stroke-width='1.6'/><text x='{lx+30}' y='{ly+i*28+15}' font-size='12.5' {FONT}>{txt}</text>")
-    ty = ly + len(itens) * 28 + 26
-    linhas = ["Regras da transferência", "Cada transferência atende até 4 estações:", "2 à esquerda e 2 à direita do vão.",
-              "Ex.: 11|12 → 10, 11 · 12, 13.", "Ponta: 03|04 → 03 · 04, 05.", "", "A bacia só entra onde o pedido tem", "itens; depois volta à esteira de",
-              "transporte (ex.: começa na 03 e só", "continua na 07 → não entra na 04/05).", "", "A de transporte passa por dentro do alto", "giro (entre o andar 3 e o 4); a de", "separação fica na frente, aberta.", "", "Medidas aproximadas, sem escala."]
+        c.append(f"<rect x='{lx}' y='{ly+i*27}' width='20' height='20' rx='3' fill='{f}' stroke='{b_}' stroke-width='1.6'/><text x='{lx+30}' y='{ly+i*27+15}' font-size='12.5' {FONT}>{txt}</text>")
+    ty = ly + len(itens) * 27 + 24
+    linhas = ["Medidas (desenho de 26/10/2026)", "Alto giro: 2,5 m por estação.", "Corredor do baixo giro: 1,2 m.", "Prateleiras: 50 cm de fundo × 2 m.",
+              "Sobra 0,3 m entre prateleiras", "de estações vizinhas.", "", "Lado esquerdo: P020–P031.", "Lado direito: P043 → P032.",
+              "P015: frente do bloco da direita,", "virado para a esteira.", "", "Concentrador atrás do alto giro;", "o barramento do baixo giro passa",
+              "por cima das esteiras.", "", "Medidas aproximadas."]
     for i, l in enumerate(linhas):
-        c.append(f"<text x='{lx}' y='{ty+i*21}' font-size='{13.5 if i==0 else 12.2}' font-weight='{700 if i==0 else 400}' fill='{AZ if i==0 else "#1c2430"}' {FONT}>{l}</text>")
+        c.append(f"<text x='{lx}' y='{ty+i*20}' font-size='{13.5 if i==0 else 12.2}' font-weight='{700 if i==0 else 400}' fill='{AZ if i==0 else "#1c2430"}' {FONT}>{l}</text>")
     return svg(W, H, "\n".join(c), "Planta da estação 05 e das vizinhas")
+
+
+# ---------------------------------------------------------------- D8 manutenção: falha e cadastro de LED
+def d_manutencao():
+    W, H = 1500, 640
+    c = []
+    passos = [
+        ("1. Detecta", ["nó ou concentrador vê a falha", "sem resposta (3 tentativas)", "display sem ACK na porta", "botão travado > 10 s"], RX),
+        ("2. Avisa", ["MQTT FALHA_MODULO", "endereço + nó/porta", "ou endereço RS-485", "grava ptl_evento_falha"], RX),
+        ("3. Mostra", ["interface de controle:", "0.05.0042.A", "nó 0x04 · porta 3", "local e tipo de falha"], AZ2),
+        ("4. Troca", ["técnico solta o RJ45", "e encaixa o reserva", "(sem ferramenta)", ""], CZ),
+        ("5. Cadastra", ["escolhe o endereço na tela", "(ou lê a etiqueta)", "módulo novo pisca CAd", "aperta o botão dele"], AM),
+        ("6. Grava", ["DEF_ENDERECO (E+Q)", "UPDATE ptl_mapa_led", "display volta ao item", "histórico registrado"], VD),
+    ]
+    x0, wq, gap = 40, 220, 26
+    for i, (tit, ls, cor) in enumerate(passos):
+        x = x0 + i * (wq + gap)
+        c.append(caixa(x, 90, wq, 150, tit, ls, cor))
+        if i < len(passos) - 1:
+            c.append(f"<line x1='{x+wq+2}' y1='165' x2='{x+wq+gap-4}' y2='165' stroke='{CZ}' stroke-width='2.4' marker-end='url(#fim)'/>")
+    # o que é detectado
+    c.append(f"<text x='40' y='300' font-size='15' font-weight='700' fill='{AZ}' {FONT}>O que dá para detectar sem hardware extra</text>")
+    linhas = [("Módulo E+Q ou nó sem resposta", "o concentrador pergunta e não recebe resposta em 3 tentativas", "sim"),
+              ("Display do módulo Q desconectado", "o nó não recebe o ACK do TM1637 naquela porta", "sim"),
+              ("Botão travado", "o botão fica apertado por mais de 10 s", "sim"),
+              ("Cabo do barramento rompido", "todos os módulos depois do ponto param de responder", "sim (aponta o trecho)"),
+              ("Segmento ou LED queimado", "o display responde normalmente; só aparece no teste 8888 do início do turno", "visual")]
+    y = 318
+    c.append(f"<rect x='40' y='{y}' width='1420' height='30' fill='#EEF2F7'/>")
+    for x, txt in ((52, "Falha"), (420, "Como aparece"), (1240, "Detecção automática")):
+        c.append(f"<text x='{x}' y='{y+20}' font-size='12.5' font-weight='700' fill='{CZ}' {FONT}>{txt}</text>")
+    for i, (a_, b_, d_) in enumerate(linhas):
+        yy = y + 30 + i * 34
+        c.append(f"<line x1='40' y1='{yy+34}' x2='1460' y2='{yy+34}' stroke='#d5dbe3'/>"
+                 f"<text x='52' y='{yy+22}' font-size='13' font-weight='600' {FONT}>{a_}</text>"
+                 f"<text x='420' y='{yy+22}' font-size='12.5' fill='{CZ}' {FONT}>{b_}</text>"
+                 f"<text x='1240' y='{yy+22}' font-size='12.5' font-weight='700' fill='{VD if d_.startswith('sim') else AM}' {FONT}>{d_}</text>")
+    c.append(f"<text x='40' y='{y+30+5*34+34}' font-size='12.5' fill='{CZ}' {FONT}>Módulo Q não tem microcontrolador: ele é identificado pelo nó e pela porta. Módulo E+Q tem serial próprio; o novo chega com o endereço de fábrica 0xF0 e recebe o endereço do antigo no cadastro.</text>")
+    return svg(W, H, "\n".join(c), "Manutenção: aviso de falha e cadastro de LED por endereço")
 
 
 # ---------------------------------------------------------------- D5 cabeamento
 def d_cabeamento():
     w, h = 1400, 600
     c = []
-    c.append(caixa(40, 230, 250, 150, "Concentrador", ["RP2040 + W5500", "Porta A: barramento alto giro", "Porta B: barramento baixo giro", "Fonte 12 V no gabinete"], VD, VD2))
+    c.append(caixa(40, 230, 250, 150, "Concentrador", ["atrás da estação", "Porta A: barramento alto giro", "Porta B: baixo giro (por cima)", "Fonte 12 V no gabinete"], VD, VD2))
     # barramento frente
     c.append(f"<text x='330' y='90' font-size='14' font-weight='700' fill='{AZ}' {FONT}>Barramento ALTO GIRO (RS-485 + 12 V em cabo Cat5e, RJ45)</text>")
     xs = [340, 470, 600, 730, 860]
@@ -431,7 +491,7 @@ def d_cabeamento():
     for i in range(6):
         x = 340 + i * 160
         c.append(f"<rect x='{x}' y='420' width='136' height='70' rx='8' fill='#fff' stroke='{AZ2}' stroke-width='2'/>"
-                 f"<rect x='{x+8}' y='430' width='86' height='24' rx='3' fill='#111'/><text x='{x+14}' y='447' font-size='11.5' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>P0{24+i*4} A3</text>"
+                 f"<rect x='{x+8}' y='430' width='86' height='24' rx='3' fill='#111'/><text x='{x+12}' y='447' font-size='10.5' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>0.05.0{24+i*4}3.A</text>"
                  f"<rect x='{x+98}' y='430' width='30' height='24' rx='3' fill='#111'/><text x='{x+113}' y='447' text-anchor='middle' font-size='11.5' fill='#ff4b3a' font-weight='700' font-family='DejaVu Sans Mono, monospace'>2</text>"
                  f"<circle cx='{x+68}' cy='474' r='8' fill='{AM}'/><text x='{x+68}' y='508' text-anchor='middle' font-size='11' fill='{CZ}' {FONT}>Zona {i+1}</text>")
         if i < 5:
@@ -471,7 +531,7 @@ def d_telas():
             ("", 12, CZ, 400)], "2ª leitura fecha a caixa"),
         tela(1080, 70, "Atenção", "#B23B3B", [
             ("Caixa com itens pendentes", 15, "#B23B3B", 700), ("3 itens não confirmados", 15, CZ, 400),
-            ("Zona 4: P031 A2, 2 un", 14, CZ, 400), ("", 12, CZ, 400),
+            ("0.05.0312.A, 2 un", 14, CZ, 400), ("", 12, CZ, 400),
             ("Leia de novo para", 15, "#1c2430", 700), ("fechar mesmo assim", 15, "#1c2430", 700)], "Registrado para a conferência")]
     c.append(f"<text x='60' y='52' font-size='13' fill='{CZ}' {FONT}>Fluxo do operador: leitura → separação guiada pelos displays → leitura de fechamento (sem menu)</text>")
     return svg(w, h, "\n".join(c), "Telas do coletor (app A1)")
@@ -495,11 +555,11 @@ def d_modulos():
     c.append(f"<text x='460' y='80' font-size='16' font-weight='700' fill='{AZ}' {FONT}>Módulo E+Q: andares 4-5 e zonas do baixo giro</text>")
     c.append(f"<rect x='460' y='100' width='560' height='150' rx='14' fill='#2b2f36' filter='url(#sombra)'/>"
              f"<rect x='480' y='122' width='300' height='70' rx='6' fill='#0b0b0b'/>"
-             f"<text x='630' y='172' text-anchor='middle' font-size='44' fill='#ff3b2f' font-weight='700' font-family='DejaVu Sans Mono, monospace'>P031 A2</text>"
+             f"<text x='630' y='170' text-anchor='middle' font-size='34' fill='#ff3b2f' font-weight='700' font-family='DejaVu Sans Mono, monospace'>0.05.0312.A</text>"
              f"<rect x='795' y='122' width='120' height='70' rx='6' fill='#0b0b0b'/>"
              f"<text x='855' y='172' text-anchor='middle' font-size='44' fill='#ff3b2f' font-weight='700' font-family='DejaVu Sans Mono, monospace'>2</text>"
              f"<circle cx='968' cy='157' r='34' fill='{VD}' stroke='#14532d' stroke-width='3'/><circle cx='968' cy='157' r='22' fill='#36c26b'/>"
-             f"<text x='630' y='228' text-anchor='middle' font-size='13' fill='#cbd5e1' {FONT}>endereço 8 dígitos (prédio + andar)</text>"
+             f"<text x='630' y='228' text-anchor='middle' font-size='13' fill='#cbd5e1' {FONT}>endereço da etiqueta: 8 dígitos com ponto</text>"
              f"<text x='855' y='228' text-anchor='middle' font-size='13' fill='#cbd5e1' {FONT}>quantidade</text>")
     c.append(f"<text x='460' y='290' font-size='12.5' {FONT}>• Mostra o PRÓXIMO item da zona, na ordem da rota</text>"
              f"<text x='460' y='312' font-size='12.5' {FONT}>• Botão confirma e passa para o próximo; apaga quando a zona termina</text>"
@@ -562,7 +622,7 @@ def d_componentes():
     c.append(_comp(40, 105, 290, 92, "Coletor MovFast (A1)", ["App Android próprio", "gatilho abre e fecha a caixa", "mostra o progresso"], AZ2))
     c.append(_comp(40, 225, 290, 78, "Tela do WMS no coletor (A2)", ["alternativa ao app", "grava a leitura no Sybase"], CZ, tracejado=True))
     c.append(_comp(40, 330, 290, 78, "Pulseira NFC (B1)", ["ESP32-C3 + PN532, bateria", "envia a tag lida por Wi-Fi"], RX, tracejado=True))
-    c.append(_comp(40, 440, 290, 92, "Navegador (gestão e TI)", ["painel das 40 estações", "indicadores e alarmes", "cadastro do mapa"], CZ))
+    c.append(_comp(40, 440, 290, 92, "Navegador (manutenção e TI)", ["painel das 40 estações", "qual LED falhou e onde", "cadastro de LED por endereço"], CZ))
     # servidor PTL
     cx = [415, 670, 925]
     cw, ch = 235, 92
@@ -571,8 +631,8 @@ def d_componentes():
         (0, 0, "API REST /v1", ["leituras, estado, cancelamento", "mapa e indicadores", "HTTPS + JSON"]),
         (1, 0, "Orquestrador de caixas", ["estado da caixa na estação", "divide itens por display", "ordena pela rota"]),
         (2, 0, "Adaptador Sybase", ["lê views do pedido", "grava sessões e eventos", "jConnect / ODBC"]),
-        (0, 1, "Painel web", ["páginas do monitoramento", "servidas pela própria API"]),
-        (1, 1, "Mapa de endereços", ["cd_endereco → módulo/zona", "editável pela TI"]),
+        (0, 1, "Interface de controle", ["monitoramento e falhas de LED", "servida pela própria API"]),
+        (1, 1, "Cadastro de LED", ["endereço → nó/porta ou E+Q", "troca por tela + botão"]),
         (2, 1, "Adaptador BHT", ["consulta dados da caixa", "aviso de conclusão (a validar)"]),
         (0, 2, "Monitor e indicadores", ["caixas/h, tempo por caixa", "heartbeat e falhas"]),
         (1, 2, "Registro de eventos", ["log de leituras e botões", "retenção definida pela TI"]),
@@ -586,7 +646,7 @@ def d_componentes():
     c.append(_comp(1240, 245, 320, 92, "Sistema BHT (terceiro)", ["controla a esteira e a transferência", "API com os dados da caixa"], "#8E6C3A"))
     c.append(_comp(1240, 370, 320, 92, "WMS PowerBuilder 12", ["sistema legado da operação", "tela A2 no coletor (opcional)"], "#8E6C3A"))
     # estação
-    c.append(_comp(40, 660, 330, 200, "Concentrador da estação", ["RP2040 + Ethernet W5500", "cliente MQTT", "estado da caixa e fila de confirmações", "mestre RS-485 com 2 portas", "watchdog, auto-teste e OTA", "fonte 12 V, gabinete com filtro e cooler", "", ""], VD))
+    c.append(_comp(40, 660, 330, 200, "Concentrador (atrás da estação)", ["RP2040 + Ethernet W5500", "cliente MQTT", "estado da caixa e fila de confirmações", "mestre RS-485 com 2 portas", "watchdog, auto-teste e OTA", "fonte 12 V, gabinete com filtro e cooler", "", ""], VD))
     c.append(_comp(40, 885, 330, 88, "Leitor NFC fixo + painel (B2)", ["leitor sob a posição de pega", "LCD 20×4 e botão FECHAR"], RX, tracejado=True))
     c.append(_comp(500, 660, 300, 92, "Nós de coluna (10)", ["um por prédio do alto giro", "liga os módulos Q do prédio"], VD))
     c.append(_comp(500, 775, 300, 64, "Módulos Q (29 a 35)", ["quantidade + botão, andares 0 a 3"], VD))
@@ -633,6 +693,7 @@ def main():
         "cabeamento": d_cabeamento(),
         "telas_coletor": d_telas(),
         "modulos": d_modulos(),
+        "manutencao": d_manutencao(),
         "componentes": d_componentes(),
     }
     html = ["<html><body style='margin:0;background:#fff'>"]

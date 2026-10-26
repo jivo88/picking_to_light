@@ -145,7 +145,7 @@ select { background: var(--painel); color: var(--tinta); border: 1px solid var(-
     const nome = (CMD[base] || 'CMD') + (resp ? ' (resposta)' : '');
     let txt = '';
     if (base === 0x10 && !resp) txt = `posição ${dados[0]}, quantidade ${(dados[1] << 8) | dados[2]}, modo ${dados[3] === 1 ? 'aceso' : 'piscando'}`;
-    else if (base === 0x11 && !resp) txt = `endereço "${String.fromCharCode(...dados.slice(0, 8))}", quantidade ${(dados[8] << 8) | dados[9]}, modo ${dados[10] === 1 ? 'aceso' : 'piscando'}`;
+    else if (base === 0x11 && !resp) txt = `endereço "${comPontos(dados.slice(0, 8), dados[8])}", quantidade ${(dados[9] << 8) | dados[10]}, modo ${dados[11] === 1 ? 'aceso' : 'piscando'}`;
     else if (base === 0x12 && !resp) txt = dados.length ? `posição ${dados[0]}` : 'display inteiro';
     else if (base === 0x20 && resp) txt = `botões apertados: ${dados[0] ? '0b' + dados[0].toString(2).padStart(3, '0') : 'nenhum'}`;
     else if (resp) txt = dados[0] === 0 ? 'OK' : `erro ${dados[0]}`;
@@ -256,7 +256,7 @@ select { background: var(--painel); color: var(--tinta); border: 1px solid var(-
   // ------------------------------------------------------------ dispositivos do barramento
   const DEV = {
     no01: { addr: 0x01, tipo: 'no', nome: 'Nó de coluna 0x01', slots: [
-      { end: 'P001 A0', qtd: 0, aceso: false, aperto: false }, { end: 'P004 A2', qtd: 0, aceso: false, aperto: false }, { end: 'P007 A1', qtd: 0, aceso: false, aperto: false }] },
+      { end: '0.05.0010.A', qtd: 0, aceso: false, aperto: false }, { end: '0.05.0042.A', qtd: 0, aceso: false, aperto: false }, { end: '0.05.0071.A', qtd: 0, aceso: false, aperto: false }] },
     eq41: { addr: 0x41, tipo: 'eq', nome: 'E+Q andar 4 · 0x41', fila: [], aceso: false, aperto: false },
     eq52: { addr: 0x52, tipo: 'eq', nome: 'E+Q zona E2 · 0x52', fila: [], aceso: false, aperto: false },
   };
@@ -312,12 +312,12 @@ select { background: var(--painel); color: var(--tinta); border: 1px solid var(-
 
   // ------------------------------------------------------------ estado
   const ITENS = [
-    { end: 'P001 A0', qtd: 3, dev: 'no01', slot: 0 },
-    { end: 'P004 A2', qtd: 1, dev: 'no01', slot: 1 },
-    { end: 'P007 A1', qtd: 2, dev: 'no01', slot: 2 },
-    { end: 'P003 A4', qtd: 2, dev: 'eq41' },
-    { end: 'P023 A1', qtd: 1, dev: 'eq52' },
-    { end: 'P025 A5', qtd: 4, dev: 'eq52' },
+    { end: '0.05.0010.A', qtd: 3, dev: 'no01', slot: 0 },
+    { end: '0.05.0042.A', qtd: 1, dev: 'no01', slot: 1 },
+    { end: '0.05.0071.A', qtd: 2, dev: 'no01', slot: 2 },
+    { end: '0.05.0034.A', qtd: 2, dev: 'eq41' },
+    { end: '0.05.0231.A', qtd: 1, dev: 'eq52' },
+    { end: '0.05.0255.A', qtd: 4, dev: 'eq52' },
   ];
   let caixaSeq = 1234;
   const S = { estado: 'AGUARDANDO', caixa: '', ok: 0, total: ITENS.length, online: true, fila: [], redeLigada: true, falhaInformada: null };
@@ -461,7 +461,14 @@ select { background: var(--painel); color: var(--tinta); border: 1px solid var(-
     campos: [['Tópico', topico], ['QoS', String(o.qos ?? 1)], ['Retido', o.retido ? 'sim' : 'não']], texto: json(carga) });
   const sql = (q, rot, resumo) => ({ camada: 'SQL', rot, resumo, texto: q });
   const rs = (addr, cmd, dados, rot) => { const b = quadro(addr, cmd, dados); const d = descreverQuadro(b); return { camada: 'RS485', rot, resumo: `0x${hex(addr)} ${d.nome} · ${d.txt}`, bytes: b }; };
-  const ascii = (s) => [...s.padEnd(8, ' ').slice(0, 8)].map((c) => c.charCodeAt(0));
+  // endereço da etiqueta (0.05.0421.A): 8 caracteres + máscara dos pontos decimais do display
+  function ascii(s) {
+    const cs = [];
+    let mask = 0;
+    for (const c of s) { if (c === '.' && cs.length) mask |= 1 << (cs.length - 1); else cs.push(c); }
+    return [...cs.join('').padEnd(8, ' ').slice(0, 8)].map((c) => c.charCodeAt(0)).concat([mask]);
+  }
+  const comPontos = (b, mask) => b.map((x, i) => String.fromCharCode(x) + (mask & (1 << i) ? '.' : '')).join('').trim();
 
   // ------------------------------------------------------------ barramento (um quadro por vez)
   let fila485 = Promise.resolve();

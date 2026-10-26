@@ -115,13 +115,20 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
 
   // ------------------------------------------------------------ RS-485
   function crc16(bytes) { let c = 0xFFFF; for (const b of bytes) { c ^= b; for (let i = 0; i < 8; i++) c = c & 1 ? (c >> 1) ^ 0xA001 : c >> 1; } return c; }
-  const CMD = { 0x10: 'MOSTRAR_Q', 0x11: 'MOSTRAR_EQ', 0x12: 'APAGAR', 0x20: 'LER_BOTOES', 0x30: 'AUTO_TESTE' };
+  const CMD = { 0x10: 'MOSTRAR_Q', 0x11: 'MOSTRAR_EQ', 0x12: 'APAGAR', 0x20: 'LER_BOTOES', 0x21: 'LER_STATUS', 0x30: 'AUTO_TESTE', 0x31: 'IDENTIFICAR',
+    0x40: 'MODO_CADASTRO', 0x41: 'DEF_ENDERECO' };
+  const FALHAS_BIT = { 1: 'display sem ACK', 2: 'botão travado' };
   function quadro(addr, cmd, dados) { const corpo = [addr, cmd, dados.length, ...dados]; const c = crc16(corpo); return [0x02, ...corpo, c & 0xFF, c >> 8]; }
   function descrever(b) {
     const addr = b[1], cmd = b[2], len = b[3], d = b.slice(4, 4 + len), resp = (cmd & 0x80) !== 0, base = cmd & 0x7F;
     let txt;
     if (base === 0x10 && !resp) txt = `andar ${d[0]}, quantidade ${(d[1] << 8) | d[2]}, ${d[3] === 1 ? 'aceso' : 'piscando'}`;
-    else if (base === 0x11 && !resp) txt = `endereço "${String.fromCharCode(...d.slice(0, 8)).trim()}", quantidade ${(d[8] << 8) | d[9]}, ${d[10] === 1 ? 'aceso' : 'piscando'}`;
+    else if (base === 0x11 && !resp) txt = `endereço "${comPontos(d.slice(0, 8), d[8])}", quantidade ${(d[9] << 8) | d[10]}, ${d[11] === 1 ? 'aceso' : 'piscando'}`;
+    else if (base === 0x21 && resp) txt = d[1] ? `porta ${d[0]}: ${FALHAS_BIT[d[1]] || 'erro ' + d[1]}` : 'sem falhas';
+    else if (base === 0x31 && !resp) txt = `mostrar 888 por ${d[0]} s`;
+    else if (base === 0x40 && !resp) txt = d.length ? `porta ${d[0]}: aguardar botão do módulo novo` : 'módulos sem endereço respondem';
+    else if (base === 0x40 && resp) txt = d.length > 1 ? `serial ${d.slice(0, 3).map(hex).join('')}, botão apertado` : `botão apertado na porta ${d[0]}`;
+    else if (base === 0x41 && !resp) txt = `novo endereço 0x${hex(d[0])}`;
     else if (base === 0x12 && !resp) txt = d.length ? `andar ${d[0]}` : 'display inteiro';
     else if (base === 0x20 && resp) txt = d[0] ? `botões apertados 0b${d[0].toString(2).padStart(4, '0')}` : 'nenhum botão';
     else if (resp) txt = d[0] === 0 ? 'OK' : `erro ${d[0]}`;
@@ -129,7 +136,14 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
     const ok = crc16(b.slice(1, 4 + len)) === (b[4 + len] | (b[5 + len] << 8));
     return { addr, nome: (CMD[base] || 'CMD') + (resp ? ' (resposta)' : ''), len, txt, ok };
   }
-  const ascii = (s) => [...s.padEnd(8, ' ').slice(0, 8)].map((c) => c.charCodeAt(0));
+  // endereço da etiqueta (0.05.0421.A) vai como 8 caracteres + máscara dos pontos decimais do display
+  function asciiEnd(s) {
+    const cs = [];
+    let mask = 0;
+    for (const c of s) { if (c === '.' && cs.length) mask |= 1 << (cs.length - 1); else cs.push(c); }
+    return [...cs.join('').padEnd(8, ' ').slice(0, 8)].map((c) => c.charCodeAt(0)).concat([mask]);
+  }
+  function comPontos(bytes, mask) { return bytes.map((b, i) => String.fromCharCode(b) + (mask & (1 << i) ? '.' : '')).join('').trim(); }
 
   // ------------------------------------------------------------ desenho
   const G = { lig: $('#ligacoes'), nos: $('#nos'), chips: $('#chips'), pac: $('#pacotes') };
@@ -367,7 +381,7 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
   const rs = (addr, cmd, dados, rot) => { const b = quadro(addr, cmd, dados); const d = descrever(b); return { camada: 'RS485', rot, resumo: `0x${hex(addr)} ${d.nome}${d.txt ? ' · ' + d.txt : ''}`, bytes: b }; };
   const quadroMostrar = (d, item, modo) => (d.tipo === 'Q'
     ? rs(d.addr, 0x10, [d.pos, item.qtd >> 8, item.qtd & 0xFF, modo || 1], `A${d.pos}: ${item.qtd}`)
-    : rs(d.addr, 0x11, [...ascii(item.end), item.qtd >> 8, item.qtd & 0xFF, modo || 1], item.end));
+    : rs(d.addr, 0x11, [...asciiEnd(item.end), item.qtd >> 8, item.qtd & 0xFF, modo || 1], item.end));
   const k = (d) => 'd' + d.addr;
 
   // leitura que chega ao serviço, conforme a arquitetura
@@ -410,7 +424,7 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
 
   // ------------------------------------------------------------ eventos do simulador 3D
   async function tratar(ev) {
-    switch (ev.tipo) {
+    switch (ev.evento || ev.tipo) {
       case 'estacao':
         S.est = ev.est; S.modo = ev.modo || S.modo; S.caixa = ''; S.ok = 0; S.total = 0; S.estado = 'livre';
         construirChips(ev); textos();
@@ -479,11 +493,48 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
         S.ok = 0; S.estado = 'aguardando leitura'; textos();
         return;
       case 'falha': {
-        const c = chipDe(ev);
-        for (let i = 1; i <= 3; i++) await enviar('conc', k(ev), rs(ev.addr, 0x20, [], i > 1 ? `${i}ª tentativa` : 'LER_BOTOES'), { perde: true });
-        registrar({ camada: 'RS485', erro: true, rot: 'timeout', de: 'Concentrador', para: '0x' + hex(ev.addr), resumo: 'sem resposta em 3 tentativas (20 ms cada)' });
+        const c = chipDe(ev), dg = ev.diag || {};
+        if (ev.tipoFalha === 'resposta' || !ev.tipoFalha) {
+          for (let i = 1; i <= 3; i++) await enviar('conc', k(ev), rs(ev.addr, 0x20, [], i > 1 ? `${i}ª tentativa` : 'LER_BOTOES'), { perde: true });
+          registrar({ camada: 'RS485', erro: true, rot: 'timeout', de: 'Concentrador', para: '0x' + hex(ev.addr), resumo: 'sem resposta em 3 tentativas (20 ms cada)' });
+        } else {
+          await enviar('conc', k(ev), rs(ev.addr, 0x21, [], 'LER_STATUS'));
+          await enviar(k(ev), 'conc', rs(ev.addr, 0xA1, [dg.porta || 1, ev.tipoFalha === 'display' ? 1 : 2], ev.tipoFalha === 'display' ? 'sem ACK' : 'travado'));
+        }
         if (c) { c.falha = true; desenharChip(c); }
-        await concParaServico({ tipo: 'FALHA_MODULO', disp: '0x' + hex(ev.addr), item_pendente: ev.item }, 'FALHA');
+        await concParaServico({ tipo: 'FALHA_MODULO', disp: '0x' + hex(ev.addr), porta: dg.porta || undefined, enderecos: dg.enderecos, falha: ev.tipoFalha || 'resposta', mensagem: ev.mensagem, item_pendente: ev.item }, 'FALHA');
+        await enviar('servico', 'sybase', sql(`INSERT INTO ptl_evento_falha\n  (estacao, cd_endereco, modulo, tipo, criado_em)\nVALUES ('${S.est}', '${(dg.cds || [''])[0]}', '${dg.modulo || ''}', '${ev.tipoFalha || 'resposta'}', getdate())`, 'INSERT', 'registra a falha para o painel de controle'));
+        return;
+      }
+      case 'cadastro_modo': {
+        const dg = ev.diag || {};
+        await enviar('fonte', 'servico', Object.assign(http('POST', `/v1/estacoes/${S.est}/cadastro`, { endereco: dg.enderecos[0], origem: 'interface de controle' }, 'POST cadastro'), { de: 'Interface de controle' }));
+        await servicoParaConc({ tipo: 'CONFIG', acao: 'CADASTRO', disp: '0x' + hex(ev.addr), porta: dg.porta || undefined }, 'CADASTRO');
+        if (ev.tipo === 'Q') await enviar('conc', k(ev), rs(ev.addr, 0x40, [dg.porta], 'MODO_CADASTRO'));
+        else await enviar('conc', k(ev), rs(0xF0, 0x40, [], 'MODO_CADASTRO'));
+        return;
+      }
+      case 'cadastro_ok': {
+        const c = chipDe(ev), dg = ev.diag || {};
+        if (ev.tipo === 'Q') await enviar(k(ev), 'conc', rs(ev.addr, 0xC0, [dg.porta], 'botão novo'));
+        else {
+          const sn = String(dg.serial || '000000');
+          await enviar(k(ev), 'conc', rs(0xF0, 0xC0, [parseInt(sn.slice(0, 2), 16), parseInt(sn.slice(2, 4), 16), parseInt(sn.slice(4, 6), 16), 1], 'serial ' + sn));
+          await enviar('conc', k(ev), rs(0xF0, 0x41, [ev.addr], 'DEF_ENDERECO'));
+          await enviar(k(ev), 'conc', rs(ev.addr, 0xC1, [0], 'OK'));
+        }
+        if (c) { c.falha = false; desenharChip(c); }
+        if (ev.item) { await enviar('conc', k(ev), quadroMostrar(ev, ev.item)); aplicarDisplay(ev, ev.item); }
+        await concParaServico({ tipo: 'CADASTRO_OK', disp: '0x' + hex(ev.addr), porta: dg.porta || undefined, serial: dg.serial, enderecos: dg.enderecos }, 'CADASTRO_OK');
+        await enviar('servico', 'sybase', sql(`UPDATE ptl_mapa_led\n   SET serial = '${dg.serial}', dt_cadastro = getdate(), usuario = 'tecnico'\n WHERE estacao = '${S.est}'\n   AND cd_endereco IN (${(dg.cds || []).slice(0, 4).map((x) => `'${x}'`).join(', ')}${(dg.cds || []).length > 4 ? ', ...' : ''})`, 'UPDATE', 'grava o LED no endereço'));
+        return;
+      }
+      case 'cadastro_cancelado':
+        await enviar('fonte', 'servico', Object.assign(http('DELETE', `/v1/estacoes/${S.est}/cadastro`, null, 'DELETE cadastro'), { de: 'Interface de controle' }));
+        return;
+      case 'identificar': {
+        await servicoParaConc({ tipo: 'CONFIG', acao: 'IDENTIFICAR', disp: '0x' + hex(ev.addr), porta: ev.tipo === 'Q' ? ev.pos + 1 : undefined, segundos: 3 }, 'IDENTIFICAR');
+        await enviar('conc', k(ev), rs(ev.addr, 0x31, [3], 'IDENTIFICAR'));
         return;
       }
       case 'troca': {

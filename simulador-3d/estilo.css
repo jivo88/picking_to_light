@@ -142,3 +142,10 @@ body.compacto .marca .sub, body.compacto .grupo label { display: none; }
 body.compacto .seg button { padding: 4px 6px; font-size: 11.5px; }
 body.compacto .celular { width: 190px; }
 body.pip #topo, body.pip .painel, body.pip #legenda, body.pip .modal { display: none !important; }
+
+/* ---------- falha e cadastro de LED ---------- */
+.alerta.cad { background: rgba(242, 163, 58, .14); border-color: rgba(242, 163, 58, .6); }
+.acoesAlerta { display: flex; flex-wrap: wrap; gap: 6px; }
+.acoesAlerta button { background: var(--painel2); color: var(--texto); border: 1px solid var(--borda); border-radius: 6px; padding: 4px 9px; font-size: 12px; }
+.alerta:not(.cad) .acoesAlerta button:last-child { background: var(--vermelho); border-color: var(--vermelho); color: #fff; }
+.alerta.cad .acoesAlerta button:nth-child(2) { background: var(--ambar); border-color: var(--ambar); color: #1B2638; font-weight: 700; }

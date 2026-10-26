@@ -4,8 +4,13 @@
  *   andar 3 e por cima do andar 4) e a esteira de separação fica na frente, aberta, ≈ 20 cm da de transporte;
  *   transferência a cada 4 estações com rolete direcionador (2 estações à esquerda, 2 à direita);
  *   o corredor do baixo giro fica atrás do operador, perpendicular às esteiras.
+ *   Medidas do desenho de 26/10/2026: estação de 2,5 m (alto giro com prédios de 25 cm); baixo giro com corredor de 1,2 m
+ *   e prateleiras de 50 cm de profundidade e 2 m de comprimento (12 prédios × 8 andares por lado); o prédio 015 fica na
+ *   frente do bloco da direita, virado para a esteira; os 0,3 m que sobram ficam entre as prateleiras de estações vizinhas.
+ *   Concentrador atrás da estação (do outro lado do alto giro).
  *   Prateleiras alinhadas, andar 0 em cima; a caixa do endereço varia pelo tipo (A, B, C, F, N), em geral pequena.
  *   Baixo giro: 4 zonas por lado do corredor, display de endereço + quantidade na altura dos olhos.
+ *   Endereços no formato da etiqueta: bairro.rua.prédio+andar.apto (ex.: 0.05.0421.A).
  * Regras de funcionamento iguais às do documento técnico (Arquitetura A e B).
  * Medidas ficam em CFG e são premissas até chegarem as medidas reais. */
 (function () {
@@ -16,13 +21,15 @@
   // ======================================================================= CONFIGURAÇÃO
   const CFG = {
     // alto giro: na frente do operador; andares 0-3 acima das esteiras, 4-5 abaixo
-    WA: 0.53, profAlto: 1.2, zAltoFace: -0.95,
+    WA: 0.25, profAlto: 1.2, zAltoFace: -0.95,
     baseAlto: 0.25, hAltoBaixo: 0.3,            // andares 5 e 4 (de baixo para cima)
     yAltoCima: 1.38, hAltoCima: 0.29,           // andares 3, 2, 1, 0 (andar 0 em cima)
     // baixo giro: corredor perpendicular atrás do operador
-    WB: 0.6, baseBaixo: 0.25, alturaBaixo: 2.04, niveisBaixo: 8, profBaixo: 2.0,
+    baseBaixo: 0.25, alturaBaixo: 2.04, niveisBaixo: 8, profBaixo: 0.5, compBaixo: 2.0,
+    prof015: 0.3,                // faixa do prédio 015 na frente do bloco da direita (virada para a esteira)
     yDisplayBaixo: 1.5,          // displays das zonas do baixo giro na altura dos olhos
-    larguraCorredor: 1.5,
+    larguraCorredor: 1.2,
+    passo: 2.5,                  // largura da estação (= frente do alto giro)
     predioVirada: 32,            // prédios < 32 no lado esquerdo do corredor; 015 e >= 32 no direito
     tilt: 0.1,
     // esteira de transporte por dentro do alto giro; esteira de separação na frente, aberta (≈ 20 cm entre elas)
@@ -38,7 +45,8 @@
     fatorCaixaAlto: 1.35,
     segmentos: { Medicamento: [3, 22], Perfumaria: [26, 45] },
   };
-  CFG.passo = 2 * CFG.profBaixo + CFG.larguraCorredor;          // distância entre estações
+  CFG.vao = CFG.passo - CFG.larguraCorredor - 2 * CFG.profBaixo;   // sobra entre prateleiras de estações vizinhas (0,3 m)
+  CFG.zCorr = CFG.zFaces + CFG.prof015;                              // início das prateleiras do corredor
   CFG.compAlto = 10 * CFG.WA;
   // níveis do alto giro por andar: {yb, h}
   CFG.niveisAlto = [0, 1, 2, 3].map((a) => ({ yb: CFG.yAltoCima + (3 - a) * CFG.hAltoCima, h: CFG.hAltoCima }))
@@ -84,7 +92,7 @@
   scene.background = new THREE.Color('#dfe4ea');
   scene.fog = new THREE.Fog('#dfe4ea', 32, 62);
   const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.05, 220);
-  camera.position.set(-5.6, 3.1, 1.05);
+  camera.position.set(1.15, 3.3, 4.9);
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.target.set(0.8, 1.05, -0.55);
   controls.enableDamping = true;
@@ -181,6 +189,36 @@
     sp.scale.set(larguraM, (larguraM * c.height) / c.width, 1);
     return sp;
   }
+  // etiquetas impressas dos endereços: um único mesh com atlas de textura (uma chamada de desenho por rack)
+  function etiquetasMesh(lista) {
+    const CW = 256, CH = 72, COLS = 8, rows = Math.max(1, Math.ceil(lista.length / COLS));
+    const tc = texCanvas(CW * COLS, CH * rows);
+    const { ctx } = tc;
+    ctx.fillStyle = '#f7f7f4';
+    ctx.fillRect(0, 0, tc.c.width, tc.c.height);
+    const pos = [], uv = [], idx = [];
+    const v = new THREE.Vector3();
+    lista.forEach((l, i) => {
+      const cx = (i % COLS) * CW, cy = Math.floor(i / COLS) * CH;
+      ctx.fillStyle = '#111';
+      ctx.font = '800 40px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(l.txt, cx + CW / 2, cy + 26);
+      for (let k = 0, x = cx + 30; x < cx + CW - 30; k++) { const w = 2 + ((i * 7 + k * 5) % 3); ctx.fillRect(x, cy + 50, w, 16); x += w + 2 + ((k * 3) % 3); }
+      [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]].forEach(([a, b]) => { v.set(a, b, 0).applyMatrix4(l.m); pos.push(v.x, v.y, v.z); });
+      const u0 = cx / tc.c.width, u1 = (cx + CW) / tc.c.width, v1 = 1 - cy / tc.c.height, v0 = 1 - (cy + CH) / tc.c.height;
+      uv.push(u0, v0, u1, v0, u1, v1, u0, v1);
+      const b = i * 4;
+      idx.push(b, b + 1, b + 2, b, b + 2, b + 3);
+    });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setIndex(idx);
+    tc.t.anisotropy = 8;
+    return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tc.t }));
+  }
   function caixaMesh(w, h, d, m) {
     const x = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
     x.castShadow = true;
@@ -224,7 +262,9 @@
   const pad = (n, k) => String(n).padStart(k, '0');
   const fmtT = (s) => { s = Math.max(0, Math.round(s)); return `${pad(Math.floor(s / 60), 2)}:${pad(s % 60, 2)}`; };
   const relogio = () => { const s = 8 * 3600 + Math.floor(simT); return `${pad(Math.floor(s / 3600) % 24, 2)}:${pad(Math.floor(s / 60) % 60, 2)}:${pad(s % 60, 2)}`; };
-  const rotEnd = (e) => `P${pad(e.predio, 3)} A${e.andar}`;
+  // etiqueta do endereço: bairro.rua.prédio+andar.apto (cd_endereco 0050421A → 0.05.0421.A)
+  const fmtEnd = (cd) => `${cd[0]}.${cd.slice(1, 3)}.${cd.slice(3, 7)}.${cd.slice(7)}`;
+  const rotEnd = (e) => fmtEnd(e.end);
   // ---------------- integração com a versão unificada (janela pai recebe os eventos)
   const EMBUTIDO = window.parent !== window;
   const ADDR_EQ = { 'AG-E4': 0x41, 'AG-E5': 0x42, 'AG-D4': 0x43, 'AG-D5': 0x44, 'BG-E1': 0x51, 'BG-E2': 0x52, 'BG-E3': 0x53, 'BG-E4': 0x54, 'BG-D1': 0x55, 'BG-D2': 0x56, 'BG-D3': 0x57, 'BG-D4': 0x58 };
@@ -235,7 +275,8 @@
   }
   function emitir(tipo, dados) {
     if (!EMBUTIDO) return;
-    try { window.parent.postMessage(Object.assign({ ptl: true, tipo, est: S.est, modo: S.modo }, dados || {}), '*'); } catch (e) { /* sem janela pai */ }
+    // 'evento' é o nome do evento; 'tipo' continua sendo o tipo do módulo (Q/EQ) quando o evento é de um display
+    try { window.parent.postMessage(Object.assign({ ptl: true, tipo, est: S.est, modo: S.modo }, dados || {}, { evento: tipo }), '*'); } catch (e) { /* sem janela pai */ }
   }
   const estVizinha = (d) => pad(Math.max(1, +S.est + d), 2);
   function limpar(g) {
@@ -262,13 +303,29 @@
   // ======================================================================= DISPLAY 7 SEGMENTOS
   const SEG = { '0': 'abcdef', '1': 'bc', '2': 'abdeg', '3': 'abcdg', '4': 'bcfg', '5': 'acdfg', '6': 'acdefg', '7': 'abc', '8': 'abcdefg', '9': 'abcdfg',
     A: 'abcefg', b: 'cdefg', C: 'adef', c: 'deg', d: 'bcdeg', E: 'adefg', F: 'aefg', H: 'bcefg', L: 'def', n: 'ceg', o: 'cdeg', P: 'abefg', r: 'eg', t: 'defg', U: 'bcdef', '-': 'g', ' ': '' };
+  // texto com '.' acende o ponto decimal do dígito anterior (ex.: "0.05.0421.A" ocupa 8 dígitos)
+  function digitos(txt) {
+    const out = [];
+    for (const ch of txt) {
+      if (ch === '.' && out.length && !out[out.length - 1].dp) out[out.length - 1].dp = true;
+      else out.push({ ch, dp: false });
+    }
+    return out;
+  }
   function seg7(ctx, txt, x, y, dw, dh, on, off) {
     const t = dw * 0.22, gp = t * 0.14;
+    const dg = digitos(txt);
     ctx.save();
     ctx.transform(1, 0, -0.1, 1, 0.1 * (y + dh / 2), 0);
-    for (let i = 0; i < txt.length; i++) {
-      const segs = SEG[txt[i]] !== undefined ? SEG[txt[i]] : '';
+    for (let i = 0; i < dg.length; i++) {
+      const segs = SEG[dg[i].ch] !== undefined ? SEG[dg[i].ch] : '';
       const ox = x + i * dw * 1.42;
+      ctx.fillStyle = dg[i].dp ? on : off;
+      ctx.shadowBlur = dg[i].dp ? t * 1.3 : 0;
+      ctx.shadowColor = on;
+      ctx.beginPath();
+      ctx.arc(ox + dw + t * 1.0, y + dh - t * 0.15, t * 0.7, 0, Math.PI * 2);
+      ctx.fill();
       const P = {
         a: [[ox + t / 2 + gp, y], [ox + dw - t / 2 - gp, y]], g: [[ox + t / 2 + gp, y + dh / 2], [ox + dw - t / 2 - gp, y + dh / 2]],
         d: [[ox + t / 2 + gp, y + dh], [ox + dw - t / 2 - gp, y + dh]], f: [[ox, y + t / 2 + gp], [ox, y + dh / 2 - t / 2 - gp]],
@@ -301,28 +358,31 @@
   scene.add(grpEst);
   let grpAlto, grpBaixo, grpCabos;
 
+  let seqSerial = 0x3A1F20;
+  function serialNovo() { seqSerial = (seqSerial * 1103515245 + 12345) & 0xffffff; return seqSerial.toString(16).toUpperCase().padStart(6, '0'); }
   function criarModulo(tipo, pai, x, y, z, rotX, id, lado) {
     const g = new THREE.Group();
     g.position.set(x, y, z);
     g.rotation.x = rotX || 0;
     pai.add(g);
     const Q = tipo === 'Q';
-    const W = Q ? 0.2 : 0.52, H = Q ? 0.066 : 0.1;
+    const W = Q ? 0.2 : 0.46, H = Q ? 0.066 : 0.1;
     const corpo = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.036), M.corpo);
     corpo.castShadow = true;
     g.add(corpo);
     const tc = Q ? texCanvas(220, 110) : texCanvas(545, 110);
-    const dispW = Q ? 0.118 : 0.36;
+    const dispW = Q ? 0.118 : 0.33;
     const disp = new THREE.Mesh(new THREE.PlaneGeometry(dispW, (dispW * tc.c.height) / tc.c.width), new THREE.MeshBasicMaterial({ map: tc.t }));
-    disp.position.set(Q ? -0.03 : -0.06, 0, 0.0185);
+    disp.position.set(Q ? -0.03 : -0.045, 0, 0.0185);
     g.add(disp);
     const btnMat = mat('#1f5f3a', { roughness: 0.35, emissive: '#000000' });
     const r = Q ? 0.021 : 0.03;
     const btn = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.018, 24), btnMat);
     btn.rotation.x = Math.PI / 2;
-    btn.position.set(W / 2 - (Q ? 0.033 : 0.046), 0, 0.024);
+    btn.position.set(W / 2 - (Q ? 0.033 : 0.04), 0, 0.024);
     g.add(btn);
-    const m = { tipo, id, lado, g, tc, btn, btnMat, fila: [], item: null, falha: false, flash: 0, press: 0 };
+    const m = { tipo, id, lado, g, tc, btn, btnMat, fila: [], item: null, falha: false, flash: 0, press: 0, ident: 0, cad: false, cadPisca: false,
+      serial: serialNovo(), W, H };
     [corpo, disp, btn].forEach((o) => { o.userData.mod = m; clicaveis.push(o); });
     modulos.push(m);
     desenhar(m);
@@ -335,11 +395,11 @@
     ctx.fillRect(0, 0, c.width, c.height);
     const it = m.falha ? null : m.item;
     if (m.tipo === 'Q') {
-      const txt = m.falha ? '   ' : it ? String(it.qtd).padStart(3, ' ') : m.flash > 0 ? '---' : '   ';
+      const txt = m.cad ? (m.cadPisca ? 'CAd' : '   ') : m.ident > 0 ? '888' : m.falha ? '   ' : it ? String(it.qtd).padStart(3, ' ') : m.flash > 0 ? '---' : '   ';
       seg7(ctx, txt, 44, 20, 34, 70, '#ff3b30', '#170808');
     } else {
-      const end = m.falha ? '        ' : it ? rotEnd(it.e).padEnd(8, ' ') : m.flash > 0 ? '--------' : '        ';
-      const q = m.falha ? '   ' : it ? String(it.qtd).padStart(3, ' ') : m.flash > 0 ? '---' : '   ';
+      const end = m.cad ? (m.cadPisca ? ' -CAd-  ' : '        ') : m.ident > 0 ? '8.8.8.8.8.8.8.8.' : m.falha ? '        ' : it ? rotEnd(it.e) : m.flash > 0 ? '--------' : '        ';
+      const q = m.cad ? (m.cadPisca ? '888' : '   ') : m.ident > 0 ? '888' : m.falha ? '   ' : it ? String(it.qtd).padStart(3, ' ') : m.flash > 0 ? '---' : '   ';
       seg7(ctx, end, 26, 20, 30, 70, '#ff3b30', '#170808');
       seg7(ctx, q, 26 + 8 * 30 * 1.42 + 34, 20, 30, 70, '#39ff6a', '#071509');
       ctx.fillStyle = '#5B6675';
@@ -348,9 +408,9 @@
       ctx.fillText('QTD', 26 + 8 * 30 * 1.42 + 38, 104);
     }
     t.needsUpdate = true;
-    const aceso = !m.falha && !!m.item;
-    m.btnMat.color.set(aceso ? '#2ecc71' : m.falha ? '#8e1b12' : '#1d4b31');
-    m.btnMat.emissive.set(aceso ? '#1fbf5a' : '#000000');
+    const aceso = (!m.falha && !!m.item) || m.ident > 0 || (m.cad && m.cadPisca);
+    m.btnMat.color.set(m.cad ? '#F2A33A' : aceso ? '#2ecc71' : m.falha ? '#8e1b12' : '#1d4b31');
+    m.btnMat.emissive.set(m.cad && m.cadPisca ? '#b86e10' : aceso ? '#1fbf5a' : '#000000');
   }
 
   // ======================================================================= RACK (frente local +z, prédios ao longo de x local)
@@ -361,8 +421,10 @@
     const top = Math.max(...o.niveis.map((n) => n.yb + n.h));
     const hM = top + 0.5;
     const cinza = !!o.cinza;
-    const bordas = new Set();
-    colunas.forEach((c) => { bordas.add(Math.round((c.x - c.w / 2) * 1000) / 1000); bordas.add(Math.round((c.x + c.w / 2) * 1000) / 1000); });
+    // montantes só nas pontas de cada vão (o.porVao prédios por vão), como no flow rack real
+    const pv = o.porVao || 1;
+    const arestas = [...new Set(colunas.flatMap((c) => [Math.round((c.x - c.w / 2) * 1000) / 1000, Math.round((c.x + c.w / 2) * 1000) / 1000]))].sort((x, y) => x - y);
+    const bordas = new Set(arestas.filter((_, k) => k % pv === 0 || k === arestas.length - 1));
     const mont = [], vigas = [], trilhos = [], reservas = [], caixas = [], etiquetas = [];
     const rotPorAndar = ROT_ANDAR.map(() => []), prodPorMat = PRODUTOS.map(() => []);
     bordas.forEach((bx) => {
@@ -374,7 +436,8 @@
     const ys = new Set();
     o.niveis.forEach((n) => { ys.add(Math.round(n.yb * 1000) / 1000); ys.add(Math.round((n.yb + n.h) * 1000) / 1000); });
     const r = aleat(o.seed || 7);
-    colunas.forEach((c) => {
+    colunas.forEach((c, ci) => {
+      c.i = ci;
       ys.forEach((y) => {
         vigas.push(matriz(c.x, y - 0.02, 0, 0, 0, 0, c.w, 0.05, 0.035));
         vigas.push(matriz(c.x, y - 0.02 + o.prof * Math.tan(CFG.tilt), -o.prof, 0, 0, 0, c.w, 0.05, 0.035));
@@ -399,10 +462,11 @@
         g.add(caixa);
         const off = ht / 2 + 0.02;
         prodPorMat[(e.predio * 7 + e.andar * 3) % PRODUTOS.length].push(matriz(c.x, yc(-0.2) + off * Math.cos(CFG.tilt) - 0.03, -0.2 + off * Math.sin(CFG.tilt), CFG.tilt, 0, 0, wt * 0.8, 0.05, dt * 0.6));
-        etiquetas.push(matriz(c.x, yc(-0.2) - ht * 0.15, -0.2 + dt / 2 + 0.003, CFG.tilt, 0, 0, Math.min(0.14, wt * 0.6), Math.min(0.05, ht * 0.3), 1));
+        const lw = Math.min(0.15, wt * 0.82);
+        etiquetas.push({ m: matriz(c.x, yc(-0.2) - ht * 0.12, -0.2 + dt / 2 + 0.003, CFG.tilt, 0, 0, lw, Math.min(lw * 0.28, ht * 0.4), 1), txt: fmtEnd(e.end) });
         e.tote = caixa;
         e.toteMat = tm;
-        rotPorAndar[Math.min(7, a)].push(matriz(c.x - c.w / 2 + 0.05, yb - 0.022, 0.024));
+        if (c.i % pv === 0) rotPorAndar[Math.min(7, a)].push(matriz(c.x - c.w / 2 + 0.04, yb - 0.022, 0.024));
         if (e.cat === 'alto_0a3') { e.modulo = criarModulo('Q', g, c.x, yb - 0.036, 0.04, 0, rotEnd(e), 'alto'); e.modulo.end = e; }
       });
       if (!cinza) {
@@ -422,7 +486,7 @@
     g.add(instanciado(BOX1, cinza ? M.cinzaTote : M.caixaPapelao, reservas, false));
     if (cinza) g.add(instanciado(BOX1, M.cinzaTote, caixas, false));
     else {
-      g.add(instanciado(new THREE.PlaneGeometry(1, 1), M.etiqueta, etiquetas, false));
+      if (etiquetas.length) g.add(etiquetasMesh(etiquetas));
       rotPorAndar.forEach((ms, a) => { if (ms.length) g.add(instanciado(GEO_ROT, ROT_ANDAR[a], ms, false)); });
       prodPorMat.forEach((ms, k) => { if (ms.length) g.add(instanciado(BOX1, PRODUTOS[k], ms, false)); });
     }
@@ -448,21 +512,34 @@
       if (!cinza) (porPredio[p] || []).forEach((e) => { ends[e.andar] = e; });
       cols.push({ x: xMundo(p), w: W, predio: p, ends });
     }
-    const g = construirRack(cols, { niveis: CFG.niveisAlto, prof: CFG.profAlto, lado: 'alto', cinza, seed });
+    const g = construirRack(cols, { niveis: CFG.niveisAlto, prof: CFG.profAlto, lado: 'alto', cinza, seed, porVao: 5 });
     posicionar(g, 0, CFG.zAltoFace, '+z');
     g.userData.xMundo = xMundo;
     return g;
   }
   // lado do corredor: prédios em ordem a partir da entrada; normal '-x' = lado esquerdo (+x), '+x' = lado direito (-x)
+  // cada lado tem 2 m de prateleira (50 cm de profundidade); a largura do prédio = 2 m ÷ número de prédios do lado
   function ladoCorredor(xFace, normal, predios, porPredio, cinza, seed, n) {
     const sgn = normal === '-x' ? 1 : -1;
-    const cols = (cinza ? Array.from({ length: n }, (_, i) => i) : predios).map((p, i) => {
+    const lista = cinza ? Array.from({ length: n }, (_, i) => i) : predios;
+    const wb = CFG.compBaixo / Math.max(1, lista.length);
+    const cols = lista.map((p, i) => {
       const ends = {};
       if (!cinza) porPredio[p].forEach((e) => { ends[e.andar] = e; });
-      return { x: sgn * (i + 0.5) * CFG.WB, w: CFG.WB, predio: cinza ? 0 : p, ends };
+      return { x: sgn * (i + 0.5) * wb, w: wb, predio: cinza ? 0 : p, ends };
     });
-    const g = construirRack(cols, { niveis: CFG.niveisBaixoY, prof: CFG.profBaixo, lado: 'baixo', cinza, seed });
-    posicionar(g, xFace, CFG.zFaces, normal);
+    const g = construirRack(cols, { niveis: CFG.niveisBaixoY, prof: CFG.profBaixo, lado: 'baixo', cinza, seed, porVao: Math.ceil(lista.length / 2) });
+    posicionar(g, xFace, CFG.zCorr, normal);
+    g.userData.wb = wb;
+    return g;
+  }
+  // prédio 015: faixa de 30 cm na frente do bloco da direita, virada para a esteira (andares 0 a 3, andar 0 em cima)
+  CFG.niveis015 = [0, 1, 2, 3].map((a) => ({ yb: CFG.baseBaixo + (3 - a) * (CFG.alturaBaixo / 4), h: CFG.alturaBaixo / 4 }));
+  function frente015(xc, porPredio, cinza, seed) {
+    const ends = {};
+    if (!cinza) (porPredio[15] || []).forEach((e) => { ends[e.andar] = e; });
+    const g = construirRack([{ x: 0, w: CFG.profBaixo, predio: cinza ? 0 : 15, ends }], { niveis: CFG.niveis015, prof: CFG.prof015, lado: 'baixo', cinza, seed });
+    posicionar(g, xc, CFG.zFaces, '-z');
     return g;
   }
 
@@ -473,6 +550,9 @@
     clicaveis.length = 0;
     modulos = [];
     guias = {};
+    emCadastro = null;
+    noSerial = {};
+    for (let p = 1; p <= 10; p++) noSerial[p] = serialNovo();
     const est = +S.est;
     enderecos = DADOS[S.est].enderecos.map((a) => ({ end: a[0], predio: a[1], andar: a[2], cat: a[3], zona: a[4], dim: a[5], ordem: a[6] }));
     const porPredio = {};
@@ -507,10 +587,10 @@
     });
     for (let p = 1; p <= 10; p++) {
       const no = caixaMesh(0.1, 0.07, 0.1, M.corpo);
-      no.position.set(xm(p) + 0.14, topA + 0.08, -0.22);
+      no.position.set(xm(p), topA + 0.08, -0.22);
       alto.add(no);
     }
-    const sinal = placa(`ALTO GIRO · ESTAÇÃO ${S.est} · P001–P010 · esteira de transporte entre o andar 3 e o andar 4`, CFG.compAlto - 0.1, 0.16, { escala: 0.46 });
+    const sinal = placa(`ALTO GIRO · ESTAÇÃO ${S.est} · P001–P010`, CFG.compAlto - 0.1, 0.16, { escala: 0.5 });
     sinal.position.set(0, topA + 0.66, -0.01);
     alto.add(sinal);
 
@@ -518,17 +598,24 @@
     const baixos = enderecos.filter((e) => e.cat === 'baixo');
     const pb = [...new Set(baixos.map((e) => e.predio))].filter((p) => p !== 15);
     const esq = pb.filter((p) => p < CFG.predioVirada).sort((a, b) => a - b);
-    const dir = (porPredio[15] ? [15] : []).concat(pb.filter((p) => p >= CFG.predioVirada).sort((a, b) => b - a));
-    const nMax = Math.max(esq.length, dir.length);
+    const dir = pb.filter((p) => p >= CFG.predioVirada).sort((a, b) => b - a);
     const rackE = ladoCorredor(hc, '-x', esq, porPredio, false);
     const rackW = ladoCorredor(-hc, '+x', dir, porPredio, false);
     grpBaixo.add(rackE, rackW);
+    const x015 = -(hc + CFG.profBaixo / 2);
+    if (porPredio[15]) {
+      const r15 = frente015(x015, porPredio, false);
+      grpBaixo.add(r15);
+      const s15 = placa('P015 · frente do bloco', 0.46, 0.06, { escala: 0.55 });
+      s15.position.set(0, r15.userData.top + 0.2, 0.02);
+      r15.add(s15);
+    }
     const topB = rackE.userData.top;
-    const sinalE = placa(`BAIXO GIRO · LADO ESQUERDO · P${pad(esq[0], 3)}–P${pad(esq[esq.length - 1], 3)}`, Math.min(esq.length * CFG.WB, 5), 0.16, { escala: 0.5 });
-    sinalE.position.set((esq.length * CFG.WB) / 2, topB + 0.66, -0.01);
+    const sinalE = placa(`BAIXO GIRO · ESQUERDA · P${pad(esq[0], 3)}–P${pad(esq[esq.length - 1], 3)}`, CFG.compBaixo - 0.05, 0.13, { escala: 0.5 });
+    sinalE.position.set(CFG.compBaixo / 2, topB + 0.66, -0.01);
     rackE.add(sinalE);
-    const sinalW = placa(`LADO DIREITO · P015, P${pad(dir[1] || 0, 3)} → P${pad(dir[dir.length - 1], 3)}`, Math.min(dir.length * CFG.WB, 5), 0.16, { escala: 0.5 });
-    sinalW.position.set(-(dir.length * CFG.WB) / 2, topB + 0.66, -0.01);
+    const sinalW = placa(`DIREITA · P${pad(dir[0] || 0, 3)} → P${pad(dir[dir.length - 1] || 0, 3)}`, CFG.compBaixo - 0.05, 0.13, { escala: 0.5 });
+    sinalW.position.set(-CFG.compBaixo / 2, topB + 0.66, -0.01);
     rackW.add(sinalW);
     const zonasIds = [...new Set(baixos.map((e) => e.zona))].sort();
     const zonas = {};
@@ -541,19 +628,19 @@
       const lista = ladoE ? esq : dir;
       const idx = ps.filter((p) => lista.includes(p)).map((p) => lista.indexOf(p));
       if (!idx.length) return;
-      const sgn = ladoE ? 1 : -1;
+      const sgn = ladoE ? 1 : -1, wb = rack.userData.wb;
       const i1 = Math.min(...idx), i2 = Math.max(...idx);
-      const x1 = sgn * i1 * CFG.WB, x2 = sgn * (i2 + 1) * CFG.WB, cx = (x1 + x2) / 2, larg = Math.abs(x2 - x1);
+      const x1 = sgn * i1 * wb, x2 = sgn * (i2 + 1) * wb, cx = (x1 + x2) / 2, larg = Math.abs(x2 - x1);
       const cor = CORES_ZONA[k % CORES_ZONA.length];
       const nomes = ps.slice().sort((a, b) => a - b).filter((p) => p !== 15);
       const rotulo = z.replace('BG-', '');
       const txt = `ZONA ${rotulo} · ${ps.includes(15) ? 'P015 + ' : ''}P${pad(nomes[0], 3)}–P${pad(nomes[nomes.length - 1], 3)}`;
-      const pl = placa(txt, larg - 0.06, 0.07, { fundo: cor, escala: 0.5 });
+      const pl = placa(txt, larg - 0.03, 0.07, { fundo: cor, escala: 0.42, px: 768 });
       pl.position.set(cx, topB + 0.2, 0.03);
       rack.add(pl);
       const m = criarModulo('EQ', rack, cx, yViga - 0.05, 0.06, 0, z, 'baixo');
-      const tarja = placa(rotulo, 0.09, 0.1, { fundo: cor, escala: 0.55 });
-      tarja.position.set(-0.32, 0, 0.019);
+      const tarja = placa(rotulo, 0.08, 0.05, { fundo: cor, escala: 0.7 });
+      tarja.position.set(-0.17, 0.078, 0.005);
       m.g.add(tarja);
       zonas[z] = m;
       zonas[z].cor = cor;
@@ -569,17 +656,18 @@
       if (s === est) continue;
       const xc = (s - est) * CFG.passo;
       grpAlto.add(altoGiro(xc, {}, true, s * 3));
-      grpBaixo.add(ladoCorredor(xc + hc, '-x', null, null, true, s * 5 + 1, nMax));
-      grpBaixo.add(ladoCorredor(xc - hc, '+x', null, null, true, s * 5 + 2, nMax));
-      const pl = placa(`ALTO GIRO · ESTAÇÃO ${pad(s, 2)}`, 2.6, 0.15, { fundo: '#7f8995', escala: 0.55 });
+      grpBaixo.add(ladoCorredor(xc + hc, '-x', null, null, true, s * 5 + 1, 12));
+      grpBaixo.add(ladoCorredor(xc - hc, '+x', null, null, true, s * 5 + 2, 12));
+      grpBaixo.add(frente015(xc + x015, null, true, s * 5 + 3));
+      const pl = placa(`ALTO GIRO · ESTAÇÃO ${pad(s, 2)}`, CFG.compAlto - 0.2, 0.15, { fundo: '#7f8995', escala: 0.55 });
       pl.position.set(xc, topA + 0.66, CFG.zAltoFace - 0.01);
       grpAlto.add(pl);
-      const t = textoPiso(`ESTAÇÃO ${pad(s, 2)}`, 2.4, 0.42, 'rgba(91,102,117,0.55)');
-      t.position.set(xc, 0.008, 0.75);
+      const t = textoPiso(`ESTAÇÃO ${pad(s, 2)}`, 1.9, 0.34, 'rgba(91,102,117,0.55)');
+      t.position.set(xc, 0.008, 0.85);
       grpEst.add(t);
     }
-    const tP = textoPiso(`ESTAÇÃO ${S.est}`, 2.4, 0.42, 'rgba(27,38,56,0.8)');
-    tP.position.set(-1.7, 0.008, 0.75);
+    const tP = textoPiso(`ESTAÇÃO ${S.est}`, 1.9, 0.34, 'rgba(27,38,56,0.8)');
+    tP.position.set(0.25, 0.008, 0.95);
     grpEst.add(tP);
 
     construirEsteiras();
@@ -593,12 +681,13 @@
       if (!e.tote) return;
       e.tote.getWorldPosition(wp);
       if (e.cat !== 'baixo') { e.lado = 'alto'; e.pega = { x: wp.x, z: CFG.zOperAlto, rot: Math.PI }; }
-      else if (esq.includes(e.predio)) { e.lado = 'esq'; e.pega = { x: 0.3, z: wp.z, rot: Math.PI / 2 }; }
-      else { e.lado = 'dir'; e.pega = { x: -0.3, z: wp.z, rot: -Math.PI / 2 }; }
+      else if (e.predio === 15) { e.lado = 'dir'; e.pega = { x: x015, z: CFG.zFaces - 0.42, rot: 0 }; }
+      else if (esq.includes(e.predio)) { e.lado = 'esq'; e.pega = { x: 0.25, z: wp.z, rot: Math.PI / 2 }; }
+      else { e.lado = 'dir'; e.pega = { x: -0.25, z: wp.z, rot: -Math.PI / 2 }; }
       e.guia = guias[(e.cat === 'baixo' ? 'baixo-' : 'alto-') + e.predio];
     });
 
-    construirConcentrador(topA, topB, CFG.zFaces + nMax * CFG.WB);
+    construirConcentrador(topA, topB, CFG.zCorr + CFG.compBaixo);
     construirB2();
     atualizarInfra();
     aplicarVisibilidade();
@@ -647,8 +736,10 @@
     g.add(e1);
   }
 
+  // concentrador atrás da estação: no fundo do alto giro, do outro lado das esteiras (acesso pela parte de trás)
   function construirConcentrador(topA, topB, zFim) {
-    const xc = CFG.larguraCorredor / 2 + 0.5, zc = CFG.zFaces - 0.25;
+    const zBack = CFG.zAltoFace - CFG.profAlto;
+    const xc = 0.7, zc = zBack - 0.13;
     const g = new THREE.Group();
     g.position.set(xc, 1.45, zc);
     g.rotation.y = Math.PI;
@@ -672,36 +763,35 @@
     const pl = placa(`CONCENTRADOR EST ${S.est}`, 0.32, 0.05, { escala: 0.6 });
     pl.position.set(0, -0.2, 0.102);
     g.add(pl);
-    const lb = sprite(['Concentrador', 'Ethernet · 2× RS-485 · 12 V · cooler'], 1.0);
-    lb.position.set(0, 0.55, 0);
+    const lb = sprite(['Concentrador (atrás da estação)', 'Ethernet · 2× RS-485 · 12 V · cooler'], 1.15);
+    lb.position.set(0, 0.62, 0.35);
     g.add(lb);
     g.userData.leds = leds;
     grpEst.userData.concentrador = g;
-    const poste = caixaMesh(0.06, 2.9, 0.06, M.montante);
-    poste.position.set(xc, 1.45, zc + 0.13);
-    grpEst.add(poste);
 
     const { cabosA, cabosB } = grpCabos.userData;
-    const yT = 3.0, zA = CFG.zAltoFace + 0.06;
+    const yT = topA + 0.62, zA = CFG.zAltoFace + 0.06, yA = topA + 0.02;
     const xa = CFG.compAlto / 2;
-    cabosA.add(cabo([[xc - 0.1, 1.68, zc + 0.05], [xc - 0.1, yT, zc + 0.05], [xc - 0.1, yT, zA], [xc - 0.1, topA + 0.02, zA], [-xa, topA + 0.02, zA], [xa, topA + 0.02, zA]], '#3A7BD5', 0.014));
+    // barramento 1: sobe pelo fundo do alto giro, passa por cima dele e corre na frente, descendo em cada prédio
+    cabosA.add(cabo([[xc - 0.1, 1.68, zc + 0.05], [xc - 0.1, yA, zc + 0.05], [xc - 0.1, yA, zA], [-xa, yA, zA], [xa, yA, zA]], '#3A7BD5', 0.014));
     for (let p = 1; p <= 10; p++) {
-      const x = (p - 5.5) * CFG.WA + 0.2;
-      cabosA.add(cabo([[x, topA + 0.02, zA], [x, CFG.baseAlto - 0.03, zA]], '#3A7BD5', 0.006));
+      const x = (p - 5.5) * CFG.WA + 0.08;
+      cabosA.add(cabo([[x, yA, zA], [x, CFG.baseAlto - 0.03, zA]], '#3A7BD5', 0.006));
     }
-    const busA = sprite(['Barramento alto giro', 'Cat5e + RJ45 · RS-485 + 12 V'], 1.1, { fundo: 'rgba(58,123,213,0.92)' });
-    busA.position.set(xa - 0.4, topA + 1.0, zA - 0.4);
+    const busA = sprite(['Barramento 1 · alto giro', 'Cat5e + RJ45 · RS-485 + 12 V'], 1.05, { fundo: 'rgba(58,123,213,0.92)' });
+    busA.position.set(-xa + 0.4, topA + 0.95, zA - 0.3);
     cabosA.add(busA);
+    // barramento 2: sobe atrás, cruza por cima do alto giro e das esteiras e desce pela eletrocalha sobre o corredor
     const calha = caixaMesh(0.2, 0.05, zFim - zc + 0.2, M.trilho);
     calha.position.set(0, yT + 0.03, (zc + zFim) / 2);
     cabosB.add(calha);
     cabosB.add(cabo([[xc + 0.1, 1.68, zc + 0.05], [xc + 0.1, yT, zc + 0.05], [0, yT, zc + 0.05], [0, yT, zFim]], '#E67E22', 0.014));
-    const busB = sprite(['Barramento baixo giro', 'Cat5e + RJ45 · eletrocalha sobre o corredor'], 1.2, { fundo: 'rgba(230,126,34,0.92)' });
+    const busB = sprite(['Barramento 2 · baixo giro', 'eletrocalha por cima das esteiras e do corredor'], 1.25, { fundo: 'rgba(230,126,34,0.92)' });
     busB.position.set(0, yT + 0.35, zFim - 0.6);
     cabosB.add(busB);
-    cabosA.add(cabo([[xc, 1.68, zc + 0.05], [xc, 3.75, zc + 0.05]], '#7F8C8D', 0.012));
+    cabosA.add(cabo([[xc, 1.68, zc - 0.05], [xc, yT + 0.6, zc - 0.05]], '#7F8C8D', 0.012));
     const rede = sprite(['Ethernet · VLAN PTL', 'switch → Serviço PTL (API + MQTT + Sybase)'], 1.15, { fundo: 'rgba(46,58,79,0.92)' });
-    rede.position.set(xc, 4.0, zc);
+    rede.position.set(xc, yT + 0.85, zc);
     cabosA.add(rede);
   }
 
@@ -1041,28 +1131,148 @@
     atualizarUI();
   }
 
-  function simularFalha() {
-    const cand = modulos.filter((m) => !m.falha && m.item);
-    const lista = cand.length ? cand : modulos.filter((m) => !m.falha && m.tipo === 'Q');
+  // ======================================================================= DIAGNÓSTICO E CADASTRO DE LED
+  // O que dá para detectar sem hardware extra: módulo sem resposta no RS-485, display do módulo Q sem ACK no nó
+  // (TM1637 desconectado) e botão travado. Segmento queimado aparece no teste visual 8888 do início do turno.
+  const hex2 = (n) => '0x' + n.toString(16).toUpperCase().padStart(2, '0');
+  let noSerial = {};
+  const endsDoModulo = (m) => enderecos.filter((e) => e.modulo === m);
+  function infoModulo(m) {
+    const d = dispDe(m), ends = endsDoModulo(m), Q = m.tipo === 'Q';
+    return {
+      chave: Q ? 'Q:' + m.end.end : 'EQ:' + m.id,
+      tipo: Q ? 'Q' : 'E+Q', barramento: m.lado === 'alto' ? 1 : 2, rs485: hex2(d.addr), porta: Q ? d.pos + 1 : null,
+      serial: Q ? noSerial[m.end.predio] : m.serial,
+      modulo: Q ? `nó ${hex2(d.addr)} · porta ${d.pos + 1}` : `E+Q ${hex2(d.addr)}`,
+      local: Q ? `Alto giro · prédio ${pad(m.end.predio, 3)} · andar ${m.end.andar}` : (m.nome || m.id),
+      status: m.falha ? 'falha' : m.cad ? 'cadastro' : 'ok', falha: m.falha ? m.falhaMsg : null,
+      enderecos: ends.map((e) => fmtEnd(e.end)), cds: ends.map((e) => e.end),
+    };
+  }
+  const registro = () => modulos.map(infoModulo);
+  const moduloPorEnd = (cd) => { const e = enderecos.find((x) => x.end === cd || fmtEnd(x.end) === cd); return e ? e.modulo : modulos.find((m) => m.id === cd); };
+  const TIPOS_FALHA = {
+    display: (m) => `display não responde (sem ACK na porta ${dispDe(m).pos + 1} do nó ${hex2(dispDe(m).addr)})`,
+    resposta: (m) => `sem resposta no barramento ${m.lado === 'alto' ? 1 : 2} (RS-485 ${hex2(dispDe(m).addr)}, 3 tentativas)`,
+    botao: () => 'botão travado (pressionado há mais de 10 s)',
+  };
+  // marca visual no 3D: moldura pulsando + etiqueta flutuante
+  function marcarModulo(m) {
+    if (!m.halo) {
+      m.halo = new THREE.Mesh(new THREE.BoxGeometry(m.W + 0.06, m.H + 0.06, 0.07), new THREE.MeshBasicMaterial({ color: '#ff2d2d', transparent: true, opacity: 0.35, depthWrite: false }));
+      m.g.add(m.halo);
+    }
+    if (m.aviso) { m.g.remove(m.aviso); m.aviso.material.map.dispose(); m.aviso.material.dispose(); m.aviso = null; }
+    m.halo.visible = m.falha || m.cad;
+    m.halo.material.color.set(m.cad ? '#F2A33A' : '#ff2d2d');
+    if (!m.falha && !m.cad) return;
+    const inf = infoModulo(m);
+    const end = inf.enderecos.length > 1 ? `${inf.enderecos[0]} +${inf.enderecos.length - 1}` : inf.enderecos[0] || '';
+    m.aviso = sprite(m.cad ? ['CADASTRO · aperte o botão', `${end} · ${inf.modulo}`] : ['FALHA · ' + end, inf.modulo], 0.62,
+      { fundo: m.cad ? 'rgba(214,137,16,0.95)' : 'rgba(192,57,43,0.95)' });
+    m.aviso.position.set(0, m.H / 2 + 0.11, 0.05);
+    m.g.add(m.aviso);
+  }
+  function simularFalha(tipo) {
+    const livres = modulos.filter((m) => !m.falha && !m.cad);
+    const cand = livres.filter((m) => m.item);
+    const lista = cand.length ? cand : livres;
     const m = lista[Math.floor(Math.random() * lista.length)];
     if (!m) return;
+    const valido = (t) => t === 'botao' || (t === 'display' && m.tipo === 'Q') || (t === 'resposta' && m.tipo !== 'Q');
+    const t = valido(tipo) ? tipo : m.tipo === 'Q' ? (Math.random() < 0.7 ? 'display' : 'botao') : (Math.random() < 0.7 ? 'resposta' : 'botao');
     m.falha = true;
     m.falhaT = simT;
+    m.falhaTipo = t;
+    m.falhaMsg = TIPOS_FALHA[t](m);
     K.falhas++;
     desenhar(m);
-    log('EVT', `ptl/est${S.est}/evt FALHA_MODULO ${m.tipo === 'Q' ? 'Q ' + m.id : 'E+Q ' + (m.nome || m.id)} sem resposta no barramento`, 'ERRO');
-    emitir('falha', Object.assign(dispDe(m), { item: m.item ? { end: rotEnd(m.item.e), qtd: m.item.qtd } : null }));
+    marcarModulo(m);
+    const inf = infoModulo(m);
+    log('EVT', `ptl/est${S.est}/evt FALHA_MODULO ${inf.modulo} · ${inf.enderecos.length > 1 ? inf.enderecos.length + ' endereços (' + inf.local + ')' : inf.enderecos[0]} · ${m.falhaMsg}`, 'ERRO');
+    log('SYB', `INSERT ptl_evento_falha (estacao, cd_endereco, modulo, tipo) → painel de controle avisado`);
+    emitir('falha', Object.assign(dispDe(m), { item: m.item ? { end: rotEnd(m.item.e), qtd: m.item.qtd } : null, diag: inf, tipoFalha: t, mensagem: m.falhaMsg }));
+    emitir('registro', { lista: registro() });
     atualizarDestaques();
     atualizarUI();
   }
-  function trocarModulo(m) {
-    if (!m.falha) return;
+  // cadastro por tela + botão: o técnico escolhe o endereço, o módulo novo pisca "CAd" e ele aperta o botão para confirmar
+  let emCadastro = null;
+  function iniciarCadastro(m, origem) {
+    if (!m) return;
+    if (emCadastro && emCadastro !== m) cancelarCadastro();
+    const eraFalha = m.falha;
     m.falha = false;
+    m.cad = true;
+    m.cadT = 0;
+    m.cadPisca = true;
+    emCadastro = m;
+    const inf = infoModulo(m);
+    log('API', `POST /v1/estacoes/${S.est}/cadastro {endereco:"${inf.enderecos[0]}"}${origem ? ' · ' + origem : ''}`);
+    if (m.tipo === 'Q') log('MQTT', `ptl/est${S.est}/cmd CONFIG CADASTRO no=${inf.rs485} porta=${inf.porta} → o nó acha o display novo e mostra "CAd"`);
+    else log('MQTT', `ptl/est${S.est}/cmd CONFIG CADASTRO barramento=${inf.barramento} → módulo novo responde no endereço de fábrica 0xF0 e mostra "-CAd-"`);
+    log('API', `Aguardando o técnico apertar o botão do módulo novo (${inf.local})`);
     desenhar(m);
-    log('EVT', `Módulo ${m.nome || m.id} trocado (conector RJ45) → CONFIG reenviado, display restaurado`);
-    emitir('troca', Object.assign(dispDe(m), { item: m.item ? { end: rotEnd(m.item.e), qtd: m.item.qtd } : null }));
+    marcarModulo(m);
+    emitir('cadastro_modo', Object.assign(dispDe(m), { diag: inf, eraFalha }));
+    emitir('registro', { lista: registro() });
+    atualizarUI();
+  }
+  function confirmarCadastro(m) {
+    if (!m || !m.cad) return;
+    m.cad = false;
+    emCadastro = null;
+    m.press = 0.18;
+    const antigo = m.tipo === 'Q' ? null : m.serial;
+    if (m.tipo !== 'Q') m.serial = serialNovo();
+    const inf = infoModulo(m);
+    if (m.tipo === 'Q') log('EVT', `ptl/est${S.est}/evt CADASTRO_OK ${inf.modulo} → ${inf.enderecos[0]} (botão do módulo novo)`);
+    else log('EVT', `ptl/est${S.est}/evt CADASTRO_OK serial ${m.serial} (antes ${antigo}) · DEF_ENDERECO 0xF0 → ${inf.rs485} · ${inf.enderecos.length} endereço(s)`);
+    log('SYB', `UPDATE ptl_mapa_led SET serial, dt_cadastro, usuario WHERE estacao='${S.est}' AND cd_endereco IN (${inf.cds.length} endereço(s))`);
+    desenhar(m);
+    marcarModulo(m);
+    emitir('cadastro_ok', Object.assign(dispDe(m), { diag: inf, serialAntigo: antigo, item: m.item ? { end: rotEnd(m.item.e), qtd: m.item.qtd } : null }));
+    emitir('registro', { lista: registro() });
     atualizarDestaques();
     atualizarUI();
+  }
+  function cancelarCadastro() {
+    const m = emCadastro;
+    if (!m) return;
+    m.cad = false;
+    emCadastro = null;
+    log('API', `DELETE /v1/estacoes/${S.est}/cadastro → cadastro cancelado`);
+    desenhar(m);
+    marcarModulo(m);
+    emitir('cadastro_cancelado', { diag: infoModulo(m) });
+    emitir('registro', { lista: registro() });
+    atualizarUI();
+  }
+  function identificar(m) {
+    if (!m || m.falha) return;
+    m.ident = 3;
+    desenhar(m);
+    const inf = infoModulo(m);
+    log('MQTT', `ptl/est${S.est}/cmd CONFIG IDENTIFICAR ${inf.modulo} → display mostra 888 por 3 s`);
+    emitir('identificar', Object.assign(dispDe(m), { diag: inf }));
+  }
+  const vLoc = new THREE.Vector3(), vDir = new THREE.Vector3();
+  function localizar(m) {
+    if (!m) return;
+    if (S.cam === 'operador') { S.cam = 'geral'; controls.enabled = true; }
+    if (CAMS[S.cam] && CAMS[S.cam].ocultar) { S.cam = 'geral'; aplicarVisibilidade(); }
+    m.g.getWorldPosition(vLoc);
+    m.g.getWorldDirection(vDir);
+    // módulos dos andares 4-5 ficam por baixo da esteira de separação: a câmera desce para olhar por baixo dela
+    const baixoEsteira = m.lado === 'alto' && vLoc.y < CFG.altSep;
+    const pos = vLoc.clone().add(vDir.clone().multiplyScalar(baixoEsteira ? 1.45 : 1.15)).add(new THREE.Vector3(0, baixoEsteira ? -0.12 : 0.25, 0));
+    camAnim = { de: { p: camera.position.clone(), t: controls.target.clone() }, para: { p: pos, t: vLoc.clone() }, k: 0 };
+  }
+  // operador automático: troca o módulo e faz o cadastro sozinho
+  function trocarModulo(m) {
+    if (!m.falha) return;
+    iniciarCadastro(m, 'troca pelo técnico');
+    esperar(1.5).then(() => confirmarCadastro(m));
   }
 
   // ======================================================================= DESTAQUES (tote e LED guia)
@@ -1249,7 +1459,7 @@
     const nQ = modulos.filter((m) => m.tipo === 'Q').length, nEQ = modulos.filter((m) => m.tipo === 'EQ').length;
     const falhas = modulos.filter((m) => m.falha).length;
     $('#infra').innerHTML = `<b>Estação ${S.est}</b> · ${info.segmento} · ${info.total} endereços<br>` +
-      `Concentrador <span class="${falhas ? '' : 'ok'}">${falhas ? '⚠ ' + falhas + ' módulo(s) sem resposta' : '● online'}</span> · 12 V · 2 barramentos<br>` +
+      `Concentrador (atrás da estação) <span class="${falhas ? '' : 'ok'}">${falhas ? '⚠ ' + falhas + ' módulo(s) com falha' : '● online'}</span> · 12 V · 2 barramentos<br>` +
       `${nQ} módulos Q · ${nEQ} módulos E+Q · ${info.nos_coluna} nós de coluna`;
   }
 
@@ -1267,14 +1477,21 @@
     $('#kPend').textContent = K.pendencias;
     const al = $('#alertas');
     al.innerHTML = '';
-    modulos.filter((m) => m.falha).forEach((m) => {
+    modulos.filter((m) => m.falha || m.cad).forEach((m) => {
+      const inf = infoModulo(m);
       const d = document.createElement('div');
-      d.className = 'alerta';
-      d.innerHTML = `<div><b>FALHA_MODULO</b> · ${m.tipo === 'Q' ? 'módulo Q ' + m.id : 'módulo E+Q ' + (m.nome || m.id)} sem resposta. Troca: soltar o RJ45, encaixar o módulo reserva.</div>`;
-      const b = document.createElement('button');
-      b.textContent = 'Trocar módulo';
-      b.onclick = () => trocarModulo(m);
-      d.appendChild(b);
+      d.className = 'alerta' + (m.cad ? ' cad' : '');
+      const ends = inf.enderecos.length > 1 ? `${inf.enderecos.length} endereços (${inf.local})` : `endereço <b>${inf.enderecos[0]}</b>`;
+      d.innerHTML = m.cad
+        ? `<div><b>CADASTRO</b> · ${ends} · ${inf.modulo}<br>O módulo novo está piscando <b>CAd</b>: aperte o botão dele para confirmar.</div>`
+        : `<div><b>FALHA</b> · ${ends}<br>${inf.modulo} · ${m.falhaMsg}</div>`;
+      const linhaB = document.createElement('div');
+      linhaB.className = 'acoesAlerta';
+      const bt = (txt, fn) => { const b = document.createElement('button'); b.textContent = txt; b.onclick = fn; linhaB.appendChild(b); };
+      bt('Localizar', () => localizar(m));
+      if (m.cad) { bt('Apertar botão do módulo novo', () => confirmarCadastro(m)); bt('Cancelar', cancelarCadastro); }
+      else bt('Trocar e cadastrar', () => iniciarCadastro(m, 'painel da estação'));
+      d.appendChild(linhaB);
       al.appendChild(d);
     });
     $('#btnCancelar').style.visibility = ['SEPARANDO', 'ALERTA', 'PRONTA'].includes(estado) ? 'visible' : 'hidden';
@@ -1357,6 +1574,7 @@
     if (o.userData.acao) o.userData.acao();
     else if (o.userData.mod) {
       const m = o.userData.mod;
+      if (m.cad) { confirmarCadastro(m); return; }
       if (m.falha) { log('EVT', `Botão do módulo ${m.nome || m.id} sem resposta (falha)`, 'ERRO'); return; }
       if (!m.item) { m.press = 0.12; return; }
       confirmar(m, 'clique');
@@ -1365,14 +1583,15 @@
   renderer.domElement.addEventListener('pointermove', (e) => {
     if (e.buttons) return;
     const o = alvoMouse(e);
-    renderer.domElement.style.cursor = o && (o.userData.acao || (o.userData.mod && o.userData.mod.item)) ? 'pointer' : 'default';
+    renderer.domElement.style.cursor = o && (o.userData.acao || (o.userData.mod && (o.userData.mod.item || o.userData.mod.cad))) ? 'pointer' : 'default';
   });
 
   // ---------------- câmera
   const CAMS = {
-    geral: { p: [-5.6, 3.1, 1.05], t: [0.8, 1.05, -0.55] },
+    geral: { p: [1.15, 3.3, 4.9], t: [-0.1, 1.0, -0.75] },
     planta: { planta: true },
     alto: { p: [0.3, 1.75, 3.6], t: [0, 1.15, -0.7], ocultar: 'baixo' },
+    concentrador: { p: [2.4, 2.2, -4.7], t: [0.5, 1.45, -2.2] },
     baixo: { p: [0, 2.2, 0.75], t: [0, 1.1, 9.0] },
     operador: { seguir: true },
   };
@@ -1391,7 +1610,7 @@
     if (c.seguir) { camAnim = null; return; }
     let to;
     if (c.planta) {
-      const xm = (faixaX[0] + faixaX[1]) / 2, zm = 3.2, alt = Math.max(20, (faixaX[1] - faixaX[0]) * 0.75);
+      const xm = (faixaX[0] + faixaX[1]) / 2, zm = 0.6, alt = Math.max(10, (faixaX[1] - faixaX[0]) * 0.72);
       to = { p: new THREE.Vector3(xm, alt, zm + 0.05), t: new THREE.Vector3(xm, 0, zm) };
     } else to = { p: new THREE.Vector3(...c.p), t: new THREE.Vector3(...c.t) };
     if (imediato) { camera.position.copy(to.p); controls.target.copy(to.t); camAnim = null; return; }
@@ -1455,6 +1674,9 @@
       if (m.flash > 0) { m.flash -= dt; if (m.flash <= 0) desenhar(m); }
       if (m.press > 0) { m.press -= dtReal; m.btn.position.z = 0.016; } else m.btn.position.z = 0.024;
       if (m.falha) m.btnMat.emissive.setRGB(pulso > 0.5 ? 0.9 : 0.15, 0.05, 0.03);
+      if (m.cad) { m.cadT += dtReal; const pisca = Math.floor(m.cadT / 0.35) % 2 === 0; if (pisca !== m.cadPisca) { m.cadPisca = pisca; desenhar(m); } }
+      if (m.ident > 0) { m.ident -= dtReal; if (m.ident <= 0) { m.ident = 0; desenhar(m); } }
+      if (m.halo && m.halo.visible) m.halo.material.opacity = 0.18 + 0.32 * pulso;
     });
     acesos.forEach((e) => {
       if (!e.toteMat) return;
@@ -1534,7 +1756,7 @@
       if (d.tipo === 'Q') { const k = 'N' + d.addr; disp[k] = disp[k] || { tipo: 'NO', addr: d.addr, pred: d.addr, andares: [] }; disp[k].andares.push(d.pos); }
       else disp['E' + d.addr] = { tipo: 'EQ', addr: d.addr, id: d.id, nome: m.nome || d.id };
     });
-    return { segmento: DADOS[S.est].info.segmento, total: DADOS[S.est].info.total, dispositivos: Object.values(disp) };
+    return { segmento: DADOS[S.est].info.segmento, total: DADOS[S.est].info.total, dispositivos: Object.values(disp), registro: registro() };
   }
   window.addEventListener('message', (ev) => {
     const d = ev.data || {};
@@ -1543,6 +1765,13 @@
     if (d.tipo === 'compacto') document.body.classList.toggle('compacto', !!d.valor);
     if (d.tipo === 'pedirMapa') emitir('estacao', mapaEstacao());
     if (d.tipo === 'gatilho') leitura();
+    if (d.tipo === 'falhar') { const antes = new Set(modulos.filter((m) => m.falha)); simularFalha(d.falha); localizar(modulos.find((m) => m.falha && !antes.has(m))); }
+    if (d.tipo === 'cad_iniciar') { const m = moduloPorEnd(d.cd); iniciarCadastro(m, 'interface de controle'); localizar(m); }
+    if (d.tipo === 'cad_apertar' && emCadastro) confirmarCadastro(emCadastro);
+    if (d.tipo === 'cad_cancelar') cancelarCadastro();
+    if (d.tipo === 'identificar') identificar(moduloPorEnd(d.cd));
+    if (d.tipo === 'localizar') localizar(moduloPorEnd(d.cd));
+    if (d.tipo === 'pedirRegistro') emitir('registro', { lista: registro() });
     if (d.tipo === 'pip') document.body.classList.toggle('pip', !!d.valor);
     if (d.tipo === 'apertar') {
       const m = modulos.find((x) => { const k = dispDe(x); return k.addr === d.addr && (k.tipo === 'EQ' || k.pos === d.pos); });
@@ -1551,5 +1780,6 @@
   });
   if (EMBUTIDO) { document.body.classList.add('embutido'); emitir('estacao', mapaEstacao()); }
 
-  window.PTL = { renderer, scene, camera, controls, enderecos: () => enderecos, S, K, CFG, estado: () => estado, leitura, confirmar, modulos: () => modulos, simularFalha, aplicarCamera };
+  window.PTL = { renderer, scene, camera, controls, enderecos: () => enderecos, S, K, CFG, estado: () => estado, leitura, confirmar, modulos: () => modulos, simularFalha, aplicarCamera,
+    iniciarCadastro, confirmarCadastro, cancelarCadastro, identificar, localizar, registro, moduloPorEnd, fmtEnd };
 })();

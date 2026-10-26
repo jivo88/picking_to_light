@@ -23,7 +23,7 @@ Parâmetros de URL úteis para a apresentação: `?auto` (operador automático),
 |---|---|
 | Alto giro, andares 0–3 | 1 módulo **Q** (3 dígitos + botão) por endereço; todos os itens da caixa acendem juntos |
 | Alto giro, andares 4–5 | 4 displays **E+Q** (A4 e A5 em cada lado, P001–P005 e P006–P010); um item por vez, na ordem da rota |
-| Baixo giro | 4 zonas por lado do corredor (E1–E4 e D1–D4, P015 na D1), display **E+Q** na altura dos olhos; um item por vez |
+| Baixo giro | 4 zonas por lado do corredor (E1–E4 e D1–D4), display **E+Q** na altura dos olhos; um item por vez. P015 fica na frente do bloco da direita, virado para a esteira, e entra na D1 |
 | LED guia de coluna | Opcional; acende no prédio do item atual de cada bloco/zona |
 | Concentrador | Gabinete ventilado, Ethernet, 2 barramentos RS-485 + 12 V em Cat5e com RJ45 |
 | Abertura e fechamento | Arquitetura A: gatilho do coletor; B2: leitor NFC fixo + painel LCD + FECHAR; B1: pulseira |
@@ -36,8 +36,11 @@ produziria (API REST, MQTT, Sybase e BHT), com os mesmos nomes do documento téc
 
 ## Ajustes
 
-Medidas (largura de prédio, altura de andar, posição da esteira) e a disposição física ficam no
-bloco `CFG` no topo de `sim.js`. São premissas até chegarem as fotos e medidas das estações.
+Medidas do desenho de 26/10/2026: estação de 2,5 m (prédios do alto giro de 25 cm), corredor de 1,2 m,
+prateleiras do baixo giro de 50 cm × 2 m e concentrador atrás da estação. Ficam no bloco `CFG` no topo de
+`sim.js`. Os endereços aparecem como na etiqueta (`0.05.0421.A`), inclusive nos displays de 8 dígitos (com
+ponto decimal). **Simular falha de módulo** mostra qual LED falhou; **Trocar e cadastrar** põe o módulo novo
+piscando **CAd** e o clique no botão dele grava o LED no endereço.
 Os dados vêm de `dados.js`, gerado a partir de `../projeto/dados/enderecos_ruaXX.json`.
 
 Biblioteca 3D: Three.js r147 (licença MIT, em `vendor/`).

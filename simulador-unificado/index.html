@@ -25,6 +25,9 @@ main { flex: 1; min-height: 0; display: flex; position: relative; }
 iframe { border: 0; display: block; background: var(--bg); }
 #f3d { flex: 1.15; min-width: 0; }
 #fcom { flex: 1; min-width: 0; border-left: 1px solid var(--borda); }
+#fctl { flex: 1; min-width: 0; border-right: 1px solid var(--borda); display: none; order: -1; }
+body.modo-ctl #fctl { display: block; }
+body.modo-ctl #fcom { display: none; }
 body.modo-3d #fcom { display: none; }
 body.modo-com #fcom { flex: 1; border-left: 0; }
 body.modo-com #f3d { position: absolute; right: 16px; bottom: 16px; width: min(340px, 36vw); height: min(220px, 30vh); z-index: 5;
@@ -32,7 +35,7 @@ body.modo-com #f3d { position: absolute; right: 16px; bottom: 16px; width: min(3
 #pipRot { display: none; position: absolute; right: 16px; bottom: calc(min(220px, 30vh) + 22px); z-index: 6; background: var(--barra); color: var(--texto);
   border: 1px solid var(--borda); border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
 body.modo-com #pipRot { display: block; }
-@media (max-width: 900px) { body.modo-lado main { flex-direction: column; } body.modo-lado #fcom { border-left: 0; border-top: 1px solid var(--borda); } }
+@media (max-width: 900px) { body.modo-lado main, body.modo-ctl main { flex-direction: column; } body.modo-lado #fcom { border-left: 0; border-top: 1px solid var(--borda); } body.modo-ctl #fctl { border-right: 0; border-bottom: 1px solid var(--borda); } }
 </style>
 </head>
 <body class="modo-lado">
@@ -42,19 +45,23 @@ body.modo-com #pipRot { display: block; }
     <button data-m="3d" role="tab">Estação 3D</button>
     <button data-m="com" role="tab">Comunicação</button>
     <button data-m="lado" role="tab" class="on">Lado a lado</button>
+    <button data-m="ctl" role="tab">Controle</button>
   </div>
-  <span class="dica">As duas telas mostram a mesma estação: cada ação no 3D aparece como mensagens na comunicação.</span>
+  <span class="dica">Todas as telas mostram a mesma estação. Controle: falhas de LED e cadastro de LED por endereço.</span>
 </header>
 <main>
   <iframe id="f3d" title="Estação 3D" src="../simulador-3d/index.html?semajuda"></iframe>
   <iframe id="fcom" title="Comunicação" src="comunicacao.html"></iframe>
+  <iframe id="fctl" title="Interface de controle" src="controle.html"></iframe>
   <button id="pipRot" type="button">Estação 3D · ampliar</button>
 </main>
 <script>
 (() => {
-  const f3d = document.getElementById('f3d'), fcom = document.getElementById('fcom');
+  const f3d = document.getElementById('f3d'), fcom = document.getElementById('fcom'), fctl = document.getElementById('fctl');
   const para3d = (m) => { try { f3d.contentWindow.postMessage(Object.assign({ ptlPai: true }, m), '*'); } catch (e) { /* ainda carregando */ } };
   const paraCom = (m) => { try { fcom.contentWindow.postMessage(m, '*'); } catch (e) { /* ainda carregando */ } };
+  const paraCtl = (m) => { try { fctl.contentWindow.postMessage(m, '*'); } catch (e) { /* ainda carregando */ } };
+  const DO_CONTROLE = ['falhar', 'cad_iniciar', 'cad_apertar', 'cad_cancelar', 'identificar', 'localizar', 'pedirRegistro'];
   let modo = window.innerWidth >= 1100 ? 'lado' : '3d';
   try { const salvo = localStorage.getItem('ptl-modo'); if (salvo) modo = salvo; } catch (e) { /* sem armazenamento */ }
   function aplicar(m) {
@@ -63,19 +70,27 @@ body.modo-com #pipRot { display: block; }
     document.querySelectorAll('.abas button').forEach((b) => b.classList.toggle('on', b.dataset.m === m));
     para3d({ tipo: 'compacto', valor: m !== '3d' });
     para3d({ tipo: 'pip', valor: m === 'com' });
-    paraCom({ ptlPai: true, tipo: 'visivel', valor: m !== '3d' });
+    paraCom({ ptlPai: true, tipo: 'visivel', valor: m === 'com' || m === 'lado' });
     try { localStorage.setItem('ptl-modo', m); } catch (e) { /* sem armazenamento */ }
     setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
   }
   document.querySelectorAll('.abas button').forEach((b) => b.addEventListener('click', () => aplicar(b.dataset.m)));
   document.getElementById('pipRot').addEventListener('click', () => aplicar('3d'));
-  window.addEventListener('keydown', (e) => { const m = { Digit1: '3d', Digit2: 'com', Digit3: 'lado' }[e.code]; if (m) aplicar(m); });
+  window.addEventListener('keydown', (e) => {
+    if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+    const m = { Digit1: '3d', Digit2: 'com', Digit3: 'lado', Digit4: 'ctl' }[e.code];
+    if (m) aplicar(m);
+  });
   window.addEventListener('message', (e) => {
     const d = e.data || {};
-    if (e.source === f3d.contentWindow && d.ptl) paraCom(d);
+    if (e.source === f3d.contentWindow && d.ptl) { paraCom(d); paraCtl(d); }
     if (e.source === fcom.contentWindow && d.ptlFilho) {
       if (d.tipo === 'pronto') { para3d({ tipo: 'pedirMapa' }); aplicar(modo); }
       if (d.tipo === 'gatilho' || d.tipo === 'apertar' || d.tipo === 'rede') para3d(d);
+    }
+    if (e.source === fctl.contentWindow && d.ptlFilho) {
+      if (d.tipo === 'pronto') para3d({ tipo: 'pedirMapa' });
+      if (DO_CONTROLE.includes(d.tipo)) para3d(d);
     }
   });
   f3d.addEventListener('load', () => { aplicar(modo); para3d({ tipo: 'pedirMapa' }); });
