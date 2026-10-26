@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Comunicação PTL</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: barra de controles, diagrama de rede ao centro, registro de mensagens e inspetor de bytes abaixo */
+:root {
+  --bg: #eef1f5; --painel: #ffffff; --tinta: #1b2638; --suave: #5b6675; --linha: #d5dbe3;
+  --azul: #2f5597; --verde: #2e8b57; --ambar: #d68910; --vermelho: #c0392b; --roxo: #7b4fa0; --marrom: #8e6c3a;
+  --tela: #f4f6f9; --led: #ff3b30; --ledoff: #2a1414; --qtd: #39d36a;
+  --mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161f; --painel: #19202c; --tinta: #e8ecf2; --suave: #9aa6b8; --linha: #2c3647; --tela: #e9edf3; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #11161f; --painel: #19202c; --tinta: #e8ecf2; --suave: #9aa6b8; --linha: #2c3647; --tela: #e9edf3; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--tinta); font: 14px/1.45 var(--sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 14px 24px; }
+h1 { font-size: 19px; margin: 0; }
+h2 { font-size: 13px; margin: 0 0 8px; color: var(--suave); text-transform: uppercase; letter-spacing: .6px; }
+button, select { font: inherit; }
+.topo { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 12px; }
+.topo .sub { color: var(--suave); font-size: 13px; }
+.controles { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; background: var(--painel); border: 1px solid var(--linha);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+.gatilho { background: #f2a33a; color: #1b2638; border: 0; border-radius: 8px; padding: 9px 16px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 0 #b97614; }
+.gatilho:active { transform: translateY(2px); box-shadow: 0 1px 0 #b97614; }
+.btn { background: transparent; color: var(--tinta); border: 1px solid var(--linha); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+.btn:hover { border-color: var(--suave); }
+label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; font-size: 13px; }
+.grupo { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--suave); }
+select { background: var(--painel); color: var(--tinta); border: 1px solid var(--linha); border-radius: 6px; padding: 5px 6px; }
+:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+.palco { background: var(--painel); border: 1px solid var(--linha); border-radius: 12px; overflow-x: auto; }
+.palco svg { display: block; width: 100%; min-width: 860px; height: auto; }
+.baixo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 12px; margin-top: 12px; }
+@media (max-width: 900px) { .baixo { grid-template-columns: 1fr; } }
+.caixa { background: var(--painel); border: 1px solid var(--linha); border-radius: 12px; padding: 12px; min-width: 0; }
+#log { height: 300px; overflow-y: auto; font-size: 12.5px; }
+#log .ln { display: grid; grid-template-columns: 58px 70px minmax(0, 1fr); gap: 8px; padding: 4px 6px; border-radius: 6px; cursor: pointer; align-items: baseline; }
+#log .ln:hover { background: color-mix(in srgb, var(--azul) 8%, transparent); }
+#log .ln.sel { background: color-mix(in srgb, var(--azul) 16%, transparent); }
+#log .t { color: var(--suave); font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 999px; color: #fff; text-align: center; }
+.c-HTTP { background: var(--azul); } .c-MQTT { background: var(--ambar); } .c-RS485 { background: var(--verde); } .c-SQL { background: var(--marrom); } .c-ERRO { background: var(--vermelho); }
+#log .rota { color: var(--suave); }
+#insp .vazio { color: var(--suave); }
+#insp table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
+#insp td { border-top: 1px solid var(--linha); padding: 4px 6px; vertical-align: top; }
+#insp td:first-child { color: var(--suave); width: 34%; }
+#insp pre { font-family: var(--mono); font-size: 12px; background: var(--bg); border-radius: 8px; padding: 10px; margin: 8px 0 0; overflow-x: auto; white-space: pre; }
+.hex span { padding: 1px 2px; border-radius: 3px; }
+.s0 { background: #cfd8e3; color: #1b2638; } .s1 { background: #d6e4f7; color: #1b2638; } .s2 { background: #fce8cc; color: #1b2638; }
+.s3 { background: #e3f1e8; color: #1b2638; } .s4 { background: #efe7f6; color: #1b2638; } .s5 { background: #fde2e2; color: #1b2638; }
+.leg { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--suave); margin-top: 6px; }
+.nota { font-size: 12.5px; color: var(--suave); margin-top: 10px; }
+#fallback { display: none; margin-top: 10px; padding: 10px; border: 1px solid var(--vermelho); border-radius: 8px; font-size: 13px; }
+#fallback button { margin-top: 6px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="topo">
+  <h1>Comunicação entre coletor, concentrador e displays</h1>
+  <span class="sub">Estação 05 · uma caixa com 6 itens · cada mensagem aparece no caminho real que ela percorre</span>
+</div>
+
+<div class="controles">
+  <button class="gatilho" id="btnGatilho">Gatilho do coletor</button>
+  <span class="grupo">Velocidade
+    <select id="selVel"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></span>
+  <label class="chk"><input type="checkbox" id="chkRotina"> Mostrar polling e heartbeat</label>
+  <label class="chk"><input type="checkbox" id="chkRede" checked> Cabo de rede do concentrador ligado</label>
+  <span class="grupo">Dispositivo com defeito
+    <select id="selFalha"><option value="">nenhum</option><option value="no01">nó de coluna 0x01</option><option value="eq41">E+Q andar 4 (0x41)</option><option value="eq52">E+Q zona E2 (0x52)</option></select></span>
+  <label class="chk"><input type="checkbox" id="chkSeguir" checked> Inspecionar a última mensagem</label>
+  <button class="btn" id="btnReiniciar">Reiniciar</button>
+</div>
+
+<div class="palco">
+<svg id="svg" viewBox="0 0 1200 640" role="img" aria-label="Diagrama da comunicação entre coletor, Serviço PTL, broker MQTT, concentrador e módulos">
+  <defs>
+    <filter id="brilho" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g id="ligacoes"></g>
+  <g id="nos"></g>
+  <g id="pacotes"></g>
+</svg>
+</div>
+<div id="fallback"><b>Módulo sem resposta.</b> <span id="fbTexto"></span><br><button class="btn" id="btnConfirmaColetor">Confirmar no coletor</button></div>
+
+<div class="baixo">
+  <div class="caixa">
+    <h2>Mensagens</h2>
+    <div id="log" aria-live="polite"></div>
+  </div>
+  <div class="caixa">
+    <h2>Inspetor</h2>
+    <div id="insp"><p class="vazio">Aperte o gatilho do coletor. Clique em qualquer mensagem para ver o conteúdo e os bytes.</p></div>
+  </div>
+</div>
+<p class="nota">Formato do quadro RS-485 usado nesta demonstração: STX (0x02) · endereço · comando · tamanho · dados · CRC-16/Modbus (byte baixo, byte alto). As respostas dos módulos usam o comando com o bit 0x80 ligado. Os botões dos módulos são clicáveis.</p>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const NS = 'http://www.w3.org/2000/svg';
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  function el(tag, at, pai, txt) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in at) e.setAttribute(k, at[k]);
+    if (txt !== undefined) e.textContent = txt;
+    if (pai) pai.appendChild(e);
+    return e;
+  }
+  const hex = (n) => n.toString(16).toUpperCase().padStart(2, '0');
+
+  // ------------------------------------------------------------ tempo e velocidade
+  let vel = 1, t0 = performance.now(), geracao = 0;
+  const agora = () => ((performance.now() - t0) / 1000).toFixed(2);
+  const dormir = (ms) => new Promise((r) => setTimeout(r, ms / vel));
+  $('#selVel').addEventListener('change', (e) => { vel = +e.target.value; });
+
+  // ------------------------------------------------------------ RS-485
+  function crc16(bytes) {
+    let crc = 0xFFFF;
+    for (const b of bytes) { crc ^= b; for (let i = 0; i < 8; i++) crc = crc & 1 ? (crc >> 1) ^ 0xA001 : crc >> 1; }
+    return crc;
+  }
+  const CMD = { 0x10: 'MOSTRAR_Q', 0x11: 'MOSTRAR_EQ', 0x12: 'APAGAR', 0x20: 'LER_BOTOES', 0x30: 'AUTO_TESTE' };
+  function quadro(addr, cmd, dados) {
+    const corpo = [addr, cmd, dados.length, ...dados];
+    const c = crc16(corpo);
+    return [0x02, ...corpo, c & 0xFF, c >> 8];
+  }
+  function descreverQuadro(b) {
+    const addr = b[1], cmd = b[2], len = b[3], dados = b.slice(4, 4 + len);
+    const resp = (cmd & 0x80) !== 0, base = cmd & 0x7F;
+    const nome = (CMD[base] || 'CMD') + (resp ? ' (resposta)' : '');
+    let txt = '';
+    if (base === 0x10 && !resp) txt = `posição ${dados[0]}, quantidade ${(dados[1] << 8) | dados[2]}, modo ${dados[3] === 1 ? 'aceso' : 'piscando'}`;
+    else if (base === 0x11 && !resp) txt = `endereço "${String.fromCharCode(...dados.slice(0, 8))}", quantidade ${(dados[8] << 8) | dados[9]}, modo ${dados[10] === 1 ? 'aceso' : 'piscando'}`;
+    else if (base === 0x12 && !resp) txt = dados.length ? `posição ${dados[0]}` : 'display inteiro';
+    else if (base === 0x20 && resp) txt = `botões apertados: ${dados[0] ? '0b' + dados[0].toString(2).padStart(3, '0') : 'nenhum'}`;
+    else if (resp) txt = dados[0] === 0 ? 'OK' : `erro ${dados[0]}`;
+    else txt = '—';
+    const crcOk = crc16(b.slice(1, 4 + len)) === (b[4 + len] | (b[5 + len] << 8));
+    return { addr, nome, len, txt, crcOk };
+  }
+
+  // ------------------------------------------------------------ desenho fixo
+  const G = { lig: $('#ligacoes'), nos: $('#nos'), pac: $('#pacotes') };
+  const BUS_Y = 382;
+  const P = {
+    coletor: { x: 30, y: 140, w: 170, h: 320 },
+    servico: { x: 300, y: 118, w: 230, h: 140 },
+    sybase: { x: 300, y: 16, w: 230, h: 62 },
+    broker: { x: 620, y: 140, w: 190, h: 96 },
+    conc: { x: 900, y: 104, w: 270, h: 176 },
+    no01: { x: 255, y: 412, w: 320, h: 58 },
+    eq41: { x: 620, y: 420, w: 250, h: 112 },
+    eq52: { x: 920, y: 420, w: 250, h: 112 },
+  };
+  const cx = (n) => P[n].x + P[n].w / 2;
+  const ROTAS = {
+    'coletor>servico': [[200, 300], [250, 300], [250, 188], [300, 188]],
+    'servico>sybase': [[415, 118], [415, 78]],
+    'servico>broker': [[530, 188], [620, 188]],
+    'broker>conc': [[810, 188], [900, 188]],
+    'conc>no01': [[1035, 280], [1035, BUS_Y], [cx('no01'), BUS_Y], [cx('no01'), 412]],
+    'conc>eq41': [[1035, 280], [1035, BUS_Y], [cx('eq41'), BUS_Y], [cx('eq41'), 420]],
+    'conc>eq52': [[1035, 280], [1035, 420]],
+  };
+  function rota(de, para) {
+    if (ROTAS[de + '>' + para]) return ROTAS[de + '>' + para];
+    const r = ROTAS[para + '>' + de];
+    return r.slice().reverse();
+  }
+  const ligacao = {};
+  function desenharLigacao(id, pts, cor, rotulo, rx, ry) {
+    const g = el('g', {}, G.lig);
+    const linha = el('polyline', { points: pts.map((p) => p.join(',')).join(' '), fill: 'none', stroke: cor, 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+    if (rotulo) {
+      const w = rotulo.length * 6.4 + 14;
+      el('rect', { x: rx - w / 2, y: ry - 11, width: w, height: 20, rx: 5, fill: 'var(--painel)', stroke: 'var(--linha)' }, g);
+      el('text', { x: rx, y: ry + 4, 'text-anchor': 'middle', 'font-size': 11.5, fill: 'var(--suave)' }, g, rotulo);
+    }
+    ligacao[id] = linha;
+  }
+  desenharLigacao('wifi', ROTAS['coletor>servico'], 'var(--azul)', 'Wi-Fi · HTTPS', 250, 245);
+  desenharLigacao('sql', ROTAS['servico>sybase'], 'var(--marrom)', 'SQL', 455, 98);
+  desenharLigacao('mqtt1', ROTAS['servico>broker'], 'var(--ambar)', 'MQTT local', 575, 170);
+  desenharLigacao('mqtt2', ROTAS['broker>conc'], 'var(--ambar)', 'MQTT · Ethernet', 855, 170);
+  desenharLigacao('bus', [[1035, 280], [1035, BUS_Y], [cx('no01') - 150, BUS_Y]], 'var(--verde)', 'RS-485 · 38.400 bps · Cat5e com RJ45 (dados e 12 V)', 760, BUS_Y - 18);
+  el('polyline', { points: `${cx('no01')},${BUS_Y} ${cx('no01')},412`, fill: 'none', stroke: 'var(--verde)', 'stroke-width': 3 }, G.lig);
+  el('polyline', { points: `${cx('eq41')},${BUS_Y} ${cx('eq41')},420`, fill: 'none', stroke: 'var(--verde)', 'stroke-width': 3 }, G.lig);
+  el('polyline', { points: `1035,${BUS_Y} 1035,420`, fill: 'none', stroke: 'var(--verde)', 'stroke-width': 3 }, G.lig);
+
+  function caixaNo(n, titulo, sub, cor) {
+    const p = P[n];
+    const g = el('g', {}, G.nos);
+    el('rect', { x: p.x, y: p.y, width: p.w, height: p.h, rx: 10, fill: 'var(--painel)', stroke: cor, 'stroke-width': 2 }, g);
+    el('rect', { x: p.x, y: p.y, width: 6, height: p.h, rx: 3, fill: cor }, g);
+    el('text', { x: p.x + 16, y: p.y + 22, 'font-size': 14, 'font-weight': 700, fill: 'var(--tinta)' }, g, titulo);
+    if (sub) el('text', { x: p.x + 16, y: p.y + 40, 'font-size': 11.5, fill: 'var(--suave)' }, g, sub);
+    return g;
+  }
+  caixaNo('sybase', 'Sybase ASE', 'views do pedido · tabelas ptl_*', 'var(--marrom)');
+  const gServ = caixaNo('servico', 'Serviço PTL', 'API REST · orquestrador · MQTT', 'var(--azul)');
+  const txtServ = [0, 1, 2, 3].map((i) => el('text', { x: P.servico.x + 16, y: P.servico.y + 66 + i * 17, 'font-size': 12, fill: 'var(--tinta)', 'font-family': 'var(--mono)' }, gServ, ''));
+  const gBroker = caixaNo('broker', 'Broker MQTT', 'Mosquitto, mesma VM', 'var(--ambar)');
+  const txtBroker = [0, 1].map((i) => el('text', { x: P.broker.x + 16, y: P.broker.y + 62 + i * 17, 'font-size': 11.5, fill: 'var(--tinta)', 'font-family': 'var(--mono)' }, gBroker, ''));
+  const gConc = caixaNo('conc', 'Concentrador · estação 05', 'RP2040 + W5500 · mestre RS-485', 'var(--verde)');
+  const txtConc = [0, 1, 2, 3].map((i) => el('text', { x: P.conc.x + 16, y: P.conc.y + 64 + i * 18, 'font-size': 12, fill: 'var(--tinta)', 'font-family': 'var(--mono)' }, gConc, ''));
+  const ledRede = el('circle', { cx: P.conc.x + P.conc.w - 20, cy: P.conc.y + 20, r: 6, fill: '#2ecc71' }, gConc);
+  const ledBus = el('circle', { cx: P.conc.x + P.conc.w - 38, cy: P.conc.y + 20, r: 6, fill: '#2ecc71' }, gConc);
+
+  // ---------- coletor
+  const gCol = el('g', {}, G.nos);
+  (() => {
+    const p = P.coletor;
+    el('rect', { x: p.x, y: p.y, width: p.w, height: p.h, rx: 24, fill: '#10141b', stroke: '#2b3445', 'stroke-width': 2 }, gCol);
+    el('text', { x: p.x + p.w / 2, y: p.y + 22, 'text-anchor': 'middle', 'font-size': 10, fill: '#6b7a90', 'letter-spacing': 1 }, gCol, 'COLETOR MOVFAST');
+    el('rect', { x: p.x + 12, y: p.y + 34, width: p.w - 24, height: p.h - 70, rx: 10, fill: 'var(--tela)' }, gCol);
+    el('rect', { x: p.x + 50, y: p.y + p.h - 26, width: p.w - 100, height: 10, rx: 5, fill: '#2b3445' }, gCol);
+  })();
+  const telaCab = el('rect', { x: P.coletor.x + 12, y: P.coletor.y + 34, width: P.coletor.w - 24, height: 34, rx: 10, fill: '#2f5597' }, gCol);
+  el('rect', { x: P.coletor.x + 12, y: P.coletor.y + 56, width: P.coletor.w - 24, height: 12, fill: 'transparent' }, gCol);
+  const telaTit = el('text', { x: P.coletor.x + 24, y: P.coletor.y + 56, 'font-size': 12.5, 'font-weight': 700, fill: '#fff' }, gCol, '');
+  const telaGrande = el('text', { x: P.coletor.x + P.coletor.w / 2, y: P.coletor.y + 140, 'text-anchor': 'middle', 'font-size': 36, 'font-weight': 800, fill: '#1b2638' }, gCol, '');
+  const telaLinhas = [0, 1, 2, 3].map((i) => el('text', { x: P.coletor.x + P.coletor.w / 2, y: P.coletor.y + 172 + i * 17, 'text-anchor': 'middle', 'font-size': 11.5, fill: '#5b6675' }, gCol, ''));
+  const telaBarraF = el('rect', { x: P.coletor.x + 26, y: P.coletor.y + 152, width: 118, height: 7, rx: 3.5, fill: '#dde2e9' }, gCol);
+  const telaBarra = el('rect', { x: P.coletor.x + 26, y: P.coletor.y + 152, width: 0, height: 7, rx: 3.5, fill: '#2e8b57' }, gCol);
+  const telaRod = el('text', { x: P.coletor.x + P.coletor.w / 2, y: P.coletor.y + 272, 'text-anchor': 'middle', 'font-size': 10.5, fill: '#5b6675' }, gCol, '');
+
+  // ---------- displays (7 segmentos simplificados)
+  function display(g, x, y, chars, cor) {
+    const w = chars * 13 + 10;
+    el('rect', { x, y, width: w, height: 26, rx: 4, fill: '#07090c' }, g);
+    el('text', { x: x + 6, y: y + 20, 'font-size': 20, 'font-family': 'var(--mono)', fill: 'var(--ledoff)', 'letter-spacing': 1.2 }, g, '8'.repeat(chars));
+    const t = el('text', { x: x + 6, y: y + 20, 'font-size': 20, 'font-family': 'var(--mono)', fill: cor, 'letter-spacing': 1.2, filter: 'url(#brilho)', style: 'white-space:pre' }, g, '');
+    return { t, chars, w };
+  }
+  function botao(g, x, y, r, dev, slot) {
+    const b = el('circle', { cx: x, cy: y, r, fill: '#1d4b31', stroke: '#0f2a1c', 'stroke-width': 2, style: 'cursor:pointer' }, g);
+    b.addEventListener('click', () => apertar(dev, slot));
+    return b;
+  }
+
+  // ------------------------------------------------------------ dispositivos do barramento
+  const DEV = {
+    no01: { addr: 0x01, tipo: 'no', nome: 'Nó de coluna 0x01', slots: [
+      { end: 'P001 A0', qtd: 0, aceso: false, aperto: false }, { end: 'P004 A2', qtd: 0, aceso: false, aperto: false }, { end: 'P007 A1', qtd: 0, aceso: false, aperto: false }] },
+    eq41: { addr: 0x41, tipo: 'eq', nome: 'E+Q andar 4 · 0x41', fila: [], aceso: false, aperto: false },
+    eq52: { addr: 0x52, tipo: 'eq', nome: 'E+Q zona E2 · 0x52', fila: [], aceso: false, aperto: false },
+  };
+  // nó de coluna com 3 módulos Q
+  (() => {
+    const p = P.no01;
+    const g = caixaNo('no01', 'Nó de coluna · 0x01', 'repassa para os módulos Q do prédio', 'var(--verde)');
+    DEV.no01.g = g;
+    DEV.no01.slots.forEach((s, i) => {
+      const x = p.x + i * 110, y = 500;
+      el('line', { x1: p.x + 55 + i * 110, y1: p.y + p.h, x2: p.x + 55 + i * 110, y2: y, stroke: 'var(--verde)', 'stroke-width': 2 }, G.lig);
+      const gm = el('g', {}, G.nos);
+      el('rect', { x, y, width: 100, height: 92, rx: 8, fill: 'var(--painel)', stroke: 'var(--linha)', 'stroke-width': 1.5 }, gm);
+      el('text', { x: x + 50, y: y + 18, 'text-anchor': 'middle', 'font-size': 11.5, 'font-weight': 700, fill: 'var(--tinta)' }, gm, 'Módulo Q');
+      el('text', { x: x + 50, y: y + 33, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--suave)' }, gm, s.end + ' · pos. ' + i);
+      s.disp = display(gm, x + 8, y + 46, 3, 'var(--led)');
+      s.btn = botao(gm, x + 78, y + 59, 11, 'no01', i);
+    });
+  })();
+  ['eq41', 'eq52'].forEach((id) => {
+    const p = P[id];
+    const g = caixaNo(id, id === 'eq41' ? 'Módulo E+Q · 0x41' : 'Módulo E+Q · 0x52', id === 'eq41' ? 'alto giro, andar 4, lado esquerdo' : 'baixo giro, zona E2 (P023 a P025)', 'var(--verde)');
+    DEV[id].g = g;
+    DEV[id].dEnd = display(g, p.x + 14, p.y + 58, 8, 'var(--led)');
+    DEV[id].dQtd = display(g, p.x + 136, p.y + 58, 3, 'var(--qtd)');
+    DEV[id].btn = botao(g, p.x + 222, p.y + 71, 13, id, 0);
+    el('text', { x: p.x + 14, y: p.y + 100, 'font-size': 10.5, fill: 'var(--suave)' }, g, 'ENDEREÇO');
+    el('text', { x: p.x + 136, y: p.y + 100, 'font-size': 10.5, fill: 'var(--suave)' }, g, 'QTD');
+  });
+  const marcaFalha = {};
+  ['no01', 'eq41', 'eq52'].forEach((id) => {
+    const p = P[id];
+    marcaFalha[id] = el('g', { visibility: 'hidden' }, G.nos);
+    el('rect', { x: p.x, y: p.y, width: p.w, height: p.h, rx: 10, fill: 'rgba(192,57,43,.12)', stroke: 'var(--vermelho)', 'stroke-width': 2, 'stroke-dasharray': '6 4' }, marcaFalha[id]);
+    el('text', { x: p.x + p.w - 12, y: p.y + p.h - 8, 'text-anchor': 'end', 'font-size': 12, 'font-weight': 700, fill: 'var(--vermelho)' }, marcaFalha[id], 'SEM RESPOSTA');
+  });
+
+  function desenharDispositivos() {
+    DEV.no01.slots.forEach((s) => {
+      s.disp.t.textContent = s.aceso ? String(s.qtd).padStart(3, ' ') : '';
+      s.btn.setAttribute('fill', s.aceso ? '#2ecc71' : '#1d4b31');
+      s.btn.setAttribute('filter', s.aceso ? 'url(#brilho)' : '');
+    });
+    ['eq41', 'eq52'].forEach((id) => {
+      const d = DEV[id], it = d.aceso ? d.fila[0] : null;
+      d.dEnd.t.textContent = it ? it.end.padEnd(8, ' ') : '';
+      d.dQtd.t.textContent = it ? String(it.qtd).padStart(3, ' ') : '';
+      d.btn.setAttribute('fill', it ? '#2ecc71' : '#1d4b31');
+      d.btn.setAttribute('filter', it ? 'url(#brilho)' : '');
+    });
+    Object.keys(marcaFalha).forEach((id) => marcaFalha[id].setAttribute('visibility', falha === id ? 'visible' : 'hidden'));
+  }
+
+  // ------------------------------------------------------------ estado
+  const ITENS = [
+    { end: 'P001 A0', qtd: 3, dev: 'no01', slot: 0 },
+    { end: 'P004 A2', qtd: 1, dev: 'no01', slot: 1 },
+    { end: 'P007 A1', qtd: 2, dev: 'no01', slot: 2 },
+    { end: 'P003 A4', qtd: 2, dev: 'eq41' },
+    { end: 'P023 A1', qtd: 1, dev: 'eq52' },
+    { end: 'P025 A5', qtd: 4, dev: 'eq52' },
+  ];
+  let caixaSeq = 1234;
+  const S = { estado: 'AGUARDANDO', caixa: '', ok: 0, total: ITENS.length, online: true, fila: [], redeLigada: true, falhaInformada: null };
+  const C = { caixa: '', estado: 'livre' };
+  let falha = '';
+
+  function atualizarTextos() {
+    txtServ[0].textContent = `estado: ${S.estado}`;
+    txtServ[1].textContent = S.caixa ? `caixa: ${S.caixa}` : 'caixa: —';
+    txtServ[2].textContent = `confirmados: ${S.ok}/${S.total}`;
+    txtServ[3].textContent = `estação 05: ${S.online ? 'online' : 'SEM REDE'}`;
+    txtServ[3].setAttribute('fill', S.online ? 'var(--tinta)' : 'var(--vermelho)');
+    txtBroker[0].textContent = 'ptl/est05/status';
+    txtBroker[1].textContent = `retido: ${S.online ? 'online' : 'offline (LWT)'}`;
+    txtConc[0].textContent = `caixa: ${C.caixa || '—'}`;
+    txtConc[1].textContent = `estado: ${C.estado}`;
+    txtConc[2].textContent = `fila de eventos: ${S.fila.length}`;
+    txtConc[2].setAttribute('fill', S.fila.length ? 'var(--vermelho)' : 'var(--tinta)');
+    txtConc[3].textContent = `rede: ${S.redeLigada ? 'conectada' : 'sem cabo'}`;
+    ledRede.setAttribute('fill', S.redeLigada ? '#2ecc71' : '#c0392b');
+    ligacao.mqtt2.setAttribute('stroke-dasharray', S.redeLigada ? '' : '8 6');
+    ligacao.mqtt2.setAttribute('stroke', S.redeLigada ? 'var(--ambar)' : 'var(--vermelho)');
+    desenharDispositivos();
+  }
+  function tela(cor, tit, grande, linhas, rod, prog) {
+    telaCab.setAttribute('fill', cor);
+    telaTit.textContent = tit;
+    telaGrande.textContent = grande;
+    telaLinhas.forEach((t, i) => { t.textContent = linhas[i] || ''; });
+    telaRod.textContent = rod;
+    const mostrar = prog !== undefined;
+    telaBarraF.setAttribute('visibility', mostrar ? 'visible' : 'hidden');
+    telaBarra.setAttribute('visibility', mostrar ? 'visible' : 'hidden');
+    telaBarra.setAttribute('width', mostrar ? 118 * prog : 0);
+    telaGrande.setAttribute('y', P.coletor.y + (mostrar ? 135 : 140));
+  }
+  function telaPorEstado(resp) {
+    if (resp && resp.erro) return tela('#c0392b', 'Erro', '!', resp.linhas, 'Tente de novo');
+    if (S.estado === 'AGUARDANDO') return tela('#2f5597', 'PTL · Estação 05', '—', ['Leia a etiqueta', 'da caixa'], 'Gatilho abre a caixa');
+    if (S.estado === 'SEPARANDO') {
+      const l = ['itens confirmados'];
+      if (!S.online) l.push('estação sem rede:', 'confirmações guardadas', 'no concentrador');
+      return tela('#2e8b57', `Caixa ${S.caixa}`, `${S.ok} / ${S.total}`, l, 'Nova leitura fecha', S.ok / S.total);
+    }
+    if (S.estado === 'PRONTA') return tela('#2e8b57', 'Estação concluída', `${S.total} / ${S.total}`, ['todos os displays', 'apagaram', 'Leia de novo', 'para fechar'], 'Gatilho fecha a caixa', 1);
+    if (S.estado === 'ALERTA') return tela('#c0392b', 'Atenção', String(S.total - S.ok), ['itens pendentes', 'leia de novo para', 'fechar assim mesmo'], 'Pendência vai p/ conferência');
+    if (S.estado === 'FECHADA') return tela('#16a085', 'Caixa fechada', '✓', [S.caixa, 'pode seguir na esteira'], '');
+  }
+
+  // ------------------------------------------------------------ registro e inspetor
+  const msgs = [];
+  let selecionada = -1;
+  function registrar(m) {
+    m.t = agora();
+    msgs.push(m);
+    const i = msgs.length - 1;
+    const d = document.createElement('div');
+    d.className = 'ln';
+    d.innerHTML = `<span class="t">${m.t}s</span><span class="chip c-${m.erro ? 'ERRO' : m.camada}">${m.camada === 'RS485' ? 'RS-485' : m.camada}</span><span><span class="rota">${m.de} → ${m.para}</span> · ${m.resumo}</span>`;
+    d.addEventListener('click', () => inspecionar(i));
+    m.linha = d;
+    const log = $('#log');
+    log.prepend(d);
+    while (log.children.length > 400) log.lastChild.remove();
+    if ($('#chkSeguir').checked) inspecionar(i);
+  }
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  function inspecionar(i) {
+    const m = msgs[i];
+    if (!m) return;
+    if (selecionada >= 0 && msgs[selecionada] && msgs[selecionada].linha) msgs[selecionada].linha.classList.remove('sel');
+    selecionada = i;
+    if (m.linha) m.linha.classList.add('sel');
+    let h = `<div><span class="chip c-${m.erro ? 'ERRO' : m.camada}">${m.camada === 'RS485' ? 'RS-485' : m.camada}</span> <b>${esc(m.de)} → ${esc(m.para)}</b> · ${esc(m.resumo)}</div>`;
+    if (m.bytes) {
+      const b = m.bytes, len = b[3];
+      const seg = (j) => (j === 0 ? 0 : j === 1 ? 1 : j === 2 ? 2 : j === 3 ? 3 : j < 4 + len ? 4 : 5);
+      h += `<pre class="hex">${b.map((x, j) => `<span class="s${seg(j)}">${hex(x)}</span>`).join(' ')}</pre>`;
+      h += `<div class="leg"><span><span class="hex"><span class="s0">STX</span></span></span><span><span class="hex"><span class="s1">endereço</span></span></span><span><span class="hex"><span class="s2">comando</span></span></span><span><span class="hex"><span class="s3">tamanho</span></span></span><span><span class="hex"><span class="s4">dados</span></span></span><span><span class="hex"><span class="s5">CRC</span></span></span></div>`;
+      const d = descreverQuadro(b);
+      h += `<table><tr><td>Endereço</td><td>0x${hex(d.addr)}</td></tr><tr><td>Comando</td><td>${esc(d.nome)}</td></tr><tr><td>Dados (${d.len} bytes)</td><td>${esc(d.txt)}</td></tr><tr><td>CRC-16/Modbus</td><td>${d.crcOk ? 'confere' : 'inválido'}</td></tr><tr><td>Tempo no fio</td><td>${((b.length * 10) / 38.4).toFixed(2)} ms a 38.400 bps</td></tr></table>`;
+    }
+    if (m.texto) h += `<pre>${esc(m.texto)}</pre>`;
+    if (m.campos) h += `<table>${m.campos.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join('')}</table>`;
+    $('#insp').innerHTML = h;
+  }
+
+  // ------------------------------------------------------------ pacotes animados
+  const CORES = { HTTP: '#2f5597', MQTT: '#d68910', RS485: '#2e8b57', SQL: '#8e6c3a', ERRO: '#c0392b' };
+  const ativos = [];
+  function comprimento(pts) { let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); return L; }
+  function ponto(pts, d) {
+    for (let i = 1; i < pts.length; i++) {
+      const s = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      if (d <= s) { const k = s ? d / s : 0; return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * k, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * k]; }
+      d -= s;
+    }
+    return pts[pts.length - 1];
+  }
+  // envia uma mensagem: registra, anima e resolve quando chega (ou se perde)
+  function enviar(de, para, m, o = {}) {
+    const ger = geracao;
+    m.de = m.de || NOMES[de]; m.para = m.para || NOMES[para];
+    registrar(m);
+    const pts = rota(de, para);
+    const L = comprimento(pts);
+    const g = el('g', {}, G.pac);
+    const w = Math.max(44, m.rot.length * 6.6 + 14);
+    el('rect', { x: -w / 2, y: -10, width: w, height: 20, rx: 10, fill: CORES[m.erro ? 'ERRO' : m.camada], stroke: '#fff', 'stroke-width': 1.5 }, g);
+    el('text', { x: 0, y: 4, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: '#fff' }, g, m.rot);
+    const perde = !!o.perde;
+    const dur = (L / 430) * 1000 * (o.lento ? 1.4 : 1);
+    return new Promise((res) => {
+      ativos.push({ g, pts, L, ini: performance.now(), dur, perde, res, ger });
+    });
+  }
+  function quadroAnim() {
+    const t = performance.now();
+    for (let i = ativos.length - 1; i >= 0; i--) {
+      const a = ativos[i];
+      if (a.ger !== geracao) { a.g.remove(); ativos.splice(i, 1); continue; }
+      const k = Math.min(1, ((t - a.ini) * vel) / a.dur);
+      const kk = a.perde ? Math.min(k, 0.8) : k;
+      const [x, y] = ponto(a.pts, a.L * kk);
+      a.g.setAttribute('transform', `translate(${x},${y})`);
+      if (a.perde && k >= 0.8) a.g.setAttribute('opacity', String(Math.max(0, 1 - (k - 0.8) * 5)));
+      if (k >= 1) { a.g.remove(); ativos.splice(i, 1); a.res(!a.perde); }
+    }
+    requestAnimationFrame(quadroAnim);
+  }
+  requestAnimationFrame(quadroAnim);
+  const NOMES = { coletor: 'Coletor', servico: 'Serviço PTL', sybase: 'Sybase', broker: 'Broker', conc: 'Concentrador', no01: 'Nó 0x01', eq41: 'E+Q 0x41', eq52: 'E+Q 0x52' };
+
+  // ------------------------------------------------------------ mensagens prontas
+  const json = (o) => JSON.stringify(o, null, 2);
+  const http = (metodo, rotaTxt, corpo, rot) => ({ camada: 'HTTP', rot, resumo: `${metodo} ${rotaTxt}`,
+    texto: `${metodo} ${rotaTxt} HTTP/1.1\nHost: ptl.interno\nContent-Type: application/json\nAuthorization: Bearer <token do coletor>\n\n${corpo ? json(corpo) : ''}` });
+  const httpResp = (cod, corpo, rot) => ({ camada: 'HTTP', rot: rot || String(cod), resumo: `resposta ${cod}`, erro: cod >= 400,
+    texto: `HTTP/1.1 ${cod} ${({ 200: 'OK', 409: 'Conflict', 503: 'Service Unavailable' })[cod]}\nContent-Type: application/json\n\n${json(corpo)}` });
+  const mqtt = (topico, carga, rot, o = {}) => ({ camada: 'MQTT', rot, resumo: `${topico} ${carga.tipo || ''}`.trim(),
+    campos: [['Tópico', topico], ['QoS', String(o.qos ?? 1)], ['Retido', o.retido ? 'sim' : 'não']], texto: json(carga) });
+  const sql = (q, rot, resumo) => ({ camada: 'SQL', rot, resumo, texto: q });
+  const rs = (addr, cmd, dados, rot) => { const b = quadro(addr, cmd, dados); const d = descreverQuadro(b); return { camada: 'RS485', rot, resumo: `0x${hex(addr)} ${d.nome} · ${d.txt}`, bytes: b }; };
+  const ascii = (s) => [...s.padEnd(8, ' ').slice(0, 8)].map((c) => c.charCodeAt(0));
+
+  // ------------------------------------------------------------ barramento (um quadro por vez)
+  let fila485 = Promise.resolve();
+  const noBarramento = (fn) => { const p = fila485.then(fn, fn); fila485 = p.catch(() => {}); return p; };
+  // envia comando e espera resposta; devolve false se o dispositivo não responder
+  async function transacao(dev, cmd, dados, rotIda, respDados, rotVolta) {
+    const ger = geracao;
+    const d = DEV[dev];
+    ledBus.setAttribute('fill', '#f2a33a');
+    if (falha === dev) {
+      for (let tent = 1; tent <= 3; tent++) {
+        await enviar('conc', dev, rs(d.addr, cmd, dados, rotIda + (tent > 1 ? ` (${tent}ª)` : '')), { perde: true });
+        if (ger !== geracao) return false;
+        await dormir(120);
+      }
+      registrar({ camada: 'RS485', erro: true, rot: 'timeout', de: 'Concentrador', para: d.nome, resumo: 'sem resposta em 3 tentativas (timeout de 20 ms cada)', campos: [['Dispositivo', d.nome], ['Tentativas', '3'], ['Ação', 'marca falha e avisa o Serviço PTL']] });
+      ledBus.setAttribute('fill', '#c0392b');
+      return false;
+    }
+    await enviar('conc', dev, rs(d.addr, cmd, dados, rotIda));
+    if (ger !== geracao) return false;
+    await enviar(dev, 'conc', rs(d.addr, cmd | 0x80, respDados || [0], rotVolta || 'OK'));
+    ledBus.setAttribute('fill', '#2ecc71');
+    return true;
+  }
+
+  // ------------------------------------------------------------ MQTT com a rede do concentrador
+  async function concParaServico(carga, rot) {
+    if (!S.redeLigada) {
+      S.fila.push({ carga, rot });
+      registrar({ camada: 'MQTT', erro: true, rot: 'na fila', de: 'Concentrador', para: '(fila local)', resumo: `sem rede: ${carga.tipo} guardado na fila (${S.fila.length})`, texto: json(carga) });
+      atualizarTextos();
+      return;
+    }
+    await enviar('conc', 'broker', mqtt('ptl/est05/evt', carga, rot));
+    await enviar('broker', 'servico', mqtt('ptl/est05/evt', carga, rot));
+    await servicoRecebe(carga);
+  }
+  async function servicoParaConc(carga, rot) {
+    await enviar('servico', 'broker', mqtt('ptl/est05/cmd', carga, rot));
+    if (!S.redeLigada) {
+      registrar({ camada: 'MQTT', erro: true, rot: 'sem rota', de: 'Broker', para: 'Concentrador', resumo: 'concentrador desconectado; mensagem fica no broker (QoS 1, sessão persistente)', texto: json(carga) });
+      return false;
+    }
+    await enviar('broker', 'conc', mqtt('ptl/est05/cmd', carga, rot));
+    return true;
+  }
+
+  // ------------------------------------------------------------ Serviço PTL
+  async function servicoRecebe(c) {
+    if (c.tipo === 'BTN' || c.tipo === 'CONFIRMA_COLETOR') {
+      S.ok++;
+      await enviar('servico', 'sybase', sql(`INSERT INTO ptl_caixa_item_conf\n  (sessao, cd_endereco, quantidade, confirmado_em, origem)\nVALUES (${caixaSeq}, '05${c.end.replace(/\D/g, '').padStart(4, '0')}0A', ${c.qtd}, getdate(), '${c.tipo === 'BTN' ? 'botao' : 'coletor'}')`, 'INSERT', 'grava a confirmação'));
+      atualizarTextos();
+    }
+    if (c.tipo === 'CONCLUIDA') { S.estado = 'PRONTA'; atualizarTextos(); }
+    if (c.tipo === 'FALHA_MODULO') { S.falhaInformada = c.dispositivo; atualizarTextos(); mostrarFallback(); }
+    await coletorConsulta();
+  }
+  async function coletorConsulta() {
+    await enviar('coletor', 'servico', http('GET', '/v1/estacoes/05', null, 'GET estado'));
+    const corpo = { estacao: '05', estado: S.estado, caixa: S.caixa, confirmados: S.ok, total: S.total, online: S.online };
+    await enviar('servico', 'coletor', httpResp(200, corpo));
+    telaPorEstado();
+  }
+
+  // ------------------------------------------------------------ leitura no coletor
+  let ocupado = false;
+  async function gatilho() {
+    if (ocupado) return;
+    ocupado = true;
+    const ger = geracao;
+    try {
+      if (S.estado === 'AGUARDANDO' || S.estado === 'FECHADA') return await abrir(ger);
+      if (S.estado === 'SEPARANDO') return await fecharComPendencia(ger, false);
+      if (S.estado === 'ALERTA') return await fecharComPendencia(ger, true);
+      if (S.estado === 'PRONTA') return await fechar(ger);
+    } finally { ocupado = false; }
+  }
+  async function abrir(ger) {
+    if (S.estado === 'FECHADA') reiniciarEstado(false);
+    const caixa = 'CX00' + caixaSeq;
+    tela('#2f5597', 'PTL · Estação 05', '…', ['enviando leitura'], '');
+    await enviar('coletor', 'servico', http('POST', '/v1/estacoes/05/leituras', { caixa, operador: '4471', origem: 'coletor' }, 'POST leitura'));
+    if (ger !== geracao) return;
+    if (!S.online) {
+      await enviar('servico', 'coletor', httpResp(503, { erro: 'estação 05 sem comunicação', acao: 'usar procedimento manual' }));
+      telaPorEstado({ erro: true, linhas: ['estação sem', 'comunicação'] });
+      return;
+    }
+    await enviar('servico', 'sybase', sql(`SELECT cd_endereco, qt_item\n  FROM vw_ptl_itens_caixa\n WHERE nr_caixa = '${caixa}'\n   AND cd_rua = '05'\n ORDER BY nr_ordem_separacao_flow, cd_predio, cd_andar`, 'SELECT', 'itens da caixa na estação 05'));
+    await enviar('sybase', 'servico', sql(ITENS.map((i) => `05${i.end.replace(/\D/g, '').padStart(4, '0')}0A  ${i.qtd}`).join('\n') + `\n(${ITENS.length} linhas)`, '6 linhas', `${ITENS.length} itens encontrados`));
+    S.estado = 'SEPARANDO'; S.caixa = caixa; S.ok = 0;
+    atualizarTextos();
+    const carga = { tipo: 'SEPARAR', caixa,
+      alto_giro: ITENS.filter((i) => i.dev === 'no01').map((i) => ({ disp: '0x01', pos: i.slot, end: i.end, qtd: i.qtd })),
+      andares_45: [{ disp: '0x41', itens: ITENS.filter((i) => i.dev === 'eq41').map((i) => ({ end: i.end, qtd: i.qtd })) }],
+      zonas: [{ disp: '0x52', zona: 'E2', itens: ITENS.filter((i) => i.dev === 'eq52').map((i) => ({ end: i.end, qtd: i.qtd })) }] };
+    const chegou = await servicoParaConc(carga, 'SEPARAR');
+    if (ger !== geracao) return;
+    if (!chegou) { await enviar('servico', 'coletor', httpResp(503, { erro: 'estação 05 sem comunicação' })); telaPorEstado({ erro: true, linhas: ['estação sem', 'comunicação'] }); return; }
+    // concentrador acende
+    C.caixa = caixa; C.estado = 'separando';
+    ITENS.forEach((i) => { if (i.dev !== 'no01') DEV[i.dev].fila.push({ end: i.end, qtd: i.qtd }); });
+    atualizarTextos();
+    let acesos = 0;
+    const falhou = [];
+    await noBarramento(async () => {
+      for (const i of ITENS.filter((x) => x.dev === 'no01')) {
+        const ok = await transacao('no01', 0x10, [i.slot, i.qtd >> 8, i.qtd & 0xFF, 1], `MOSTRAR ${i.qtd}`);
+        if (ger !== geracao) return;
+        if (ok) { Object.assign(DEV.no01.slots[i.slot], { qtd: i.qtd, aceso: true }); acesos++; } else { falhou.push('no01'); break; }
+        desenharDispositivos();
+      }
+      for (const id of ['eq41', 'eq52']) {
+        const it = DEV[id].fila[0];
+        const ok = await transacao(id, 0x11, [...ascii(it.end), it.qtd >> 8, it.qtd & 0xFF, 1], `MOSTRAR ${it.end}`);
+        if (ger !== geracao) return;
+        if (ok) { DEV[id].aceso = true; acesos++; } else falhou.push(id);
+        desenharDispositivos();
+      }
+    });
+    if (ger !== geracao) return;
+    await concParaServico({ tipo: 'ACK', caixa, displays_acesos: acesos }, 'ACK');
+    for (const f of falhou) await concParaServico({ tipo: 'FALHA_MODULO', dispositivo: `0x${hex(DEV[f].addr)}`, dev: f, itens: itensDo(f) }, 'FALHA');
+  }
+  const itensDo = (dev) => (dev === 'no01' ? DEV.no01.slots.filter((s) => s.qtd || true).map((s, k) => ITENS.find((i) => i.dev === 'no01' && i.slot === k)) : DEV[dev].fila).map((i) => `${i.end} (${i.qtd})`);
+
+  async function fecharComPendencia(ger, confirmado) {
+    await enviar('coletor', 'servico', http('POST', '/v1/estacoes/05/leituras', { caixa: S.caixa, operador: '4471', origem: 'coletor' }, 'POST leitura'));
+    if (!confirmado) {
+      S.estado = 'ALERTA'; atualizarTextos();
+      await enviar('servico', 'coletor', httpResp(409, { erro: 'itens pendentes', pendentes: S.total - S.ok, acao: 'nova leitura fecha com pendência' }, '409'));
+      telaPorEstado();
+      return;
+    }
+    await enviar('servico', 'sybase', sql(`UPDATE ptl_caixa_sessao\n   SET situacao = 'FECHADA_PENDENTE', fechada_em = getdate()\n WHERE nr_caixa = '${S.caixa}'`, 'UPDATE', 'fecha com pendência'));
+    await servicoParaConc({ tipo: 'CANCELAR', caixa: S.caixa, motivo: 'fechada com pendência' }, 'CANCELAR');
+    if (S.redeLigada) await apagarTudo(ger);
+    S.estado = 'FECHADA'; atualizarTextos();
+    await enviar('servico', 'coletor', httpResp(200, { estado: 'FECHADA', pendencias: S.total - S.ok }));
+    telaPorEstado();
+  }
+  async function apagarTudo(ger) {
+    await noBarramento(async () => {
+      for (const s of DEV.no01.slots.map((x, k) => [x, k]).filter(([x]) => x.aceso)) {
+        if (await transacao('no01', 0x12, [s[1]], 'APAGAR')) { s[0].aceso = false; desenharDispositivos(); }
+        if (ger !== geracao) return;
+      }
+      for (const id of ['eq41', 'eq52']) if (DEV[id].aceso) {
+        if (await transacao(id, 0x12, [], 'APAGAR')) { DEV[id].aceso = false; DEV[id].fila = []; desenharDispositivos(); }
+        if (ger !== geracao) return;
+      }
+    });
+    C.caixa = ''; C.estado = 'livre'; atualizarTextos();
+  }
+  async function fechar(ger) {
+    await enviar('coletor', 'servico', http('POST', '/v1/estacoes/05/leituras', { caixa: S.caixa, operador: '4471', origem: 'coletor' }, 'POST leitura'));
+    await enviar('servico', 'sybase', sql(`UPDATE ptl_caixa_sessao\n   SET situacao = 'FECHADA', fechada_em = getdate()\n WHERE nr_caixa = '${S.caixa}'`, 'UPDATE', 'fecha a sessão'));
+    S.estado = 'FECHADA'; C.caixa = ''; C.estado = 'livre'; atualizarTextos();
+    await enviar('servico', 'coletor', httpResp(200, { estado: 'FECHADA', caixa: S.caixa, pendencias: 0 }));
+    telaPorEstado();
+  }
+
+  // ------------------------------------------------------------ botão de um módulo
+  function apertar(dev, slot) {
+    if (falha === dev) return;
+    const d = DEV[dev];
+    if (d.tipo === 'no') { if (!d.slots[slot].aceso) return; d.slots[slot].aperto = true; }
+    else { if (!d.aceso) return; d.aperto = true; }
+    d.btn ? d.btn.setAttribute('r', 10) : d.slots[slot].btn.setAttribute('r', 8);
+    setTimeout(() => { if (d.btn) d.btn.setAttribute('r', 13); else d.slots[slot].btn.setAttribute('r', 11); }, 160);
+  }
+
+  // ciclo de leitura dos botões (o concentrador consulta todos os dispositivos a cada 50 ms)
+  async function cicloPolling(ger) {
+    while (ger === geracao) {
+      const rotina = $('#chkRotina').checked;
+      for (const id of ['no01', 'eq41', 'eq52']) {
+        if (ger !== geracao) return;
+        const d = DEV[id];
+        const temAperto = d.tipo === 'no' ? d.slots.some((s) => s.aperto) : d.aperto;
+        if (!temAperto && !rotina) continue;
+        if (falha === id && !rotina) continue;
+        await noBarramento(async () => {
+          let mask = 0;
+          if (d.tipo === 'no') d.slots.forEach((s, k) => { if (s.aperto) mask |= 1 << k; });
+          else mask = d.aperto ? 1 : 0;
+          const ok = await transacao(id, 0x20, [], 'LER_BOTOES', [mask], mask ? 'BOTÃO' : 'nada');
+          if (!ok || !mask || ger !== geracao) return;
+          await tratarAperto(id, mask, ger);
+        });
+      }
+      await dormir(rotina ? 1500 : 250);
+    }
+  }
+  async function tratarAperto(id, mask, ger) {
+    const d = DEV[id];
+    const eventos = [];
+    if (d.tipo === 'no') {
+      for (let k = 0; k < 3; k++) if (mask & (1 << k)) {
+        const s = d.slots[k];
+        s.aperto = false;
+        if (!s.aceso) continue;
+        if (await transacao(id, 0x12, [k], 'APAGAR')) { s.aceso = false; desenharDispositivos(); }
+        eventos.push({ tipo: 'BTN', caixa: C.caixa, disp: '0x01', pos: k, end: s.end, qtd: s.qtd });
+      }
+    } else {
+      d.aperto = false;
+      const it = d.fila.shift();
+      if (it) eventos.push({ tipo: 'BTN', caixa: C.caixa, disp: `0x${hex(d.addr)}`, end: it.end, qtd: it.qtd });
+      if (d.fila.length) {
+        const nx = d.fila[0];
+        await transacao(id, 0x11, [...ascii(nx.end), nx.qtd >> 8, nx.qtd & 0xFF, 2], `MOSTRAR ${nx.end}`);
+      } else {
+        await transacao(id, 0x12, [], 'APAGAR');
+        d.aceso = false;
+        if (id === 'eq52') eventos.push({ tipo: 'ZONA_FIM', caixa: C.caixa, zona: 'E2' });
+      }
+      desenharDispositivos();
+    }
+    if (ger !== geracao) return;
+    const restam = DEV.no01.slots.some((s) => s.aceso) || DEV.eq41.aceso || DEV.eq52.aceso;
+    if (!restam && C.caixa) { C.estado = 'concluída'; eventos.push({ tipo: 'CONCLUIDA', caixa: C.caixa }); }
+    atualizarTextos();
+    // o envio para o serviço não segura o barramento
+    (async () => { for (const e of eventos) await concParaServico(e, e.tipo === 'BTN' ? `BTN ${e.end}` : e.tipo); })();
+  }
+
+  // ------------------------------------------------------------ módulo com defeito: confirmação no coletor
+  function mostrarFallback() {
+    const f = S.falhaInformada ? Object.keys(DEV).find((k) => `0x${hex(DEV[k].addr)}` === S.falhaInformada) : null;
+    if (!f) { $('#fallback').style.display = 'none'; return; }
+    const itens = f === 'no01' ? ITENS.filter((i) => i.dev === 'no01') : DEV[f].fila;
+    if (!itens.length) { $('#fallback').style.display = 'none'; return; }
+    $('#fbTexto').textContent = `${DEV[f].nome} não respondeu. O coletor mostra o próximo item desse dispositivo: pegue ${itens[0].qtd} un em ${itens[0].end} e confirme no coletor.`;
+    $('#fallback').style.display = 'block';
+    $('#btnConfirmaColetor').onclick = async () => {
+      const it = itens.shift();
+      await enviar('coletor', 'servico', http('POST', '/v1/estacoes/05/confirmacoes', { caixa: S.caixa, end: it.end, qtd: it.qtd, origem: 'coletor' }, `POST ${it.end}`));
+      await servicoRecebe({ tipo: 'CONFIRMA_COLETOR', end: it.end, qtd: it.qtd });
+      if (S.ok >= S.total) { S.estado = 'PRONTA'; atualizarTextos(); telaPorEstado(); }
+      mostrarFallback();
+    };
+  }
+
+  // ------------------------------------------------------------ rede do concentrador
+  async function mudarRede(ligado) {
+    const ger = geracao;
+    S.redeLigada = ligado;
+    atualizarTextos();
+    if (!ligado) {
+      await dormir(600);
+      if (ger !== geracao || S.redeLigada) return;
+      S.online = false;
+      await enviar('broker', 'servico', mqtt('ptl/est05/status', { tipo: 'STATUS', estacao: '05', online: false, origem: 'last will do concentrador' }, 'offline', { retido: true }));
+      atualizarTextos();
+      if (S.estado === 'SEPARANDO') telaPorEstado();
+      return;
+    }
+    await enviar('conc', 'broker', mqtt('ptl/est05/status', { tipo: 'STATUS', estacao: '05', online: true, versao: '1.0.3', caixa_aberta: C.caixa || null }, 'CONNECT', { retido: true }));
+    await enviar('broker', 'servico', mqtt('ptl/est05/status', { tipo: 'STATUS', estacao: '05', online: true }, 'online', { retido: true }));
+    S.online = true;
+    atualizarTextos();
+    while (S.fila.length && ger === geracao) {
+      const e = S.fila.shift();
+      atualizarTextos();
+      await concParaServico(e.carga, e.rot + ' (fila)');
+    }
+    if (S.estado === 'SEPARANDO' || S.estado === 'PRONTA') await coletorConsulta();
+  }
+
+  // ------------------------------------------------------------ heartbeat
+  async function cicloHeartbeat(ger) {
+    while (ger === geracao) {
+      await dormir(9000);
+      if (ger !== geracao) return;
+      if ($('#chkRotina').checked && S.redeLigada) {
+        await enviar('conc', 'broker', mqtt('ptl/est05/evt', { tipo: 'HEARTBEAT', uptime_s: Math.round((performance.now() - t0) / 1000) + 86400, temp_c: 38.5, fila: S.fila.length, versao: '1.0.3' }, 'HEARTBEAT', { qos: 0 }));
+        await enviar('broker', 'servico', mqtt('ptl/est05/evt', { tipo: 'HEARTBEAT' }, 'HEARTBEAT', { qos: 0 }));
+      }
+    }
+  }
+
+  // ------------------------------------------------------------ início e controles
+  function reiniciarEstado(total) {
+    if (total) { geracao++; fila485 = Promise.resolve(); S.fila = []; S.online = S.redeLigada; }
+    caixaSeq++;
+    Object.assign(S, { estado: 'AGUARDANDO', caixa: '', ok: 0, falhaInformada: null });
+    Object.assign(C, { caixa: '', estado: 'livre' });
+    DEV.no01.slots.forEach((s) => Object.assign(s, { qtd: 0, aceso: false, aperto: false }));
+    ['eq41', 'eq52'].forEach((id) => Object.assign(DEV[id], { fila: [], aceso: false, aperto: false }));
+    $('#fallback').style.display = 'none';
+    atualizarTextos();
+    telaPorEstado();
+    if (total) { ocupado = false; cicloPolling(geracao); cicloHeartbeat(geracao); }
+  }
+  $('#btnGatilho').addEventListener('click', gatilho);
+  $('#btnReiniciar').addEventListener('click', () => { $('#log').innerHTML = ''; msgs.length = 0; selecionada = -1; t0 = performance.now(); reiniciarEstado(true); });
+  $('#chkRede').addEventListener('change', (e) => mudarRede(e.target.checked));
+  $('#selFalha').addEventListener('change', (e) => { falha = e.target.value; desenharDispositivos(); });
+  window.addEventListener('keydown', (e) => { if (e.code === 'Space' && !/INPUT|SELECT|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); gatilho(); } });
+
+  reiniciarEstado(true);
+  window.DEMO = { gatilho, apertar, S, C, DEV, mudarRede, msgs };
+})();
+</script>
+</body>
+</html>
