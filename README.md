@@ -2,6 +2,7 @@
 
 | Pasta | Conteúdo |
 |---|---|
+| [`simulador-unificado/`](simulador-unificado/) | **Versão unificada**: estação 3D e comunicação sincronizadas, com abas para alternar (3D, comunicação, lado a lado). Abra `index.html`. |
 | [`demo-comunicacao/`](demo-comunicacao/) | **Demonstração da comunicação** entre coletor, Serviço PTL, broker MQTT, concentrador e módulos de LED, com os bytes de cada mensagem. Abra `index.html`. |
 | [`simulador-3d/`](simulador-3d/) | **Simulador 3D da estação completa** (estações 05 e 27, endereços reais, arquiteturas A e B). Abra `index.html`. |
 | [`projeto/entregaveis/`](projeto/entregaveis/) | Apresentação (.pptx), documento técnico (.docx) e orçamento (.xlsx) |

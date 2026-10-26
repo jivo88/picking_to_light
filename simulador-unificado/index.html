@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulador PTL</title>
+<style>
+/* Casca da versão unificada: abas no topo e as duas telas (estação 3D e comunicação) sincronizadas */
+:root { --bg: #dfe4ea; --barra: #111826; --texto: #e8ecf2; --suave: #9aa6b8; --ambar: #f2a33a; --borda: rgba(255,255,255,.12); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0c1018; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #0c1018; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; display: flex; flex-direction: column; overflow: hidden; }
+header { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; background: var(--barra); color: var(--texto);
+  padding: 8px max(14px, env(safe-area-inset-right, 0px)) 8px max(14px, env(safe-area-inset-left, 0px)); padding-top: calc(8px + env(safe-area-inset-top, 0px)); }
+header b { font-size: 15px; }
+header .ponto { width: 10px; height: 10px; border-radius: 50%; background: var(--ambar); box-shadow: 0 0 10px var(--ambar); display: inline-block; margin-right: 8px; }
+.abas { display: flex; background: rgba(255,255,255,.06); border-radius: 8px; padding: 3px; }
+.abas button { background: transparent; color: var(--suave); border: 0; border-radius: 6px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.abas button.on { background: var(--ambar); color: #1b2638; font-weight: 700; }
+.abas button:focus-visible { outline: 2px solid #fff; }
+.dica { color: var(--suave); font-size: 12px; margin-left: auto; }
+main { flex: 1; min-height: 0; display: flex; position: relative; }
+iframe { border: 0; display: block; background: var(--bg); }
+#f3d { flex: 1.15; min-width: 0; }
+#fcom { flex: 1; min-width: 0; border-left: 1px solid var(--borda); }
+body.modo-3d #fcom { display: none; }
+body.modo-com #fcom { flex: 1; border-left: 0; }
+body.modo-com #f3d { position: absolute; right: 16px; bottom: 16px; width: min(340px, 36vw); height: min(220px, 30vh); z-index: 5;
+  border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.35); outline: 2px solid var(--ambar); }
+#pipRot { display: none; position: absolute; right: 16px; bottom: calc(min(220px, 30vh) + 22px); z-index: 6; background: var(--barra); color: var(--texto);
+  border: 1px solid var(--borda); border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+body.modo-com #pipRot { display: block; }
+@media (max-width: 900px) { body.modo-lado main { flex-direction: column; } body.modo-lado #fcom { border-left: 0; border-top: 1px solid var(--borda); } }
+</style>
+</head>
+<body class="modo-lado">
+<header>
+  <span><span class="ponto"></span><b>Simulador Pick-to-Light</b></span>
+  <div class="abas" role="tablist" aria-label="Visualização">
+    <button data-m="3d" role="tab">Estação 3D</button>
+    <button data-m="com" role="tab">Comunicação</button>
+    <button data-m="lado" role="tab" class="on">Lado a lado</button>
+  </div>
+  <span class="dica">As duas telas mostram a mesma estação: cada ação no 3D aparece como mensagens na comunicação.</span>
+</header>
+<main>
+  <iframe id="f3d" title="Estação 3D" src="../simulador-3d/index.html?semajuda"></iframe>
+  <iframe id="fcom" title="Comunicação" src="comunicacao.html"></iframe>
+  <button id="pipRot" type="button">Estação 3D · ampliar</button>
+</main>
+<script>
+(() => {
+  const f3d = document.getElementById('f3d'), fcom = document.getElementById('fcom');
+  const para3d = (m) => { try { f3d.contentWindow.postMessage(Object.assign({ ptlPai: true }, m), '*'); } catch (e) { /* ainda carregando */ } };
+  const paraCom = (m) => { try { fcom.contentWindow.postMessage(m, '*'); } catch (e) { /* ainda carregando */ } };
+  let modo = window.innerWidth >= 1100 ? 'lado' : '3d';
+  try { const salvo = localStorage.getItem('ptl-modo'); if (salvo) modo = salvo; } catch (e) { /* sem armazenamento */ }
+  function aplicar(m) {
+    modo = m;
+    document.body.className = 'modo-' + m;
+    document.querySelectorAll('.abas button').forEach((b) => b.classList.toggle('on', b.dataset.m === m));
+    para3d({ tipo: 'compacto', valor: m !== '3d' });
+    para3d({ tipo: 'pip', valor: m === 'com' });
+    paraCom({ ptlPai: true, tipo: 'visivel', valor: m !== '3d' });
+    try { localStorage.setItem('ptl-modo', m); } catch (e) { /* sem armazenamento */ }
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+  }
+  document.querySelectorAll('.abas button').forEach((b) => b.addEventListener('click', () => aplicar(b.dataset.m)));
+  document.getElementById('pipRot').addEventListener('click', () => aplicar('3d'));
+  window.addEventListener('keydown', (e) => { const m = { Digit1: '3d', Digit2: 'com', Digit3: 'lado' }[e.code]; if (m) aplicar(m); });
+  window.addEventListener('message', (e) => {
+    const d = e.data || {};
+    if (e.source === f3d.contentWindow && d.ptl) paraCom(d);
+    if (e.source === fcom.contentWindow && d.ptlFilho) {
+      if (d.tipo === 'pronto') { para3d({ tipo: 'pedirMapa' }); aplicar(modo); }
+      if (d.tipo === 'gatilho' || d.tipo === 'apertar' || d.tipo === 'rede') para3d(d);
+    }
+  });
+  f3d.addEventListener('load', () => { aplicar(modo); para3d({ tipo: 'pedirMapa' }); });
+  aplicar(modo);
+})();
+</script>
+</body>
+</html>

@@ -59,7 +59,7 @@
   }
 
   // ======================================================================= ESTADO
-  const S = { est: '05', modo: 'A', itens: 8, vel: 1, auto: false, guia: true, destaque: true, cabos: true, cam: 'geral' };
+  const S = { redeOk: true, est: '05', modo: 'A', itens: 8, vel: 1, auto: false, guia: true, destaque: true, cabos: true, cam: 'geral' };
   const K = { caixas: 0, itens: 0, tempoTotal: 0, pendencias: 0, falhas: 0 };
   let simT = 0;
   let estado = 'AGUARDANDO';
@@ -225,6 +225,18 @@
   const fmtT = (s) => { s = Math.max(0, Math.round(s)); return `${pad(Math.floor(s / 60), 2)}:${pad(s % 60, 2)}`; };
   const relogio = () => { const s = 8 * 3600 + Math.floor(simT); return `${pad(Math.floor(s / 3600) % 24, 2)}:${pad(Math.floor(s / 60) % 60, 2)}:${pad(s % 60, 2)}`; };
   const rotEnd = (e) => `P${pad(e.predio, 3)} A${e.andar}`;
+  // ---------------- integração com a versão unificada (janela pai recebe os eventos)
+  const EMBUTIDO = window.parent !== window;
+  const ADDR_EQ = { 'AG-E4': 0x41, 'AG-E5': 0x42, 'AG-D4': 0x43, 'AG-D5': 0x44, 'BG-E1': 0x51, 'BG-E2': 0x52, 'BG-E3': 0x53, 'BG-E4': 0x54, 'BG-D1': 0x55, 'BG-D2': 0x56, 'BG-D3': 0x57, 'BG-D4': 0x58 };
+  function dispDe(m) {
+    if (m.tipo === 'Q') return { tipo: 'Q', addr: m.end.predio, pos: m.end.andar, id: m.id };
+    const a = ADDR_EQ[m.id] || (0x60 + (parseInt(String(m.id).replace(/\D/g, ''), 10) || 0));
+    return { tipo: 'EQ', addr: a, id: m.id, nome: m.nome || m.id };
+  }
+  function emitir(tipo, dados) {
+    if (!EMBUTIDO) return;
+    try { window.parent.postMessage(Object.assign({ ptl: true, tipo, est: S.est, modo: S.modo }, dados || {}), '*'); } catch (e) { /* sem janela pai */ }
+  }
   const estVizinha = (d) => pad(Math.max(1, +S.est + d), 2);
   function limpar(g) {
     while (g.children.length) {
@@ -391,7 +403,7 @@
         e.tote = caixa;
         e.toteMat = tm;
         rotPorAndar[Math.min(7, a)].push(matriz(c.x - c.w / 2 + 0.05, yb - 0.022, 0.024));
-        if (e.cat === 'alto_0a3') e.modulo = criarModulo('Q', g, c.x, yb - 0.036, 0.04, 0, rotEnd(e), 'alto');
+        if (e.cat === 'alto_0a3') { e.modulo = criarModulo('Q', g, c.x, yb - 0.036, 0.04, 0, rotEnd(e), 'alto'); e.modulo.end = e; }
       });
       if (!cinza) {
         const lb = placa(pad(c.predio, 3), Math.min(0.2, c.w - 0.06), 0.065, { fundo: '#ffffff', cor: '#1B2638' });
@@ -908,21 +920,27 @@
       if (b2 && ori === 'leitor fixo') b2.leituraT = 0.6;
     }
     log('API', `POST /v1/estacoes/${S.est}/leituras {caixa:"${atual.id}", origem:"${ori}"}`);
-    if (estado === 'NA_POSICAO') return abrirCaixa();
+    if (estado === 'NA_POSICAO' && !S.redeOk) {
+      log('API', `503 → estação ${S.est} sem comunicação com o concentrador`, 'ERRO');
+      emitir('recusada', { caixa: atual.id, origem: ori });
+      return;
+    }
+    if (estado === 'NA_POSICAO') return abrirCaixa(ori);
     if (estado === 'SEPARANDO') {
       const p = pendentes();
       if (p > 0) {
         estado = 'ALERTA';
         log('API', `409 → ${p} item(ns) pendente(s). Nova leitura fecha com pendência`, 'ERRO');
+        emitir('alerta', { caixa: atual.id, origem: ori, pendentes: p });
         atualizarUI();
         return;
       }
     }
-    if (estado === 'ALERTA') return fecharCaixa(true);
-    if (estado === 'PRONTA') return fecharCaixa(false);
+    if (estado === 'ALERTA') return fecharCaixa(true, ori);
+    if (estado === 'PRONTA') return fecharCaixa(false, ori);
   }
 
-  function abrirCaixa() {
+  function abrirCaixa(ori) {
     estado = 'SEPARANDO';
     atual.t0 = simT;
     const its = atual.itens;
@@ -941,6 +959,9 @@
     const blocos = Object.keys(grupos).filter((k) => k.startsWith('AG')).length, zonas = Object.keys(grupos).filter((k) => k.startsWith('BG')).length;
     log('MQTT', `ptl/est${S.est}/cmd SEPARAR caixa=${atual.id} itens=${its.length} (Q:${q.length} · andares 4-5:${blocos} · zonas:${zonas})`);
     log('EVT', `ptl/est${S.est}/evt ACK ${q.length + blocos + zonas} display(s) aceso(s)`);
+    const displays = modulos.filter((m) => m.item).map((m) => Object.assign(dispDe(m), { end: rotEnd(m.item.e), qtd: m.item.qtd, fila: m.fila.length, falha: m.falha }));
+    emitir('abrir', { caixa: atual.id, origem: ori || 'coletor', total: its.length, displays,
+      itens: its.map((i) => ({ end: rotEnd(i.e), qtd: i.qtd, cd: i.e.end })) });
     atualizarDestaques();
     atualizarUI();
   }
@@ -957,17 +978,23 @@
     if (m.tipo === 'EQ' && !m.item) { m.flash = 0.7; log('EVT', `ptl/est${S.est}/evt ZONA_FIM ${m.nome || m.id}`); }
     if (m.tipo === 'Q') m.flash = 0.5;
     desenhar(m);
-    if (pendentes() === 0) {
+    const concluiu = pendentes() === 0;
+    if (concluiu) {
       estado = 'PRONTA';
       log('EVT', `ptl/est${S.est}/evt CONCLUIDA caixa=${atual.id} · aguardando leitura de fechamento`);
     }
+    emitir('botao', Object.assign(dispDe(m), { caixa: atual.id, end: rotEnd(it.e), qtd: it.qtd, cd: it.e.end,
+      proximo: m.item ? { end: rotEnd(m.item.e), qtd: m.item.qtd } : null, zonaFim: m.tipo === 'EQ' && !m.item,
+      concluida: concluiu, ok: atual.itens.length - pendentes(), total: atual.itens.length }));
     atualizarDestaques();
     atualizarUI();
   }
 
-  function fecharCaixa(comPendencia) {
+  function fecharCaixa(comPendencia, ori) {
     const p = pendentes();
     const dur = simT - atual.t0;
+    emitir('fechar', { caixa: atual.id, origem: ori || 'coletor', pendentes: comPendencia ? p : 0, tempo: fmtT(dur),
+      apagar: modulos.filter((m) => m.item && !m.falha).map((m) => dispDe(m)) });
     modulos.forEach((m) => { if (m.fila.length) { m.fila = []; m.item = null; desenhar(m); } });
     if (comPendencia && p) {
       K.pendencias += p;
@@ -1006,6 +1033,7 @@
     if (!atual || !['SEPARANDO', 'ALERTA', 'PRONTA'].includes(estado)) return;
     log('API', `POST /v1/estacoes/${S.est}/cancelar {caixa:"${atual.id}"}`);
     log('MQTT', `ptl/est${S.est}/cmd CANCELAR caixa=${atual.id}`);
+    emitir('cancelar', { caixa: atual.id, apagar: modulos.filter((m) => m.item && !m.falha).map((m) => dispDe(m)) });
     modulos.forEach((m) => { m.fila = []; m.item = null; desenhar(m); });
     atual.itens.forEach((i) => { i.status = 'pendente'; });
     estado = 'NA_POSICAO';
@@ -1023,6 +1051,7 @@
     K.falhas++;
     desenhar(m);
     log('EVT', `ptl/est${S.est}/evt FALHA_MODULO ${m.tipo === 'Q' ? 'Q ' + m.id : 'E+Q ' + (m.nome || m.id)} sem resposta no barramento`, 'ERRO');
+    emitir('falha', Object.assign(dispDe(m), { item: m.item ? { end: rotEnd(m.item.e), qtd: m.item.qtd } : null }));
     atualizarDestaques();
     atualizarUI();
   }
@@ -1031,6 +1060,7 @@
     m.falha = false;
     desenhar(m);
     log('EVT', `Módulo ${m.nome || m.id} trocado (conector RJ45) → CONFIG reenviado, display restaurado`);
+    emitir('troca', Object.assign(dispDe(m), { item: m.item ? { end: rotEnd(m.item.e), qtd: m.item.qtd } : null }));
     atualizarDestaques();
     atualizarUI();
   }
@@ -1268,6 +1298,7 @@
     $('#log').innerHTML = '';
     reiniciarCaixas();
     log('API', `PUT /v1/estacoes/${v}/mapa → ${DADOS[v].info.total} endereços carregados de wms_endereco`);
+    emitir('estacao', mapaEstacao());
     Object.assign(oper, posCaixa(), { caminho: [], rot: Math.PI });
     if (S.auto) ligarAuto(true);
     aplicarCamera(S.cam, true);
@@ -1278,11 +1309,12 @@
     if (b2) b2.g.visible = v === 'B2';
     caixasCena.forEach((c) => { c.g.userData.tag.visible = v !== 'A'; });
     log('API', `Modo de identificação: ${v === 'A' ? 'A · coletor (código de barras)' : v === 'B2' ? 'B2 · RFID leitor fixo' : 'B1 · RFID pulseira'}`);
+    emitir('modo', {});
     if (v === 'B2' && estado === 'NA_POSICAO') esperar(0.8).then(() => { if (estado === 'NA_POSICAO' && S.modo === 'B2') leitura('leitor fixo'); });
     atualizarUI();
   });
   segmentado('#selCam', (v) => aplicarCamera(v));
-  segmentado('#selVel', (v) => { S.vel = +v; });
+  segmentado('#selVel', (v) => { S.vel = +v; emitir('vel', { vel: S.vel }); });
   $('#btnLeitura').addEventListener('click', () => leitura());
   $('#btnCancelar').addEventListener('click', cancelarCaixa);
   $('#btnFalha').addEventListener('click', simularFalha);
@@ -1438,6 +1470,7 @@
     if (simT - ultimoHeartbeat > 120) {
       ultimoHeartbeat = simT;
       log('EVT', `ptl/est${S.est}/evt HEARTBEAT concentrador ok · 2 barramentos · ${modulos.filter((m) => m.falha).length} falha(s)`);
+      emitir('heartbeat', { falhas: modulos.filter((m) => m.falha).length });
     }
 
     // câmera
@@ -1489,10 +1522,34 @@
   aplicarCamera('geral', true);
   atualizarUI();
   if (params.has('auto')) { $('#optAuto').checked = true; ligarAuto(true); }
-  if (params.has('semajuda')) $('#ajuda').classList.add('oculto');
+  if (params.has('semajuda') || window.parent !== window) $('#ajuda').classList.add('oculto');
   if (params.get('cam')) { const b = document.querySelector(`#selCam button[data-v="${params.get('cam')}"]`); if (b) b.click(); }
   if (params.get('vel')) { const b = document.querySelector(`#selVel button[data-v="${params.get('vel')}"]`); if (b) b.click(); }
   requestAnimationFrame(loop);
+
+  function mapaEstacao() {
+    const disp = {};
+    modulos.forEach((m) => {
+      const d = dispDe(m);
+      if (d.tipo === 'Q') { const k = 'N' + d.addr; disp[k] = disp[k] || { tipo: 'NO', addr: d.addr, pred: d.addr, andares: [] }; disp[k].andares.push(d.pos); }
+      else disp['E' + d.addr] = { tipo: 'EQ', addr: d.addr, id: d.id, nome: m.nome || d.id };
+    });
+    return { segmento: DADOS[S.est].info.segmento, total: DADOS[S.est].info.total, dispositivos: Object.values(disp) };
+  }
+  window.addEventListener('message', (ev) => {
+    const d = ev.data || {};
+    if (!d.ptlPai) return;
+    if (d.tipo === 'rede') { S.redeOk = !!d.ligado; log('EVT', `Cabo de rede do concentrador ${d.ligado ? 'religado' : 'desligado'}${d.ligado ? '' : ' · displays seguem funcionando, confirmações ficam na fila'}`, d.ligado ? undefined : 'ERRO'); }
+    if (d.tipo === 'compacto') document.body.classList.toggle('compacto', !!d.valor);
+    if (d.tipo === 'pedirMapa') emitir('estacao', mapaEstacao());
+    if (d.tipo === 'gatilho') leitura();
+    if (d.tipo === 'pip') document.body.classList.toggle('pip', !!d.valor);
+    if (d.tipo === 'apertar') {
+      const m = modulos.find((x) => { const k = dispDe(x); return k.addr === d.addr && (k.tipo === 'EQ' || k.pos === d.pos); });
+      if (m && m.item && !m.falha) confirmar(m, 'clique');
+    }
+  });
+  if (EMBUTIDO) { document.body.classList.add('embutido'); emitir('estacao', mapaEstacao()); }
 
   window.PTL = { renderer, scene, camera, controls, enderecos: () => enderecos, S, K, CFG, estado: () => estado, leitura, confirmar, modulos: () => modulos, simularFalha, aplicarCamera };
 })();
