@@ -1587,7 +1587,7 @@
     S.modo = v;
     if (b2) b2.g.visible = v === 'B2';
     caixasCena.forEach((c) => { c.g.userData.tag.visible = v !== 'A'; });
-    log('API', `Modo de identificação: ${v === 'A' ? 'A · coletor (código de barras)' : v === 'B2' ? 'B2 · RFID leitor fixo' : 'B1 · RFID pulseira'}`);
+    log('API', `Modo de identificação: ${v === 'A' ? 'A · coletor (código de barras)' : 'RFID com pulseira (melhoria futura)'}`);
     emitir('modo', {});
     if (v === 'B2' && estado === 'NA_POSICAO') esperar(0.8).then(() => { if (estado === 'NA_POSICAO' && S.modo === 'B2') leitura('leitor fixo'); });
     atualizarUI();

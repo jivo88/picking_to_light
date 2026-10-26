@@ -270,7 +270,7 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
   // ------------------------------------------------------------ estado espelhado
   const S = { caixa: '', ok: 0, total: 0, estado: 'livre', modo: 'A', est: '05', online: true, rede: true, fila: [], acesos: 0, falhas: 0 };
   function textos() {
-    const fonte = S.modo === 'A' ? ['Coletor MovFast', 'leitura da etiqueta'] : S.modo === 'B1' ? ['Pulseira NFC (B1)', 'tag lida no pulso'] : ['Coletor (consulta)', 'leitura feita no B2'];
+    const fonte = S.modo === 'A' ? ['Coletor MovFast', 'leitura da etiqueta'] : S.modo === 'B1' ? ['Pulseira NFC (futuro)', 'tag lida no pulso'] : ['Coletor (consulta)', 'leitura feita no B2'];
     nFonte.t.textContent = fonte[0];
     tFonte[0].textContent = `caixa ${S.caixa || '—'}`;
     tFonte[1].textContent = S.total ? `${S.ok}/${S.total} confirmados` : '';
@@ -292,8 +292,9 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
     tConc[4].textContent = `rede: ${S.rede ? 'conectada' : 'sem cabo'}`;
     lig.mq2.setAttribute('stroke', S.rede ? 'var(--ambar)' : 'var(--vermelho)');
     lig.mq2.setAttribute('stroke-dasharray', S.rede ? '' : '8 6');
-    nB2.g.setAttribute('opacity', S.modo === 'B2' ? '1' : '0.35');
-    lig.spi.setAttribute('opacity', S.modo === 'B2' ? '1' : '0.35');
+    // leitor fixo (B2) saiu do projeto em 26/10/2026: fica oculto
+    nB2.g.setAttribute('display', 'none');
+    lig.spi.setAttribute('display', 'none');
   }
 
   // ------------------------------------------------------------ registro e inspetor

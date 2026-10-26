@@ -22,8 +22,7 @@
     <label>Arquitetura</label>
     <div class="seg" id="selModo">
       <button data-v="A" class="on">A · Coletor</button>
-      <button data-v="B2">B2 · RFID fixo</button>
-      <button data-v="B1">B1 · Pulseira</button>
+      <button data-v="B1">RFID pulseira (futuro)</button>
     </div>
   </div>
   <div class="grupo">
@@ -105,7 +104,7 @@
     <p>Estação montada com os endereços reais da tabela <code>wms_endereco</code>, no layout da operação: a <b>esteira de transporte</b> passa <b>por dentro do alto giro</b> (por baixo do andar 3 e por cima do andar 4) e a <b>esteira de separação</b> fica na frente, aberta, a cerca de 20 cm. A <b>transferência</b> (a cada 4 estações) passa a bacia para a separação e o <b>rolete direcionador</b> manda para 2 estações à esquerda ou 2 à direita. Cada estação tem 2,5 m de alto giro na frente do operador (andares 4 e 5 por baixo da esteira de separação) e, atrás dele, um <b>corredor de cerca de 1,5 m</b> com prateleiras de 50 cm × 2 m (020–031 à esquerda, 043 → 032 à direita) e o prédio <b>015</b> ocupando a frente do bloco da direita (1 m). Câmera <b>Visão do operador</b> mostra o que ele vê. O <b>concentrador</b> fica atrás da estação, do outro lado do alto giro. Endereços no formato da etiqueta, por exemplo <b>0.05.0421.A</b>.</p>
     <ol>
       <li><b>A bacia chega</b> pela esteira de separação, vinda da transferência.</li>
-      <li><b>Leitura abre a bacia:</b> gatilho do coletor (arquitetura A), tag lida pelo leitor fixo (B2) ou pela pulseira (B1).</li>
+      <li><b>Leitura abre a bacia:</b> gatilho do coletor (arquitetura A, usada na POC). A pulseira RFID aparece como melhoria futura.</li>
       <li><b>Displays acendem:</b> no alto giro, todos os endereços dos andares 0–3 com a quantidade; nos 2 displays dos andares 4–5 (por baixo da esteira de separação) e nas zonas do baixo giro (2 por lado do corredor, na altura dos olhos), um item por vez na ordem da rota. Se a caixa tem itens no baixo giro, o <b>sinal luminoso</b> ao lado da posição de pega acende, e o operador não precisa ficar olhando para trás.</li>
       <li><b>Confirmação:</b> clique no botão verde do módulo. O display apaga ou passa ao próximo item.</li>
       <li><b>Nova leitura fecha a bacia</b>, e o operador a empurra de volta para a esteira de transporte.</li>

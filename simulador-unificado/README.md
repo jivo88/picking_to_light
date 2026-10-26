@@ -25,7 +25,7 @@ Atalhos: teclas 1, 2, 3 e 4 (com o foco fora das telas). A aba escolhida fica sa
 
 | No 3D | Na comunicação |
 |---|---|
-| Leitura que abre a caixa (A, B1 ou B2) | POST da leitura (ou leitura NFC pelo SPI no B2), SELECT no Sybase, MQTT `SEPARAR` e um quadro MOSTRAR para cada display |
+| Leitura que abre a caixa (coletor, ou pulseira RFID no futuro) | POST da leitura, SELECT no Sybase, MQTT `SEPARAR` e um quadro MOSTRAR para cada display |
 | Botão de um módulo | LER_BOTOES, APAGAR ou MOSTRAR do próximo item, MQTT `BTN`/`ZONA_FIM`/`CONCLUIDA`, INSERT no Sybase e consulta do coletor |
 | Leitura com itens pendentes / fechamento | resposta 409 / UPDATE da sessão, `CANCELAR` e APAGAR quando fecha com pendência |
 | Simular falha | conforme o tipo: 3 tentativas sem resposta (E+Q) ou LER_STATUS com "display sem ACK" / "botão travado", `FALHA_MODULO` com endereço e porta, INSERT em `ptl_evento_falha`; o aviso aparece no Controle e o 3D mostra o módulo com moldura vermelha |

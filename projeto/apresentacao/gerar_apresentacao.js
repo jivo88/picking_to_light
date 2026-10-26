@@ -110,7 +110,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   });
   s.addText([
     { text: "Proposta: ", options: { bold: true, color: C.text1 } },
-    { text: "começar pela Arquitetura A, que usa os coletores MovFast que já temos, com os módulos montados internamente e alimentação em 12 V. O piloto seria nas estações 04 e 27. A Arquitetura B (RFID) pode vir depois, aproveitando os mesmos displays.", options: { color: C.text2 } },
+    { text: "começar pela Arquitetura A, que usa os coletores MovFast que já temos, com os módulos montados internamente e alimentação em 12 V. O piloto seria nas estações 04 e 27. O RFID com pulseira fica como melhoria futura, aproveitando os mesmos displays.", options: { color: C.text2 } },
   ], { x: 0.6, y: 4.1, w: 12.1, h: 1.1, fontSize: 17, margin: 0, isTextBox: true, valign: "top" });
   s.addText("Para decidir hoje: aprovação do piloto, Arquitetura A como base e montagem interna dos módulos.", { x: 0.6, y: 5.45, w: 12.1, h: 0.5, fontSize: 16, color: C.text1, bold: true, margin: 0, valign: "middle", isTextBox: true });
   s.addNotes("Números da tabela wms_endereco e da planilha Orcamento_PTL.xlsx (aba Resumo). O piloto custa cerca de 5% da operação completa e permite medir o ganho antes de investir no restante.");
@@ -157,14 +157,14 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     s.addText(t1, { x: x + 0.3, y: 3.0, w: 2.35, h: 0.5, fontSize: 19, bold: true, color: C.text1, margin: 0, isTextBox: true });
     s.addText(t2, { x: x + 0.3, y: 3.5, w: 2.35, h: 1.8, fontSize: 14, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
   });
-  s.addText("Na Arquitetura B, os passos 1 e 4 são feitos pela leitura da tag RFID fixa na caixa.", { x: 0.6, y: 5.85, w: 12, h: 0.5, fontSize: 14, italic: true, color: C.accent4, margin: 0, isTextBox: true });
+  s.addText("No futuro, com RFID, os passos 1 e 4 passam a ser feitos encostando a pulseira na tag da caixa.", { x: 0.6, y: 5.85, w: 12, h: 0.5, fontSize: 14, italic: true, color: C.accent4, margin: 0, isTextBox: true });
   s.addNotes("A operação pediu que abrir e fechar a caixa fosse só pela leitura, sem escolher opção na tela.");
 
   // ================================================================ SECAO ARQUITETURAS
   pres.addSection({ title: "Arquiteturas" });
   s = pres.addSlide({ masterName: "SECAO", sectionTitle: "Arquiteturas" });
   s.addText("Arquiteturas", { placeholder: "title" });
-  s.addText("As duas usam os mesmos displays. Muda apenas como a caixa é identificada: pelo coletor (A) ou por RFID (B).", { placeholder: "body" });
+  s.addText("A POC e a implantação usam o coletor que já temos. O RFID com pulseira usa os mesmos displays e fica como melhoria futura.", { placeholder: "body" });
 
   // ================================================================ 6 ARQ A
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Arquiteturas" });
@@ -187,15 +187,15 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Arquiteturas" });
   titulo(s, "Arquitetura de componentes");
   imagem(s, BASE + "/diagramas/componentes.png", 0.5, 1.2, 12.3, 5.7);
-  s.addNotes("Azul: software novo (Serviço PTL). Verde: hardware novo em cada estação. Marrom: sistemas que já existem. Tracejado: opcional ou só na Arquitetura B. O serviço fala com o Sybase por SQL, com o BHT por HTTP e com os 40 concentradores por MQTT na rede cabeada; cada concentrador comanda dois barramentos RS-485.");
+  s.addNotes("Azul: software novo (Serviço PTL). Verde: hardware novo em cada estação. Marrom: sistemas que já existem. Tracejado: opcional ou melhoria futura (RFID com pulseira). O serviço fala com o Sybase por SQL, com o BHT por HTTP e com os 40 concentradores por MQTT na rede cabeada; cada concentrador comanda dois barramentos RS-485.");
 
   // ================================================================ 7 ARQ B
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Arquiteturas" });
-  titulo(s, "Arquitetura B: RFID na caixa");
+  titulo(s, "Melhoria futura: RFID com pulseira");
   imagem(s, BASE + "/diagramas/arquitetura_b.png", 0.5, 1.3, 8.6, 5.5);
   const cardsB = [
-    ["B2: leitor fixo (indicado)", "Leitor NFC no ponto onde a caixa para e painel LCD. O operador não carrega nada."],
-    ["B1: pulseira NFC", "Cerca de R$ 130 por unidade, mãos livres. Bateria e conforto preocupam."],
+    ["Depois da POC", "A POC e a implantação usam o coletor. O leitor fixo saiu do projeto."],
+    ["Pulseira NFC", "Cerca de R$ 130 por unidade, mãos livres. Acréscimo de ~R$ 36 mil para as 40 estações."],
     ["Tag na caixa", "NTAG213, cerca de R$ 2,37 cada. Frota estimada em 5.000 caixas, a confirmar."],
   ];
   cardsB.forEach(([a, b], i) => {
@@ -208,20 +208,20 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
 
   // ================================================================ 8 A x B
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Arquiteturas" });
-  titulo(s, "Comparação entre A e B");
+  titulo(s, "Coletor hoje, RFID depois");
   const cab = (t) => ({ text: t, options: { bold: true, color: C.background1, fill: { color: C.text1 } } });
   const linhasAB = [
-    [cab("Critério"), cab("A: coletor"), cab("B2: RFID com leitor fixo")],
-    ["Leitura da caixa", "Coletores MovFast que já temos", "Tag em cada caixa e leitor em cada estação"],
-    ["O que o operador faz", "Aperta o gatilho para abrir e para fechar", "Posiciona a caixa (abre) e lê de novo (fecha)"],
-    ["Hardware, 40 estações", "R$ 305 mil", "R$ 332 mil"],
+    [cab("Critério"), cab("Coletor (POC e implantação)"), cab("RFID com pulseira (futuro)")],
+    ["Leitura da caixa", "Coletores MovFast que já temos", "Tag em cada caixa e pulseira no operador"],
+    ["O que o operador faz", "Aperta o gatilho para abrir e para fechar", "Encosta o pulso na tag para abrir e fechar"],
+    ["Hardware, 40 estações", "R$ 305 mil", "+ R$ 33 mil sobre o coletor"],
     ["Custo recorrente novo", "Nenhum", "Tags de caixas novas ou danificadas"],
-    ["Software (estimativa)", "Cerca de 1.080 h", "Cerca de 1.000 h, mais o cadastro das tags"],
-    ["Principais riscos", "Wi-Fi e disponibilidade dos coletores", "Posição de leitura na esteira; frota de tags"],
-    ["Prazo", "Menor", "Maior, por causa das tags, do cadastro e da instalação"],
+    ["Software (estimativa)", "Cerca de 1.144 h", "+ 80 h e o cadastro das tags"],
+    ["Principais riscos", "Wi-Fi e disponibilidade dos coletores", "Conforto e bateria da pulseira; frota de tags"],
+    ["Prazo", "POC em ~10 semanas", "Depois da POC"],
   ];
   s.addTable(linhasAB, { x: 0.6, y: 1.45, w: 12.1, colW: [3.0, 4.55, 4.55], fontSize: 15, color: C.text2, border: { type: "solid", pt: 0.75, color: "D5DBE3" }, rowH: 0.56, valign: "middle", margin: [4, 8, 4, 8] });
-  s.addNotes("Valores com mão de obra interna. A B usa toda a parte de displays da A, então começar pela A não desperdiça investimento.");
+  s.addNotes("Valores com mão de obra interna. O RFID usa toda a parte de displays da A, então começar pelo coletor não desperdiça investimento.");
 
   // ================================================================ SECAO ESTACAO
   pres.addSection({ title: "A estação" });
@@ -318,7 +318,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   // ================================================================ 15 ORCAMENTO GRAFICO
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Orçamento" });
   titulo(s, "Custo de hardware por cenário");
-  s.addChart(pres.charts.BAR, [{ name: "Operação completa (R$ mil)", labels: ["A interna, só materiais", "A interna, com mão de obra", "B2, RFID com leitor fixo", "A com placa própria (EMS)", "B1, RFID com pulseira", "A com PTL comercial"], values: [222, 305, 332, 335, 338, 763] }], {
+  s.addChart(pres.charts.BAR, [{ name: "Operação completa (R$ mil)", labels: ["A interna, só materiais", "A interna, com mão de obra", "A com placa própria (EMS)", "A com PTL comercial"], values: [222, 305, 335, 763] }], {
     x: 0.5, y: 1.35, w: 8.3, h: 5.4, barDir: "bar", chartColors: [THEME.colors.accent3],
     catAxisLabelColor: "5B6675", valAxisLabelColor: "8A97AB", catAxisLabelFontSize: 12, valAxisLabelFontSize: 10,
     catAxisLabelFontFace: "+mn-lt", valAxisLabelFontFace: "+mn-lt", dataLabelFontFace: "+mn-lt",
@@ -330,12 +330,12 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     [cab("Piloto 04 e 27"), cab("R$")],
     ["A interna, materiais", "14.511"],
     ["A interna, com mão de obra", "19.211"],
-    ["B2, leitor fixo", "20.550"],
+    ["POC com contingência", "22.469"],
     ["A, placa própria", "34.967"],
     ["A, PTL comercial", "41.681"],
   ];
   s.addTable(tabP, { x: 9.15, y: 1.45, w: 3.6, colW: [2.45, 1.15], fontSize: 13, color: C.text2, border: { type: "solid", pt: 0.75, color: "D5DBE3" }, rowH: 0.45, align: "left" });
-  s.addText("Software interno: cerca de 1.144 h (A) e 1.064 h (B), ou R$ 119 mil e R$ 110 mil. Com 10% de contingência e o software, a Arquitetura A soma cerca de R$ 454 mil.", { x: 9.15, y: 4.45, w: 3.6, h: 1.6, fontSize: 12, italic: true, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
+  s.addText("Software interno: cerca de 1.144 h, ou R$ 119 mil. RFID futuro: + R$ 33 mil e 80 h. Com 10% de contingência e o software, a Arquitetura A soma cerca de R$ 454 mil.", { x: 9.15, y: 4.45, w: 3.6, h: 1.6, fontSize: 12, italic: true, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
   s.addNotes("Fonte: Orcamento_PTL.xlsx. A placa própria só compensa em escala, por causa do projeto (cerca de R$ 15 mil) e da importação. Quantidades e preços podem ser alterados na planilha. Mão de obra a R$ 34,93/h (técnico) e software a R$ 103,78/h (analista de desenvolvimento), salários médios do salario.com.br com encargos. Os materiais incluem canaleta pelo layout real, alimentação dos concentradores, tomadas novas, nobreak e rack dos switches, ferramentas e frete.");
 
   // ================================================================ 16 INTERNO x TERCEIROS
@@ -413,7 +413,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   }
   const roteiro = [
     "A caixa entra pela transferência",
-    "Leitura no coletor virtual ou por RFID",
+    "Leitura da caixa no coletor virtual",
     "Alto giro e zonas acendem com os endereços da tabela",
     "Confirmação nos botões",
     "Nova leitura fecha e a caixa volta à esteira",

@@ -84,12 +84,12 @@ def d_arq(rfid=False):
             "Gatilho: 1ª leitura ABRE, 2ª leitura FECHA a caixa", "Mostra o progresso da caixa"], AZ2))
         c.append(seta(900, 165, 820, 165, "HTTPS", dupla=True))
     else:
-        c.append(caixa(900, 90, 470, 160, "Identificação por RFID (NFC 13,56 MHz)", [
+        c.append(caixa(900, 90, 470, 160, "RFID com pulseira (NFC 13,56 MHz)", [
             "Tag NFC fixa em cada caixa retornável",
-            "B1: pulseira NFC do operador (Wi-Fi)",
-            "B2: leitor fixo no barramento da estação",
-            "Painel da estação mostra caixa e progresso",
-            "Fechamento: nova leitura da tag"], RX, RX2))
+            "Pulseira NFC do operador (Wi-Fi)",
+            "Encosta o pulso: 1ª leitura ABRE, 2ª FECHA",
+            "Coletor continua como reserva",
+            "Melhoria futura, depois da POC"], RX, RX2))
         c.append(seta(900, 175, 820, 175, "Wi-Fi", dupla=True))
     # estacao
     c.append(f"<text x='30' y='418' font-size='13' font-weight='700' fill='{VD}' {FONT}>ESTAÇÃO (× 40), REDE CABEADA</text>")
@@ -97,25 +97,26 @@ def d_arq(rfid=False):
         "RP2040 + Ethernet W5500 (cabo, VLAN PTL)",
         "2 barramentos RS-485 (alto e baixo giro)",
         "Fonte 12 V Mean Well + gabinete ventilado",
-        "Guarda o estado da caixa se a rede cair"] + (["B2: leitor NFC + painel LCD"] if rfid else []), VD, VD2))
+        "Guarda o estado da caixa se a rede cair"], VD, VD2))
     c.append(seta(620, 360, 620, 430, "MQTT (ptl/est/cmd · evt)", dupla=True))
     c.append(caixa(30, 610, 380, 130, "Alto giro (na frente do operador)", [
         "Andares 0-3: Módulo Q por endereço",
         "  (quantidade 3 díg. + botão com LED)",
         "Nó de coluna por prédio (1 a 10)",
-        "Andares 4-5: 4 displays E+Q (A4/A5 por lado)"], VD))
+        "Andares 4-5: 2 displays E+Q (1 por lado)"], VD))
     c.append(caixa(470, 610, 360, 130, "Baixo giro (corredor)", [
-        "Zonas de 4 prédios (6 a 9 por estação)",
+        "2 zonas por lado (4 por estação)",
         "1 Módulo E+Q por zona:",
         "  endereço 8 díg. + quantidade + botão",
         "Um item por vez, na ordem da rota"], VD))
     c.append(seta(520, 580, 260, 610, "RS-485 + 12 V (Cat5e)"))
     c.append(seta(660, 580, 660, 610, ""))
     if rfid:
-        c.append(caixa(890, 430, 480, 150, "Leitor fixo B2 (opcional)", [
-            "PN532 sob a posição da caixa", "LCD 20×4: caixa, itens restantes",
-            "Botão FECHAR / nova leitura da tag", "Alternativa sem nada no corpo do operador"], RX, RX2))
-        c.append(seta(890, 505, 820, 505, "serial/I2C"))
+        c.append(caixa(890, 430, 480, 150, "Pulseira (1,1 por operador e turno)", [
+            "ESP32-C3 + leitor PN532 + bateria",
+            "Vibra ao ler; carregador na estação",
+            "Mesmos displays, concentrador e serviço",
+            "Só muda a forma de abrir e fechar"], RX, RX2))
     else:
         c.append(caixa(890, 430, 480, 150, "Operador (1 por estação)", [
             "Lê a caixa no gatilho → displays acendem",
@@ -127,7 +128,7 @@ def d_arq(rfid=False):
         "VLAN dedicada PTL, IP reservado por estação",
         "Coletores no Wi-Fi existente",
         "NTP, backup e monitoramento centralizados"], CZ))
-    tit = "Arquitetura B: RFID, concentrador e displays" if rfid else "Arquitetura A: coletor, concentrador e displays"
+    tit = "Melhoria futura: RFID com pulseira, sobre a Arquitetura A" if rfid else "Arquitetura A: coletor, concentrador e displays"
     return svg(w, h, "\n".join(c), tit)
 
 
@@ -628,7 +629,7 @@ def d_componentes():
     # usuários
     c.append(_comp(40, 105, 290, 92, "Coletor MovFast (A1)", ["App Android próprio", "gatilho abre e fecha a caixa", "mostra o progresso"], AZ2))
     c.append(_comp(40, 225, 290, 78, "Tela do WMS no coletor (A2)", ["alternativa ao app", "grava a leitura no Sybase"], CZ, tracejado=True))
-    c.append(_comp(40, 330, 290, 78, "Pulseira NFC (B1)", ["ESP32-C3 + PN532, bateria", "envia a tag lida por Wi-Fi"], RX, tracejado=True))
+    c.append(_comp(40, 330, 290, 78, "Pulseira NFC (futuro)", ["ESP32-C3 + PN532, bateria", "melhoria futura, depois da POC"], RX, tracejado=True))
     c.append(_comp(40, 440, 290, 92, "Navegador (manutenção e TI)", ["painel das 40 estações", "qual LED falhou e onde", "cadastro de LED por endereço"], CZ))
     # servidor PTL
     cx = [415, 670, 925]
@@ -654,7 +655,6 @@ def d_componentes():
     c.append(_comp(1240, 370, 320, 92, "WMS PowerBuilder 12", ["sistema legado da operação", "tela A2 no coletor (opcional)"], "#8E6C3A"))
     # estação
     c.append(_comp(40, 660, 330, 200, "Concentrador (atrás da estação)", ["RP2040 + Ethernet W5500", "cliente MQTT", "estado da caixa e fila de confirmações", "mestre RS-485 com 2 portas", "watchdog, auto-teste e OTA", "fonte 12 V, gabinete com filtro e cooler", "", ""], VD))
-    c.append(_comp(40, 885, 330, 88, "Leitor NFC fixo + painel (B2)", ["leitor sob a posição de pega", "LCD 20×4 e botão FECHAR"], RX, tracejado=True))
     c.append(_comp(500, 660, 300, 92, "Nós de coluna (10)", ["um por prédio do alto giro", "liga os módulos Q do prédio"], VD))
     c.append(_comp(500, 775, 300, 64, "Módulos Q (29 a 35)", ["quantidade + botão, andares 0 a 3"], VD))
     c.append(_comp(500, 880, 300, 78, "Módulos E+Q andares 4-5 (2)", ["1 por lado (P001–P005, P006–P010)", "sob a esteira de separação"], VD))
@@ -678,11 +678,10 @@ def d_componentes():
     c.append(_linha([(650, 752), (650, 775)], VD))
     c.append(_linha([(440, 706), (440, 919), (500, 919)], VD))
     c.append(_linha([(370, 852), (930, 852), (930, 706), (1000, 706)], VD, "RS-485 porta B", 930, 780))
-    c.append(_linha([(205, 885), (205, 860)], RX, "SPI", 232, 873, tracejada=True))
     # legenda
     ly = 845
     for i, (cor, txt, tr) in enumerate(((AZ2, "componente novo (software)", False), (VD, "componente novo (hardware)", False),
-                                        ("#8E6C3A", "sistema existente", False), (RX, "opcional / Arquitetura B", True))):
+                                        ("#8E6C3A", "sistema existente", False), (RX, "melhoria futura (RFID)", True))):
         d = "stroke-dasharray='6 4'" if tr else ""
         c.append(f"<rect x='{1330}' y='{ly+i*28}' width='20' height='16' rx='3' fill='#fff' stroke='{cor}' stroke-width='1.8' {d}/>"
                  f"<text x='{1360}' y='{ly+i*28+13}' font-size='12' {FONT}>{txt}</text>")

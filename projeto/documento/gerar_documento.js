@@ -91,11 +91,11 @@ c.push(new Paragraph({ spacing: { before: 2600, after: 120 }, children: [t("Proj
 c.push(new Paragraph({ spacing: { after: 120 }, children: [t("Documento de Arquitetura", { size: 52, bold: true, color: AZ })] }));
 c.push(new Paragraph({ spacing: { after: 700 }, children: [t("Separação por luz nas estações de flow rack de Medicamento e Perfumaria", { size: 26, color: CZ })] }));
 c.push(tabela(["Item", "Descrição"], [
-  ["Arquiteturas", "A: coletor de dados, concentrador e displays\nB: identificação por RFID, concentrador e displays"],
+  ["Arquitetura", "A: coletor de dados, concentrador e displays (POC e implantação)\nMelhoria futura: identificação por RFID com pulseira"],
   ["Abrangência", "40 estações (20 de Medicamento, ruas 03 a 22, e 20 de Perfumaria, ruas 26 a 45), 7.981 endereços"],
   ["Piloto (POC)", "Estações 04 (Medicamento) e 27 (Perfumaria), depois de uma bancada de testes"],
   ["Material de apoio", "Orcamento_PTL.xlsx, Apresentacao_PTL.pptx e simulador 3D (repositório picking_to_light)"],
-  ["Versão", "1.4, de 26/10/2026 (2 zonas por lado, andares 4-5 sob a separação, sinal de baixo giro), em revisão pela TI, arquitetura de software e diretoria"],
+  ["Versão", "1.5, de 26/10/2026 (foco no coletor; RFID como melhoria futura; POC 04 e 27), em revisão pela TI, arquitetura de software e diretoria"],
   ["Elaboração", "Equipe de TI"],
 ], [1, 3]));
 c.push(quebra());
@@ -111,7 +111,7 @@ c.push(H1("1. Objetivo e escopo"));
 c.push(P("Hoje o operador procura cada endereço na estante e confere a quantidade na tela. Com o pick-to-light, a leitura da etiqueta da caixa acende os displays dos endereços que têm itens daquela caixa, já com a quantidade. O operador pega, aperta o botão do display e passa ao próximo. O objetivo é reduzir o tempo por caixa e os erros de separação em uma linha que movimenta cerca de 3.000 volumes e 250 a 270 mil produtos por dia."));
 c.push(H2("1.1 O que está no escopo"));
 [
-  "Duas formas de identificar a caixa: pelo coletor de dados MovFast que já usamos (Arquitetura A) ou por uma tag RFID fixa na caixa retornável (Arquitetura B).",
+  "Identificação da caixa pelo coletor de dados MovFast que já usamos (Arquitetura A). A identificação por RFID com pulseira fica descrita como melhoria futura (item 6).",
   "A parte de displays é a mesma nas duas: um concentrador por estação, displays de quantidade no alto giro e displays de endereço e quantidade nos andares 4 e 5 do alto giro e nas zonas do baixo giro.",
   "Um serviço no servidor (Serviço PTL) ligado ao Sybase e à API do sistema BHT, com um painel de acompanhamento para a gestão e para a TI.",
   "Comparação entre fazer os módulos internamente e comprar de terceiros.",
@@ -133,7 +133,7 @@ c.push(tabela(["Tema", "Como é hoje"], [
   ["Coletores", "MovFast com Android atualizado, na rede Wi-Fi."],
   ["Operadores", "Um operador por estação, uma caixa por vez."],
   ["Volume", "Cerca de 3.000 volumes e 250 a 270 mil produtos por dia. A média de itens por caixa ainda precisa ser levantada; em Perfumaria ela é menor."],
-  ["Caixas", "Retornáveis, o que permite fixar uma tag RFID na Arquitetura B."],
+  ["Caixas", "Retornáveis, o que permite fixar uma tag RFID no futuro."],
   ["Rede", "Os concentradores serão ligados por cabo. Só os coletores usam Wi-Fi."],
   ["Energia", "Preferência por 12 V para displays e concentrador. O 5 V foi avaliado junto (item 9.4)."],
   ["Ambiente", "Poeira e calor, sem lavagem com água. O gabinete precisa de ventilação com filtro."],
@@ -215,7 +215,7 @@ c.push(tabela(["Código", "Requisito não funcional"], [
 c.push(H1("5. Arquitetura A: coletor, concentrador e displays"));
 c.push(...img("arquitetura_a", 640, 347, "Figura 3. Visão geral da Arquitetura A"));
 c.push(H2("5.1 Componentes"));
-c.push(P("A Figura 4 mostra os componentes do sistema e como se comunicam. Os blocos em azul são o software novo, os verdes são o hardware novo de cada estação e os marrons são os sistemas que já existem. Os tracejados são opcionais ou só valem para a Arquitetura B."));
+c.push(P("A Figura 4 mostra os componentes do sistema e como se comunicam. Os blocos em azul são o software novo, os verdes são o hardware novo de cada estação e os marrons são os sistemas que já existem. Os tracejados são opcionais ou ficam para a melhoria futura com RFID."));
 c.push(...img("componentes", 640, 404, "Figura 4. Arquitetura de componentes"));
 c.push(tabela(["Componente", "Função", "Tecnologia proposta"], [
   ["API REST", "Recebe as leituras do coletor e do RFID, informa o estado da estação, permite cancelar uma caixa e atualizar o mapa.", "HTTPS com JSON. Linguagem a definir pela arquitetura (Java, .NET ou Node)."],
@@ -252,16 +252,15 @@ c.push(...img("sequencia", 640, 375, "Figura 5. Mensagens trocadas durante uma c
 ].forEach((x) => c.push(N(x)));
 
 // 6 ARQUITETURA B
-c.push(H1("6. Arquitetura B: identificação por RFID"));
-c.push(P("A Arquitetura B usa os mesmos displays, concentradores e Serviço PTL da A. Muda só a forma de identificar a caixa: cada caixa retornável recebe uma tag NFC (13,56 MHz) fixa e a leitura acontece sem o coletor."));
-c.push(...img("arquitetura_b", 640, 347, "Figura 6. Visão geral da Arquitetura B"));
+c.push(H1("6. Melhoria futura: identificação por RFID"));
+c.push(P("Decisão de 26/10/2026: a POC e a implantação inicial usam o coletor (Arquitetura A). O RFID com pulseira fica como melhoria futura e o leitor fixo na estação saiu do projeto. O RFID usa os mesmos displays, concentradores e Serviço PTL da A; muda só a forma de abrir e fechar a caixa: cada caixa retornável recebe uma tag NFC (13,56 MHz) e o operador encosta a pulseira."));
+c.push(...img("arquitetura_b", 640, 347, "Figura 6. Melhoria futura: RFID com pulseira sobre a Arquitetura A"));
 c.push(H2("6.1 Opções de leitura"));
 c.push(tabela(["Opção", "Como funciona", "Vantagens", "Desvantagens"], [
-  ["B1: pulseira NFC", "Leitor no pulso (ESP32-C3, PN532 e bateria). O operador encosta o pulso na tag para abrir e para fechar.", "Mãos livres, leitura em menos de 1 s, cerca de R$ 130 por unidade.", "Pode atrapalhar o operador; precisa de carga diária; higiene e conforto."],
-  ["B2: leitor fixo na estação", "Leitor NFC sob a posição de pega na esteira de separação, ligado ao barramento da estação como mais um nó. Um painel LCD mostra a caixa e os itens que faltam; fecha com nova leitura ou com o botão FECHAR.", "Nada no corpo do operador e sem bateria. Abre sozinho.", "A caixa precisa parar sempre no mesmo ponto; exige instalação mecânica na esteira."],
+  ["Pulseira NFC (escolhida para o futuro)", "Leitor no pulso (ESP32-C3, PN532 e bateria). O operador encosta o pulso na tag para abrir e para fechar.", "Mãos livres, leitura em menos de 1 s, cerca de R$ 130 por unidade.", "Pode atrapalhar o operador; precisa de carga diária; higiene e conforto."],
   ["B3: produto de mercado", "Leitores de pulso comerciais (em geral UHF, como o FEIG HyWEAR, cerca de US$ 997) ou leitores HF industriais.", "Robustez e garantia.", "Custo muito maior. O UHF lê de longe e pode pegar a caixa vizinha; exige tags UHF."],
 ], [1.2, 2.6, 1.8, 1.8], { size: 17 }));
-c.push(nota("Para a Arquitetura B, indicamos o leitor fixo (B2): ele resolve a preocupação de a pulseira atrapalhar o operador e não tem bateria. A pulseira (B1) fica como alternativa para estações em que a caixa não pare sempre no mesmo lugar."));
+c.push(nota("O leitor fixo na posição de pega foi descartado. Quando o RFID for retomado, a opção é a pulseira NFC; o hardware e o software da POC já ficam preparados para receber essa leitura."));
 c.push(H2("6.2 Tag na caixa retornável"));
 [
   "Tag NFC NTAG213 adesiva, cerca de R$ 2,37 a unidade em lote, colada em um ponto protegido da caixa.",
@@ -269,14 +268,14 @@ c.push(H2("6.2 Tag na caixa retornável"));
   "A frota estimada é de 5.000 caixas, mas precisa ser confirmada com a operação, porque o custo das tags depende dela.",
   "Caixa danificada: a tag é trocada na manutenção de caixas.",
 ].forEach((x) => c.push(B(x)));
-c.push(H2("6.3 Comparação entre A e B"));
-c.push(tabela(["Critério", "A: coletor", "B: RFID (B2)"], [
-  ["Leitura", "Coletores MovFast que já temos", "Leitor fixo por estação e tag em cada caixa"],
-  ["O que o operador faz", "Aponta e aperta o gatilho, uma vez para abrir e outra para fechar", "Coloca a caixa na posição (abre) e faz nova leitura ou aperta o botão (fecha)"],
-  ["Hardware, 40 estações*", "R$ 305 mil", "R$ 332 mil"],
+c.push(H2("6.3 Coletor hoje e RFID depois"));
+c.push(tabela(["Critério", "Coletor (POC e implantação)", "RFID com pulseira (futuro)"], [
+  ["Leitura", "Coletores MovFast que já temos", "Tag em cada caixa e pulseira no operador"],
+  ["O que o operador faz", "Aponta e aperta o gatilho, uma vez para abrir e outra para fechar", "Encosta o pulso na tag para abrir e de novo para fechar"],
+  ["Hardware, 40 estações*", "R$ 305 mil", "Acréscimo de cerca de R$ 33 mil (R$ 36 mil com contingência)"],
   ["Custo contínuo", "Nenhum novo", "Tags para caixas novas ou danificadas"],
-  ["Riscos", "Disponibilidade e bateria dos coletores; Wi-Fi", "Posição da caixa na leitura; tamanho da frota"],
-  ["Prazo", "Menor, porque usa os coletores atuais", "Maior por causa das tags, do cadastro e da instalação"],
+  ["Riscos", "Disponibilidade e bateria dos coletores; Wi-Fi", "Conforto e bateria da pulseira; tamanho da frota"],
+  ["Prazo", "Menor, porque usa os coletores atuais", "Depois da POC: etiquetar a frota e cadastrar as tags"],
 ], [1.6, 2.2, 2.2]));
 c.push(P("* Com mão de obra interna, instalação e treinamento, sem contingência. O detalhamento está no item 12 e na planilha Orcamento_PTL.xlsx.", { italic: true, size: 18, color: CZ }));
 
@@ -446,12 +445,11 @@ c.push(tabela(["Cenário", "Piloto (04 e 27)", "Operação completa", "Por esta�
   ["A interno, materiais e mão de obra", "R$ 19.211", "R$ 304.755", "R$ 7.619"],
   ["A com placa própria (EMS)", "R$ 34.967", "R$ 335.487", "R$ 8.387"],
   ["A com PTL comercial importado", "R$ 41.681", "R$ 763.125", "R$ 19.078"],
-  ["B1, RFID com pulseira", "R$ 20.971", "R$ 337.795", "R$ 8.445"],
-  ["B2, RFID com leitor fixo", "R$ 20.550", "R$ 331.524", "R$ 8.288"],
+  ["Melhoria futura: RFID (acréscimo)", "R$ 1.760", "R$ 33.040", "R$ 826"],
 ], [3, 1.5, 1.7, 1.3], { direita: [1, 2, 3] }));
 c.push(P("Os materiais incluem, além dos módulos: canaleta calculada pelo layout de cada estação (cerca de 27 m por estação, com as medidas do desenho), cabos, alimentação e protetor de surto dos concentradores, pontos de tomada novos onde faltar, switches com nobreak e mini rack, cabo de uplink, ferramentas de montagem e 5% de frete. A mão de obra inclui montagem, instalação fora do horário de separação (hora extra de 50%), comissionamento e treinamento."));
-c.push(P("Software, com desenvolvimento interno: cerca de 1.144 h para a Arquitetura A e 1.064 h para a B, a R$ 103,78 por hora (salário médio de analista de desenvolvimento, R$ 8.458,30, salario.com.br, CBO 212405, com encargos), ou cerca de R$ 119 mil e R$ 110 mil. Inclui a interface de controle com o cadastro de LED. É custo da equipe interna, não desembolso novo, a menos que o desenvolvimento seja contratado."));
-c.push(P("Com 10% de contingência sobre o hardware e somando o software, o investimento total fica em cerca de R$ 454 mil na Arquitetura A e R$ 475 mil na B2."));
+c.push(P("Software, com desenvolvimento interno: cerca de 1.144 h para a Arquitetura A (mais 80 h quando o RFID for feito), a R$ 103,78 por hora (salário médio de analista de desenvolvimento, R$ 8.458,30, salario.com.br, CBO 212405, com encargos), ou cerca de R$ 119 mil. Inclui a interface de controle com o cadastro de LED. É custo da equipe interna, não desembolso novo, a menos que o desenvolvimento seja contratado."));
+c.push(P("Com 10% de contingência sobre o hardware e somando o software, o investimento total fica em cerca de R$ 454 mil na Arquitetura A. A POC (bancada + estações 04 e 27) custa cerca de R$ 22,5 mil de hardware com contingência (aba POC)."));
 c.push(P("Mão de obra interna: R$ 34,93 por hora de técnico, calculados com salário médio de R$ 2.846,84 (salario.com.br, CBO 313215, outubro de 2026), encargos de 100% e 163 horas por mês."));
 
 // 13 IMPLANTACAO
@@ -485,7 +483,7 @@ c.push(tabela(["#", "Ponto", "Responsável"], [
   ["3", "Campos e limites da API do BHT e possibilidade de liberar a caixa ao fechar", "TI / fornecedor BHT"],
   ["4", "Origem dos itens da caixa no WMS (tabelas e views) e acesso do Serviço PTL ao Sybase", "DBA"],
   ["5", "Divergências de contagem (esquinas de Perfumaria, estação 26, 21ª estação de Medicamento)", "Operação"],
-  ["6", "Tamanho da frota de caixas retornáveis (Arquitetura B)", "Operação"],
+  ["6", "Tamanho da frota de caixas retornáveis (para o RFID futuro)", "Operação"],
   ["7", "Fator de importação e fornecedores para placa própria ou PTL comercial", "Compras / Comex"],
   ["8", "Linguagem e servidor do Serviço PTL; pontos de rede e VLAN", "Arquitetura / Infraestrutura"],
   ["9", "Custo por hora de técnico e de desenvolvimento", "RH / TI"],
@@ -546,7 +544,7 @@ const doc = new Document({
   sections: [{
     properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 } } },
     headers: { default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT,
-      children: [t("Projeto Pick-to-Light · Documento de Arquitetura · versão 1.4", { size: 16, color: CZ })] })] }) },
+      children: [t("Projeto Pick-to-Light · Documento de Arquitetura · versão 1.5", { size: 16, color: CZ })] })] }) },
     footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER,
       children: [new TextRun({ children: ["Página ", PageNumber.CURRENT, " de ", PageNumber.TOTAL_PAGES], font: FONTE, size: 16, color: CZ })] })] }) },
     children: c,

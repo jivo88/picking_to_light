@@ -73,7 +73,7 @@ ws.column_dimensions["A"].width = 3
 ws.column_dimensions["B"].width = 115
 linhas = [
     ("Orçamento do projeto Pick-to-Light (flow rack)", TIT),
-    ("Arquitetura A (coletor + concentrador + displays) e Arquitetura B (identificação por RFID). Revisão 26/10/2026.", SUB),
+    ("Arquitetura A: coletor MovFast + concentrador + displays. RFID com pulseira fica como melhoria futura. Revisão 26/10/2026.", SUB),
     ("", None),
     ("COMO USAR", SUB),
     ("• Células em AZUL são entradas editáveis (quantidades, preços, premissas). Células em PRETO são fórmulas: não editar.", PRETO),
@@ -92,7 +92,7 @@ linhas = [
     ("Composição: lista de materiais (BOM) de cada tipo de módulo e custo unitário.", PRETO),
     ("A-Interno: Arquitetura A com produção interna: peças, infraestrutura, mão de obra, treinamento, variante 5 V.", PRETO),
     ("A-Terceiros: Arquitetura A com produção de terceiros: (T1) placa própria montada por EMS e (T2) PTL comercial importado.", PRETO),
-    ("B-RFID: Arquitetura B: mesma infraestrutura de displays + identificação RFID (B1 pulseira, B2 leitor fixo).", PRETO),
+    ("RFID-futuro: melhoria futura, fora da POC e da implantação inicial: tag na caixa + pulseira NFC (acréscimo sobre a Arquitetura A).", PRETO),
     ("Software: esforço estimado de desenvolvimento (horas) para as duas arquiteturas.", PRETO),
     ("", None),
     ("TERMOS", SUB),
@@ -117,8 +117,8 @@ linhas = [
     ("• Botão de confirmação trocado por botão metálico com anel de LED (cerca de 6.000 confirmações por estação por dia).", PRETO),
     ("• Instalação calculada por quantidade de módulos e metros de canaleta, com hora extra (instalação fora do horário de separação).", PRETO),
     ("• Treinamento de operadores e manutenção incluído em todos os cenários.", PRETO),
-    ("• B1: 2 pulseiras por estação (a bateria de 500 mAh não cobre um turno inteiro com leitura contínua) + carregador.", PRETO),
-    ("• B2: o leitor fixo vira um nó do barramento RS-485 (microcontrolador próprio), sem ligação I2C longa até o concentrador.", PRETO),
+    ("• RFID (melhoria futura): 2 pulseiras por estação (a bateria de 500 mAh não cobre um turno inteiro com leitura contínua) + carregador.", PRETO),
+    ("• Leitor fixo na estação (antiga opção B2) retirado do projeto; o foco é o coletor, e o RFID com pulseira fica como melhoria futura.", PRETO),
     ("• T1: horas de montagem final/gravação dos módulos vindos da EMS; T1/T2: cabo em cadeia dos módulos Q com 1 m por módulo.", PRETO),
     ("• Software: custo-hora calculado com o salário de mercado de analista de desenvolvimento (antes R$ 60/h fixo) "
      "e implantação do servidor/broker incluída.", PRETO),
@@ -196,9 +196,9 @@ premissas = [
     ("m_uplink", "Cabo de uplink por switch até a rede corporativa", 80, "m",
      "Se passar de 90 m, trocar por fibra/conversor de mídia", True),
     ("pct_sem_tomada", "Estações sem tomada 220 V a até 3 m", 0.5, "%", "CONFIRMAR com a manutenção predial", True),
-    ("frota", "Frota de caixas retornáveis (Arq. B)", 5000, "caixas",
+    ("frota", "Frota de caixas retornáveis (RFID, melhoria futura)", 5000, "caixas",
      "Estimativa: ~1,7 × 3.000 volumes/dia. CONFIRMAR com a operação.", True),
-    ("pulseiras_por_est", "Pulseiras por estação (Arq. B1)", 2.2, "un",
+    ("pulseiras_por_est", "Pulseiras por estação (RFID, melhoria futura)", 2.2, "un",
      "2 por estação (uma carregando; 500 mAh dura cerca de 5 h lendo) + 10% reserva", True),
     ("m_5v_extra", "Cabo de força extra por estação na variante 5 V", 30, "m", "Distribuição de 5 V exige mais pontos de injeção", True),
     ("m_cadeia_q", "Cabo por Módulo Q em cadeia (T1/T2)", 1.0, "m", "Módulos vizinhos ligados em sequência", True),
@@ -347,7 +347,6 @@ precos = [
      "MakerHero, Kit Módulo Leitor RFID NFC PN532, 23/10/2026 (Pix)", "Cotado"),
     ("P26", "Kit energia pulseira (LiPo 500 mAh + TP4056 + motor vibração + botão)", "kit", 35.00, None, "Estimativa, cotar", "Estimativa"),
     ("P27", "Carcaça 3D + pulseira velcro", "un", 20.00, None, "Estimativa", "Estimativa"),
-    ("P28", "Display LCD 20×4 I2C (painel da estação, Arq. B2)", "un", 35.00, None, "Estimativa, cotar", "Estimativa"),
     ("P29", "Módulo PTL comercial 3 dígitos + botão (RS-485)", "un", None, 30.00,
      "Alibaba, Sophia T-P3: US$ 32 (1-299 un) / US$ 28 (300+), 23/10/2026; média US$ 30", "Cotado (US$)"),
     ("P30", "Módulo PTL comercial endereço + quantidade (display alfanumérico)", "un", None, 65.00,
@@ -362,8 +361,6 @@ precos = [
      "Estimativa, solicitar orçamento a design house", "Estimativa"),
     ("P36", "Leitor RFID UHF de pulso comercial (FEIG HyWEAR Compact), referência", "un", None, 997.00,
      "atlasRFIDstore, US$ 997, 22/10/2026 (UHF; não lê tags NFC)", "Cotado (US$)"),
-    ("P37", "Leitor HF/NFC fixo industrial (USB/RS-232), alternativa comercial ao PN532", "un", 350.00, None,
-     "Estimativa, cotar (ex.: ACS ACR122U ou similar)", "Estimativa"),
     ("P38", "Cabo PP 3×1,0 mm² (por metro)", "m", "=913.31/100", None,
      "KaBuM, Cabo PP 3×1,00 mm² flexível preto 100 m R$ 913,31 (Pix), 26/10/2026", "Cotado"),
     ("P39", "Plugue 2P+T 10 A + prensa-cabo", "un", 12.00, None, "Estimativa, cotar", "Estimativa"),
@@ -376,7 +373,7 @@ precos = [
      "KaBuM via escorregaopreco.com.br, oferta atualizada ~28 dias antes de 26/10/2026", "Cotado"),
     ("P44", "Mini rack de parede 5U 19\" + patch cords + organizador", "kit", 550.00, None,
      "Estimativa (ex.: Intelbras MRM 537), cotar", "Estimativa"),
-    ("P45", "Carregador USB 2 portas para pulseiras (Arq. B1)", "un", 35.00, None, "Estimativa, cotar", "Estimativa"),
+    ("P45", "Carregador USB 2 portas para pulseiras (RFID futuro)", "un", 35.00, None, "Estimativa, cotar", "Estimativa"),
     ("P46", "Ponto de tomada 220 V novo (material + eletricista)", "un", 350.00, None,
      "Estimativa, cotar com a manutenção predial", "Estimativa"),
     ("P48", "Painel de MDF 1,2 × 0,6 m com longarina para a bancada + parafusos", "kit", 150.00, None, "Estimativa, cotar", "Estimativa"),
@@ -417,10 +414,8 @@ bom = {
                    ("P14", 1), ("P15", 1)],
     "Concentrador 12 V": [("P05", 1), ("P04", 2), ("P06", 1), ("P08", 1), ("P16", 1), ("P17", 1), ("P10", 2)] + alimentacao,
     "Concentrador 5 V": [("P05", 1), ("P04", 2), ("P07", 1), ("P16", 1), ("P17", 1), ("P10", 2)] + alimentacao,
-    "Pulseira RFID (B1)": [("P24", 1), ("P25", 1), ("P26", 1), ("P27", 1)],
-    "Leitor fixo + painel (B2)": [("P25", 1), ("P28", 1), ("P09", 1), ("P03", 1), ("P04", 1), ("P08", 1), ("P15", 1),
-                                  ("P10", 2), ("P14", 1), ("P12", 5), ("P11", 2)],
-    "Tag por caixa (B)": [("P22", 1), ("P23", 1)],
+    "Pulseira RFID (futuro)": [("P24", 1), ("P25", 1), ("P26", 1), ("P27", 1)],
+    "Tag por caixa (RFID futuro)": [("P22", 1), ("P23", 1)],
 }
 r = 2
 UNIT = {}
@@ -439,8 +434,7 @@ for conj, itens in bom.items():
     UNIT[conj] = "'Composição'!$F$%d" % r
     r += 2
 for t in ("Variante 5 V: os módulos e nós não usam regulador step-down (P08); o custo é descontado na aba A-Interno.",
-          "Concentrador: inclui alimentação até a tomada (3 m de cabo PP, plugue) e protetor de surto.",
-          "Leitor fixo (B2): tem microcontrolador e RS-485 próprios e entra no barramento como mais um nó (cabo de 5 m)."):
+          "Concentrador: inclui alimentação até a tomada (3 m de cabo PP, plugue) e protetor de surto."):
     cel(wc, "A%d" % r, t, NOTA, borda=False)
     r += 1
 
@@ -663,41 +657,31 @@ cel(wt, "A%d" % (T2_TOT + 2), "Valores em US$ convertidos por câmbio × fator d
     "Frete nacional não aplicado aqui: os itens principais são importados (frete no fator de importação).", NOTA, borda=False)
 
 # =====================================================================
-# 8. B-RFID
+# 8. RFID (melhoria futura): acréscimo sobre a Arquitetura A
 # =====================================================================
-wb_ = wb.create_sheet("B-RFID")
+wb_ = wb.create_sheet("RFID-futuro")
 cabecalho(wb_, 1, ["Item", "Base de cálculo", "Qtd piloto", "Qtd completo", "Preço unit. (R$)",
                    "Total piloto (R$)", "Total completo (R$)"], [48, 48, 12, 13, 15, 17, 18])
-cel(wb_, "A2", "Arquitetura B = infraestrutura de displays da Arquitetura A + identificação da caixa por RFID", SUB, borda=False)
-linha_ref(wb_, 3, "Infraestrutura de displays (Arquitetura A interna, materiais + mão de obra)", "aba A-Interno",
-          "'A-Interno'!F%d" % A_TOT, "'A-Interno'!G%d" % A_TOT)
-linha_item(wb_, 4, "Tags NFC nas caixas retornáveis (frota)", "frota de caixas (piloto: proporcional às estações)",
-           "=ROUNDUP(%s*%s/%s,0)" % (REF["frota"], tot("O", "P"), tot("O", "C")), "=%s" % REF["frota"], UNIT["Tag por caixa (B)"])
-linha_item(wb_, 5, "Associação tag ↔ caixa (cadastro inicial) (h)", "30 s por caixa", "=C4*30/3600", "=D4*30/3600",
+cel(wb_, "A2", "Melhoria futura (não entra na POC nem na implantação inicial): tag NFC na caixa + pulseira no operador", SUB, borda=False)
+linha_item(wb_, 3, "Tags NFC nas caixas retornáveis (frota)", "frota de caixas (piloto: proporcional às estações)",
+           "=ROUNDUP(%s*%s/%s,0)" % (REF["frota"], tot("O", "P"), tot("O", "C")), "=%s" % REF["frota"], UNIT["Tag por caixa (RFID futuro)"])
+linha_item(wb_, 4, "Associação tag ↔ caixa (cadastro inicial) (h)", "30 s por caixa", "=C3*30/3600", "=D3*30/3600",
            REF["custo_hora"], NUM2)
-cel(wb_, "A7", "B1, Pulseira NFC (montagem própria)", SUB, borda=False)
 qp, qc = par("ROUNDUP({O}*{pulseiras_por_est},0)")
-linha_item(wb_, 8, "Pulseiras NFC (ESP32-C3 + PN532 + bateria)", "estações × pulseiras por estação", qp, qc, UNIT["Pulseira RFID (B1)"])
+linha_item(wb_, 5, "Pulseiras NFC (ESP32-C3 + PN532 + bateria)", "estações × pulseiras por estação", qp, qc, UNIT["Pulseira RFID (futuro)"])
 qp, qc = par("{O}")
-linha_item(wb_, 9, "Carregador USB das pulseiras", "1 por estação", qp, qc, PRECO["P45"])
-linha_item(wb_, 10, "Montagem das pulseiras (h)", "1,5 h por pulseira", "=C8*1.5", "=D8*1.5", REF["custo_hora"], NUM2)
-faixa_total(wb_, 11, "TOTAL B1, displays + tags + pulseiras")
-cel(wb_, "F11", "=SUM(F3:F5)+SUM(F8:F10)", NEG, BRL, fill=TOTAL)
-cel(wb_, "G11", "=SUM(G3:G5)+SUM(G8:G10)", NEG, BRL, fill=TOTAL)
-B1_TOT = 11
-cel(wb_, "A13", "B2, Leitor fixo na estação + painel (sem item no corpo do operador)", SUB, borda=False)
-qp, qc = par("{O}")
-linha_item(wb_, 14, "Leitor PN532 + LCD 20×4 + botão Fechar (nó do barramento)", "1 por estação", qp, qc,
-           UNIT["Leitor fixo + painel (B2)"])
-linha_item(wb_, 15, "Montagem e instalação do leitor (h)", "2 h por estação", "=C14*2", "=D14*2", REF["custo_hora"], NUM2)
-faixa_total(wb_, 16, "TOTAL B2, displays + tags + leitor fixo")
-cel(wb_, "F16", "=SUM(F3:F5)+SUM(F14:F15)", NEG, BRL, fill=TOTAL)
-cel(wb_, "G16", "=SUM(G3:G5)+SUM(G14:G15)", NEG, BRL, fill=TOTAL)
-B2_TOT = 16
-linha_item(wb_, 18, "Referência de mercado, leitor de pulso comercial", "FEIG HyWEAR (UHF) por pulseira, não lê NFC; exigiria tags UHF",
-           "=C8", "=D8", PRECO["P36"])
-cel(wb_, "A20", "Coletores MovFast já existentes não entram no custo (Arquitetura A). Na Arquitetura B eles deixam de ser "
-    "necessários na separação, mas continuam disponíveis para as demais operações.", NOTA, borda=False)
+linha_item(wb_, 6, "Carregador USB das pulseiras", "1 por estação", qp, qc, PRECO["P45"])
+linha_item(wb_, 7, "Montagem das pulseiras (h)", "1,5 h por pulseira", "=C5*1.5", "=D5*1.5", REF["custo_hora"], NUM2)
+faixa_total(wb_, 8, "ACRÉSCIMO DO RFID sobre a Arquitetura A")
+cel(wb_, "F8", "=SUM(F3:F7)", NEG, BRL, fill=TOTAL)
+cel(wb_, "G8", "=SUM(G3:G7)", NEG, BRL, fill=TOTAL)
+RF_TOT = 8
+linha_ref(wb_, 10, "Referência: Arquitetura A + RFID", "aba A-Interno + acréscimo acima",
+          "'A-Interno'!F%d+F8" % A_TOT, "'A-Interno'!G%d+G8" % A_TOT)
+linha_item(wb_, 12, "Referência de mercado, leitor de pulso comercial", "FEIG HyWEAR (UHF) por pulseira, não lê NFC; exigiria tags UHF",
+           "=C5", "=D5", PRECO["P36"])
+cel(wb_, "A14", "O hardware e o software da Arquitetura A já ficam preparados para receber a leitura RFID depois. "
+    "O leitor fixo na estação (antiga opção B2) foi retirado do projeto em 26/10/2026.", NOTA, borda=False)
 
 # =====================================================================
 # 9. SOFTWARE
@@ -712,7 +696,7 @@ sw = [
     ("Tela no WMS PowerBuilder para o coletor (A2)", "A2", 80, "Alternativa ao app; grava a leitura em tabela consumida pelo serviço"),
     ("Firmware do concentrador (Ethernet + MQTT + 2 barramentos RS-485)", "A e B", 120, "Base no protótipo MicroPython já validado"),
     ("Firmware dos nós de coluna e módulos E+Q", "A e B", 100, "Protocolo de barramento, endereçamento, auto-teste"),
-    ("Leitura RFID no concentrador + painel da estação (B2) / pulseira (B1)", "B", 80, "Somente Arquitetura B"),
+    ("Leitura RFID pela pulseira (melhoria futura)", "RFID", 80, "Fora do escopo inicial"),
     ("Painel de monitoramento (gestão e TI)", "A e B", 120, "Status das estações, módulos com falha, produtividade"),
     ("Interface de controle: qual LED falhou + cadastro de LED por endereço (tela + botão)", "A e B", 40,
      "Diagnóstico no firmware (sem resposta, display sem ACK, botão travado), modo cadastro e tabela ptl_mapa_led"),
@@ -733,8 +717,8 @@ faixa_total(wsw, n, "TOTAL, Arquitetura A com app próprio (A1)", "B")
 cel(wsw, "C%d" % n, '=SUMIF(%s,"A e B",%s)+SUMIF(%s,"A",%s)' % (rng + rng), NEG, NUM, fill=TOTAL)
 cel(wsw, "D%d" % n, "=C%d*%s" % (n, REF["custo_hora_dev"]), NEG, BRL0, fill=TOTAL)
 cel(wsw, "E%d" % n, "Com a tela no WMS (A2) no lugar do app: troque o item A1 (160 h) pelo A2 (80 h).", wrap=True, fill=TOTAL)
-faixa_total(wsw, n + 1, "TOTAL, Arquitetura B", "B")
-cel(wsw, "C%d" % (n + 1), '=SUMIF(%s,"A e B",%s)+SUMIF(%s,"B",%s)' % (rng + rng), NEG, NUM, fill=TOTAL)
+faixa_total(wsw, n + 1, "Melhoria futura: acréscimo do RFID", "B")
+cel(wsw, "C%d" % (n + 1), '=SUMIF(%s,"RFID",%s)' % rng, NEG, NUM, fill=TOTAL)
 cel(wsw, "D%d" % (n + 1), "=C%d*%s" % (n + 1, REF["custo_hora_dev"]), NEG, BRL0, fill=TOTAL)
 cel(wsw, "E%d" % (n + 1), None, fill=TOTAL)
 cel(wsw, "A%d" % (n + 3), "Custo-hora de desenvolvimento calculado na aba Premissas (salário de mercado × encargos ÷ horas). "
@@ -879,9 +863,8 @@ cen = [
      "'A-Terceiros'!F%d" % T1_TOT, "'A-Terceiros'!G%d" % T1_TOT),
     ("A terceiros, T2 (PTL comercial importado)", "Hardware PTL pronto + instalação",
      "'A-Terceiros'!F%d" % T2_TOT, "'A-Terceiros'!G%d" % T2_TOT),
-    ("B1, RFID com pulseira", "Displays (A interno) + tags + pulseiras NFC", "'B-RFID'!F%d" % B1_TOT, "'B-RFID'!G%d" % B1_TOT),
-    ("B2, RFID com leitor fixo na estação", "Displays (A interno) + tags + leitor fixo e painel (opção indicada na B)",
-     "'B-RFID'!F%d" % B2_TOT, "'B-RFID'!G%d" % B2_TOT),
+    ("Melhoria futura: RFID com pulseira", "Acréscimo sobre a A: tags nas caixas + pulseiras (não incluído no investimento)",
+     "'RFID-futuro'!F%d" % RF_TOT, "'RFID-futuro'!G%d" % RF_TOT),
 ]
 for i, (nome, desc, fp, fc) in enumerate(cen, 4):
     cel(wr, "A%d" % i, nome, NEG)
@@ -890,27 +873,24 @@ for i, (nome, desc, fp, fc) in enumerate(cen, 4):
     cel(wr, "D%d" % i, "=" + fc, VERDE, BRL0)
     cel(wr, "E%d" % i, "=D%d/%s" % (i, tot("O", "C")), PRETO, BRL0)
     cel(wr, "F%d" % i, "=D%d*(1+%s)" % (i, REF["contingencia"]), PRETO, BRL0)
-LB2 = 4 + [c[0] for c in cen].index("B2, RFID com leitor fixo na estação")
 n = len(cen) + 4
 cel(wr, "A%d" % (n + 1), "Desenvolvimento de software (interno)", SUB, borda=False)
 cel(wr, "A%d" % (n + 2), "Arquitetura A (app próprio)", NEG)
 cel(wr, "B%d" % (n + 2), "=\"Horas: \"&TEXT(Software!C%d,\"#,##0\")" % SW_A, PRETO)
 cel(wr, "D%d" % (n + 2), "=Software!D%d" % SW_A, VERDE, BRL0)
-cel(wr, "A%d" % (n + 3), "Arquitetura B", NEG)
+cel(wr, "A%d" % (n + 3), "Melhoria futura: RFID (acréscimo)", NEG)
 cel(wr, "B%d" % (n + 3), "=\"Horas: \"&TEXT(Software!C%d,\"#,##0\")" % SW_B, PRETO)
 cel(wr, "D%d" % (n + 3), "=Software!D%d" % SW_B, VERDE, BRL0)
 LTOT = n + 5
 LA = 4 + [c[0] for c in cen].index("A interno, materiais + mão de obra")
 for k, (rot, desc, lh, ls) in enumerate([
-        ("Investimento total, Arquitetura A (proposta)", "A interno com contingência + software da Arquitetura A", LA, n + 2),
-        ("Investimento total, Arquitetura B2", "B2 com contingência + software da Arquitetura B", LB2, n + 3)]):
+        ("Investimento total, Arquitetura A (proposta)", "A interno com contingência + software da Arquitetura A", LA, n + 2)]):
     rr = LTOT + k
     cel(wr, "A%d" % rr, rot, NEG, fill=TOTAL)
     cel(wr, "B%d" % rr, desc, fill=TOTAL, wrap=True)
     for col in "CDE":
         cel(wr, "%s%d" % (col, rr), None, fill=TOTAL)
     cel(wr, "F%d" % rr, "=F%d+D%d" % (lh, ls), NEG, BRL0, fill=TOTAL)
-LTOT += 1
 cel(wr, "A%d" % (LTOT + 2), "POC (bancada + estações 04 e 27)", NEG, fill=TOTAL)
 cel(wr, "B%d" % (LTOT + 2), "Hardware com contingência (aba POC); software da POC é interno", fill=TOTAL, wrap=True)
 cel(wr, "C%d" % (LTOT + 2), "=POC!E%d" % QHC, NEG, BRL0, fill=TOTAL)
