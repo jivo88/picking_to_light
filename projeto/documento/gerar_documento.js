@@ -95,7 +95,7 @@ c.push(tabela(["Item", "Descrição"], [
   ["Abrangência", "40 estações (20 de Medicamento, ruas 03 a 22, e 20 de Perfumaria, ruas 26 a 45), 7.981 endereços"],
   ["Piloto", "Estações 05 (Medicamento) e 27 (Perfumaria)"],
   ["Material de apoio", "Orcamento_PTL.xlsx, Apresentacao_PTL.pptx e simulador 3D (repositório picking_to_light)"],
-  ["Versão", "1.1, de 26/10/2026, em revisão pela TI, arquitetura de software e diretoria"],
+  ["Versão", "1.2, de 26/10/2026 (orçamento revisado), em revisão pela TI, arquitetura de software e diretoria"],
   ["Elaboração", "Equipe de TI"],
 ], [1, 3]));
 c.push(quebra());
@@ -227,7 +227,7 @@ c.push(tabela(["Componente", "Função", "Tecnologia proposta"], [
   ["Coletor (A1 ou A2)", "Lê a etiqueta com o gatilho (abre e fecha) e mostra o andamento.", "A1: app Android próprio. A2: tela do WMS no coletor."],
   ["Concentrador", "Recebe a caixa, comanda os dois barramentos e devolve as confirmações. Mantém o estado se a rede cair.", "RP2040 com Ethernet W5500, duas saídas RS-485, fonte Mean Well de 12 V e gabinete IP54 ventilado."],
   ["Nó de coluna", "Liga os módulos Q de um prédio do alto giro ao barramento.", "RP2040, RS-485 e regulador de 12 para 5 V, com RJ45 de entrada, saída e por módulo."],
-  ["Módulo Q", "Quantidade de 3 dígitos e botão com LED, um por endereço do alto giro (andares 0 a 3).", "Display de 7 segmentos de 0,56\" e botão de 16 mm com LED."],
+  ["Módulo Q", "Quantidade de 3 dígitos e botão com LED, um por endereço do alto giro (andares 0 a 3).", "Display de 7 segmentos de 0,56\" e botão metálico de 16 mm com anel de LED."],
   ["Módulo E+Q", "Endereço de 8 dígitos, quantidade de 3 dígitos e botão. Usado nos andares 4 e 5 (quatro por estação) e nas zonas do baixo giro.", "MAX7219, display de 3 dígitos, RP2040 e RS-485."],
 ], [1.4, 3, 2.6], { size: 17 }));
 c.push(H2("5.2 Duas opções para o coletor"));
@@ -256,7 +256,7 @@ c.push(...img("arquitetura_b", 640, 347, "Figura 6. Visão geral da Arquitetura 
 c.push(H2("6.1 Opções de leitura"));
 c.push(tabela(["Opção", "Como funciona", "Vantagens", "Desvantagens"], [
   ["B1: pulseira NFC", "Leitor no pulso (ESP32-C3, PN532 e bateria). O operador encosta o pulso na tag para abrir e para fechar.", "Mãos livres, leitura em menos de 1 s, cerca de R$ 130 por unidade.", "Pode atrapalhar o operador; precisa de carga diária; higiene e conforto."],
-  ["B2: leitor fixo na estação", "Leitor NFC sob a posição de pega na esteira de separação, ligado ao concentrador. Um painel LCD mostra a caixa e os itens que faltam; fecha com nova leitura ou com o botão FECHAR.", "Nada no corpo do operador e sem bateria. Abre sozinho.", "A caixa precisa parar sempre no mesmo ponto; exige instalação mecânica na esteira."],
+  ["B2: leitor fixo na estação", "Leitor NFC sob a posição de pega na esteira de separação, ligado ao barramento da estação como mais um nó. Um painel LCD mostra a caixa e os itens que faltam; fecha com nova leitura ou com o botão FECHAR.", "Nada no corpo do operador e sem bateria. Abre sozinho.", "A caixa precisa parar sempre no mesmo ponto; exige instalação mecânica na esteira."],
   ["B3: produto de mercado", "Leitores de pulso comerciais (em geral UHF, como o FEIG HyWEAR, cerca de US$ 997) ou leitores HF industriais.", "Robustez e garantia.", "Custo muito maior. O UHF lê de longe e pode pegar a caixa vizinha; exige tags UHF."],
 ], [1.2, 2.6, 1.8, 1.8], { size: 17 }));
 c.push(nota("Para a Arquitetura B, indicamos o leitor fixo (B2): ele resolve a preocupação de a pulseira atrapalhar o operador e não tem bateria. A pulseira (B1) fica como alternativa para estações em que a caixa não pare sempre no mesmo lugar."));
@@ -271,12 +271,12 @@ c.push(H2("6.3 Comparação entre A e B"));
 c.push(tabela(["Critério", "A: coletor", "B: RFID (B2)"], [
   ["Leitura", "Coletores MovFast que já temos", "Leitor fixo por estação e tag em cada caixa"],
   ["O que o operador faz", "Aponta e aperta o gatilho, uma vez para abrir e outra para fechar", "Coloca a caixa na posição (abre) e faz nova leitura ou aperta o botão (fecha)"],
-  ["Hardware, 40 estações*", "R$ 284 mil", "R$ 308 mil"],
+  ["Hardware, 40 estações*", "R$ 364 mil", "R$ 391 mil"],
   ["Custo contínuo", "Nenhum novo", "Tags para caixas novas ou danificadas"],
   ["Riscos", "Disponibilidade e bateria dos coletores; Wi-Fi", "Posição da caixa na leitura; tamanho da frota"],
   ["Prazo", "Menor, porque usa os coletores atuais", "Maior por causa das tags, do cadastro e da instalação"],
 ], [1.6, 2.2, 2.2]));
-c.push(P("* Com mão de obra interna. O detalhamento está no item 12 e na planilha Orcamento_PTL.xlsx.", { italic: true, size: 18, color: CZ }));
+c.push(P("* Com mão de obra interna, instalação e treinamento, sem contingência. O detalhamento está no item 12 e na planilha Orcamento_PTL.xlsx.", { italic: true, size: 18, color: CZ }));
 
 // 7 FUNCIONAMENTO
 c.push(H1("7. Funcionamento e regras"));
@@ -394,7 +394,7 @@ c.push(P("Cálculo de referência: 10 m de Cat5e (24 AWG, cerca de 0,084 Ω/m po
 c.push(tabela(["Critério", "12 V (indicado)", "5 V"], [
   ["Queda de tensão em cabo longo", "Os reguladores dos módulos compensam", "Crítica; exige cabos de força extras"],
   ["Componentes", "Um regulador por nó ou módulo, cerca de R$ 8", "Sem reguladores"],
-  ["Custo das peças (operação completa)", "Cerca de R$ 211 mil", "Cerca de R$ 208 mil; a economia nos reguladores vai para o cabo de força"],
+  ["Custo dos materiais (operação completa)", "Cerca de R$ 266 mil", "Cerca de R$ 269 mil; o cabo de força extra custa mais do que os reguladores economizados"],
   ["Manutenção", "Menor: um cabo só por trecho", "Maior: mais pontos de ligação de energia"],
   ["Indicação", "Adotar", "Só em trechos curtos"],
 ], [2, 2.4, 2.4]));
@@ -402,7 +402,7 @@ c.push(H2("9.5 Fazer internamente ou comprar"));
 c.push(tabela(["Caminho", "Como seria", "Vantagens", "Desvantagens"], [
   ["Interno", "A equipe monta os módulos com placas e displays comprados no Brasil.", "Menor custo, controle total e reposição rápida.", "Precisa de técnico de eletrônica; padronização manual."],
   ["Terceiros: placa própria (EMS)", "Projeto de placa nosso, fabricado e montado por uma fábrica (JLCPCB, por exemplo) e importado.", "Qualidade industrial e peças iguais; menos mão de obra.", "Projeto da placa (cerca de R$ 15 mil), importação e prazo."],
-  ["Terceiros: PTL comercial", "Módulos e controladores prontos de um fornecedor de pick-to-light.", "Produto testado e com garantia.", "Custa cerca de três vezes mais; dependência do fornecedor."],
+  ["Terceiros: PTL comercial", "Módulos e controladores prontos de um fornecedor de pick-to-light.", "Produto testado e com garantia.", "Custa cerca de duas vezes e meia mais; dependência do fornecedor."],
 ], [1.4, 2.4, 1.8, 1.8], { size: 17 }));
 
 // 10 REDE
@@ -422,22 +422,24 @@ c.push(H1("11. Operação e manutenção"));
   "Teste no início de cada turno: todos os displays mostram 8888 por alguns segundos, para achar falhas antes de começar.",
   "Kit de reserva por esteira com módulos Q e E+Q, nós, um concentrador completo e cabos.",
   "Troca de módulo em três passos: desconectar, encaixar o reserva e conferir o teste no painel.",
-  "Treinamento de cerca de 30 minutos para operadores e de 4 horas para a manutenção.",
+  "Treinamento de cerca de 2 horas por operador, com prática na estação, e de 16 horas para a equipe de manutenção.",
 ].forEach((x) => c.push(B(x)));
 
 // 12 ORCAMENTO
 c.push(H1("12. Orçamento"));
-c.push(P("Os valores de hardware estão na planilha Orcamento_PTL.xlsx, com preços pesquisados em lojas brasileiras em 23/10/2026. Os itens sem preço público aparecem como estimativa e precisam de cotação. Câmbio usado: US$ 1 = R$ 5,04. Fator de importação estimado: 1,9."));
+c.push(P("Os valores de hardware estão na planilha Orcamento_PTL.xlsx, com preços pesquisados em lojas brasileiras em 23 e 26/10/2026. Os itens sem preço público aparecem como estimativa e precisam de cotação. Câmbio usado: US$ 1 = R$ 5,04. Fator de importação estimado: 1,9."));
 c.push(tabela(["Cenário", "Piloto (05 e 27)", "Operação completa", "Por estação"], [
-  ["A interno, só peças (12 V)", "R$ 11.668", "R$ 210.829", "R$ 5.271"],
-  ["A interno, só peças (5 V)", "R$ 11.508", "R$ 207.866", "R$ 5.197"],
-  ["A interno, peças e mão de obra", "R$ 15.415", "R$ 284.323", "R$ 7.108"],
-  ["A com placa própria (EMS)", "R$ 34.027", "R$ 368.696", "R$ 9.217"],
-  ["A com PTL comercial importado", "R$ 46.363", "R$ 906.305", "R$ 22.658"],
-  ["B1, RFID com pulseira", "R$ 16.745", "R$ 308.765", "R$ 7.719"],
-  ["B2, RFID com leitor fixo", "R$ 16.588", "R$ 307.779", "R$ 7.694"],
+  ["A interno, só materiais (12 V)", "R$ 16.707", "R$ 266.040", "R$ 6.651"],
+  ["A interno, só materiais (5 V)", "R$ 16.824", "R$ 268.636", "R$ 6.716"],
+  ["A interno, materiais e mão de obra", "R$ 22.204", "R$ 364.094", "R$ 9.102"],
+  ["A com placa própria (EMS)", "R$ 38.859", "R$ 412.582", "R$ 10.315"],
+  ["A com PTL comercial importado", "R$ 50.447", "R$ 936.605", "R$ 23.415"],
+  ["B1, RFID com pulseira", "R$ 23.964", "R$ 397.134", "R$ 9.928"],
+  ["B2, RFID com leitor fixo", "R$ 23.542", "R$ 390.862", "R$ 9.772"],
 ], [3, 1.5, 1.7, 1.3], { direita: [1, 2, 3] }));
-c.push(P("Software, com desenvolvimento interno: cerca de 1.080 h para a Arquitetura A e 1.000 h para a B. A planilha usa R$ 60 por hora, valor que pode ser ajustado."));
+c.push(P("Os materiais incluem, além dos módulos: canaleta calculada pelo layout de cada estação (cerca de 42 m por estação), cabos, alimentação e protetor de surto dos concentradores, pontos de tomada novos onde faltar, switches com nobreak e mini rack, cabo de uplink, ferramentas de montagem e 5% de frete. A mão de obra inclui montagem, instalação fora do horário de separação (hora extra de 50%), comissionamento e treinamento."));
+c.push(P("Software, com desenvolvimento interno: cerca de 1.104 h para a Arquitetura A e 1.024 h para a B, a R$ 103,78 por hora (salário médio de analista de desenvolvimento, R$ 8.458,30, salario.com.br, CBO 212405, com encargos), ou cerca de R$ 115 mil e R$ 106 mil. É custo da equipe interna, não desembolso novo, a menos que o desenvolvimento seja contratado."));
+c.push(P("Com 10% de contingência sobre o hardware e somando o software, o investimento total fica em cerca de R$ 515 mil na Arquitetura A e R$ 536 mil na B2."));
 c.push(P("Mão de obra interna: R$ 34,93 por hora de técnico, calculados com salário médio de R$ 2.846,84 (salario.com.br, CBO 313215, outubro de 2026), encargos de 100% e 163 horas por mês."));
 
 // 13 IMPLANTACAO
@@ -529,7 +531,7 @@ const doc = new Document({
   sections: [{
     properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 } } },
     headers: { default: new Header({ children: [new Paragraph({ alignment: AlignmentType.RIGHT,
-      children: [t("Projeto Pick-to-Light · Documento de Arquitetura · versão 1.1", { size: 16, color: CZ })] })] }) },
+      children: [t("Projeto Pick-to-Light · Documento de Arquitetura · versão 1.2", { size: 16, color: CZ })] })] }) },
     footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER,
       children: [new TextRun({ children: ["Página ", PageNumber.CURRENT, " de ", PageNumber.TOTAL_PAGES], font: FONTE, size: 16, color: CZ })] })] }) },
     children: c,

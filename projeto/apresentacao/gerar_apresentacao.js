@@ -98,8 +98,8 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   const stats = [
     ["40", "estações", "20 de Medicamento e 20 de Perfumaria"],
     ["7.981", "endereços", "1.280 com display próprio no alto giro"],
-    ["R$ 284 mil", "operação completa", "Arquitetura A, produção interna"],
-    ["R$ 15,4 mil", "piloto", "estações 05 e 27"],
+    ["R$ 364 mil", "operação completa", "Arquitetura A, produção interna"],
+    ["R$ 22,2 mil", "piloto", "estações 05 e 27"],
   ];
   stats.forEach(([n, r, d], i) => {
     const x = 0.6 + i * 3.08;
@@ -214,7 +214,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     [cab("Critério"), cab("A: coletor"), cab("B2: RFID com leitor fixo")],
     ["Leitura da caixa", "Coletores MovFast que já temos", "Tag em cada caixa e leitor em cada estação"],
     ["O que o operador faz", "Aperta o gatilho para abrir e para fechar", "Posiciona a caixa (abre) e lê de novo (fecha)"],
-    ["Hardware, 40 estações", "R$ 284 mil", "R$ 308 mil"],
+    ["Hardware, 40 estações", "R$ 364 mil", "R$ 391 mil"],
     ["Custo recorrente novo", "Nenhum", "Tags de caixas novas ou danificadas"],
     ["Software (estimativa)", "Cerca de 1.080 h", "Cerca de 1.000 h, mais o cadastro das tags"],
     ["Principais riscos", "Wi-Fi e disponibilidade dos coletores", "Posição de leitura na esteira; frota de tags"],
@@ -306,12 +306,12 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   pres.addSection({ title: "Orçamento" });
   s = pres.addSlide({ masterName: "SECAO", sectionTitle: "Orçamento" });
   s.addText("Orçamento", { placeholder: "title" });
-  s.addText("Preços pesquisados em lojas brasileiras em 23/10/2026. Os itens estimados estão marcados na planilha.", { placeholder: "body" });
+  s.addText("Preços pesquisados em lojas brasileiras em 23 e 26/10/2026. Os itens estimados estão marcados na planilha.", { placeholder: "body" });
 
   // ================================================================ 15 ORCAMENTO GRAFICO
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Orçamento" });
   titulo(s, "Custo de hardware por cenário");
-  s.addChart(pres.charts.BAR, [{ name: "Operação completa (R$ mil)", labels: ["A interna, só peças", "A interna, peças e mão de obra", "B2, RFID com leitor fixo", "B1, RFID com pulseira", "A com placa própria (EMS)", "A com PTL comercial"], values: [211, 284, 308, 309, 369, 906] }], {
+  s.addChart(pres.charts.BAR, [{ name: "Operação completa (R$ mil)", labels: ["A interna, só materiais", "A interna, com mão de obra", "B2, RFID com leitor fixo", "B1, RFID com pulseira", "A com placa própria (EMS)", "A com PTL comercial"], values: [266, 364, 391, 397, 413, 937] }], {
     x: 0.5, y: 1.35, w: 8.3, h: 5.4, barDir: "bar", chartColors: [THEME.colors.accent3],
     catAxisLabelColor: "5B6675", valAxisLabelColor: "8A97AB", catAxisLabelFontSize: 12, valAxisLabelFontSize: 10,
     catAxisLabelFontFace: "+mn-lt", valAxisLabelFontFace: "+mn-lt", dataLabelFontFace: "+mn-lt",
@@ -321,23 +321,23 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   });
   const tabP = [
     [cab("Piloto 05 e 27"), cab("R$")],
-    ["A interna, peças", "11.668"],
-    ["A interna, com mão de obra", "15.415"],
-    ["B2, leitor fixo", "16.588"],
-    ["A, placa própria", "34.027"],
-    ["A, PTL comercial", "46.363"],
+    ["A interna, materiais", "16.707"],
+    ["A interna, com mão de obra", "22.204"],
+    ["B2, leitor fixo", "23.542"],
+    ["A, placa própria", "38.859"],
+    ["A, PTL comercial", "50.447"],
   ];
   s.addTable(tabP, { x: 9.15, y: 1.45, w: 3.6, colW: [2.45, 1.15], fontSize: 13, color: C.text2, border: { type: "solid", pt: 0.75, color: "D5DBE3" }, rowH: 0.45, align: "left" });
-  s.addText("Software interno estimado em cerca de 1.080 h (A) e 1.000 h (B). Mão de obra a R$ 34,93 por hora (salário médio de técnico com encargos).", { x: 9.15, y: 4.45, w: 3.6, h: 1.6, fontSize: 12, italic: true, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
-  s.addNotes("Fonte: Orcamento_PTL.xlsx. A placa própria só compensa em escala, por causa do projeto (cerca de R$ 15 mil) e da importação. Quantidades e preços podem ser alterados na planilha.");
+  s.addText("Software interno: cerca de 1.104 h (A) e 1.024 h (B), ou R$ 115 mil e R$ 106 mil. Com 10% de contingência e o software, a Arquitetura A soma cerca de R$ 515 mil.", { x: 9.15, y: 4.45, w: 3.6, h: 1.6, fontSize: 12, italic: true, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
+  s.addNotes("Fonte: Orcamento_PTL.xlsx. A placa própria só compensa em escala, por causa do projeto (cerca de R$ 15 mil) e da importação. Quantidades e preços podem ser alterados na planilha. Mão de obra a R$ 34,93/h (técnico) e software a R$ 103,78/h (analista de desenvolvimento), salários médios do salario.com.br com encargos. Os materiais incluem canaleta pelo layout real, alimentação dos concentradores, tomadas novas, nobreak e rack dos switches, ferramentas e frete.");
 
   // ================================================================ 16 INTERNO x TERCEIROS
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Orçamento" });
   titulo(s, "Fazer internamente ou comprar");
   const col = [
-    ["Produção interna", C.accent2, "R$ 284 mil", ["Displays e placas comprados no Brasil", "Montagem e manutenção pela equipe", "Reposição imediata", "Precisa de técnico de eletrônica"]],
-    ["Placa própria (EMS)", C.accent3, "R$ 369 mil", ["Projeto da placa, cerca de R$ 15 mil", "Fabricação e montagem industrial", "Peças sempre iguais", "Importação e prazo maiores"]],
-    ["PTL comercial", C.accent5, "R$ 906 mil", ["Produto pronto e com garantia", "Cerca de três vezes o custo interno", "Dependência do fornecedor", "Precisa de cotação formal"]],
+    ["Produção interna", C.accent2, "R$ 364 mil", ["Displays e placas comprados no Brasil", "Montagem e manutenção pela equipe", "Reposição imediata", "Precisa de técnico de eletrônica"]],
+    ["Placa própria (EMS)", C.accent3, "R$ 413 mil", ["Projeto da placa, cerca de R$ 15 mil", "Fabricação e montagem industrial", "Peças sempre iguais", "Importação e prazo maiores"]],
+    ["PTL comercial", C.accent5, "R$ 937 mil", ["Produto pronto e com garantia", "Cerca de 2,5 vezes o custo interno", "Dependência do fornecedor", "Precisa de cotação formal"]],
   ];
   col.forEach(([t1, cor, v, itens], i) => {
     const x = 0.6 + i * 4.1;
@@ -348,7 +348,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     s.addText("operação completa", { x: x + 0.3, y: 3.1, w: 3.3, h: 0.35, fontSize: 12, color: C.accent6, margin: 0, isTextBox: true });
     s.addText(itens.map((it, k) => ({ text: it, options: { bullet: true, breakLine: k < itens.length - 1 } })), { x: x + 0.3, y: 3.6, w: 3.35, h: 2.5, fontSize: 14, color: C.text2, paraSpaceAfter: 6, valign: "top", isTextBox: true });
   });
-  s.addNotes("Valores com instalação. 12 V × 5 V: o custo de peças fica praticamente igual (R$ 211 mil × R$ 208 mil), mas o 5 V exige mais pontos de alimentação e aumenta a manutenção. Por isso a indicação é 12 V.");
+  s.addNotes("Valores com instalação. 12 V × 5 V: os materiais ficam praticamente iguais (R$ 266 mil × R$ 269 mil), porque o cabo de força extra do 5 V custa mais do que os reguladores economizados, e o 5 V ainda aumenta a manutenção. Por isso a indicação é 12 V.");
 
   // ================================================================ 17 PLANO
   pres.addSection({ title: "Próximos passos" });
@@ -420,7 +420,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   // ================================================================ 20 DECISAO
   s = pres.addSlide({ masterName: "CAPA", sectionTitle: "Próximos passos" });
   s.addText("Decisões", { placeholder: "title" });
-  s.addText("1. Aprovar o piloto nas estações 05 e 27 (cerca de R$ 15,4 mil)\n2. Usar a Arquitetura A como base e deixar a B para depois\n3. Montar os módulos internamente, em 12 V\n4. Liberar medidas, dados de volume, API do BHT e acesso ao Sybase", { placeholder: "body" });
+  s.addText("1. Aprovar o piloto nas estações 05 e 27 (cerca de R$ 22 mil)\n2. Usar a Arquitetura A como base e deixar a B para depois\n3. Montar os módulos internamente, em 12 V\n4. Liberar medidas, dados de volume, API do BHT e acesso ao Sybase", { placeholder: "body" });
   s.addNotes("Com essas quatro decisões, o protótipo de bancada pode começar na semana seguinte.");
 
   await pres.writeFile({ fileName: SAIDA });

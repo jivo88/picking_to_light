@@ -79,6 +79,11 @@ for rua, rs in sorted(por_rua.items()):
         "blocos_alto_45": 4 if cat["alto_45"] else 0,   # A4 e A5 em cada lado (display fixo no lado)
         "zonas_baixo": len(zonas_bg),
         "zonas": dict(sorted(zonas.items())),
+        # 1 nó por prédio do alto giro com endereços nos andares 0-3 (máx. 4 módulos Q por prédio nos dados)
+        "nos_coluna": len({r["cd_predio"] for r in rs if categoria(r) == "alto_0a3"}),
+        # prédios do baixo giro (corredor, 015 e esquinas): base do LED guia opcional e da canaleta do corredor
+        "predios_fundo": len({r["cd_predio"] for r in rs if categoria(r) == "baixo"}),
+        "max_q_por_predio": max(C.Counter(r["cd_predio"] for r in rs if categoria(r) == "alto_0a3").values()),
     }
 
 json.dump(estacoes, open("dados/estacoes.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
