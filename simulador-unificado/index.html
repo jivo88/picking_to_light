@@ -27,6 +27,9 @@ iframe { border: 0; display: block; background: var(--bg); }
 #fcom { flex: 1; min-width: 0; border-left: 1px solid var(--borda); }
 #fctl { flex: 1; min-width: 0; border-right: 1px solid var(--borda); display: none; order: -1; }
 body.modo-ctl #fctl { display: block; }
+#fop { flex: 1; min-width: 0; display: none; }
+body.modo-op #fop { display: block; }
+body.modo-op #f3d, body.modo-op #fcom { display: none; }
 body.modo-ctl #fcom { display: none; }
 body.modo-3d #fcom { display: none; }
 body.modo-com #fcom { flex: 1; border-left: 0; }
@@ -46,18 +49,22 @@ body.modo-com #pipRot { display: block; }
     <button data-m="com" role="tab">Comunicação</button>
     <button data-m="lado" role="tab" class="on">Lado a lado</button>
     <button data-m="ctl" role="tab">Controle</button>
+    <button data-m="op" role="tab">Operação completa</button>
   </div>
-  <span class="dica">Todas as telas mostram a mesma estação. Controle: falhas de LED e cadastro de LED por endereço.</span>
+  <span class="dica" id="dica">Todas as telas mostram a mesma estação. Controle: falhas de LED e cadastro de LED por endereço.</span>
 </header>
 <main>
   <iframe id="f3d" title="Estação 3D" src="../simulador-3d/index.html?semajuda"></iframe>
   <iframe id="fcom" title="Comunicação" src="comunicacao.html"></iframe>
   <iframe id="fctl" title="Interface de controle" src="controle.html"></iframe>
+  <iframe id="fop" title="Operação completa" data-src="operacao.html"></iframe>
   <button id="pipRot" type="button">Estação 3D · ampliar</button>
 </main>
 <script>
 (() => {
-  const f3d = document.getElementById('f3d'), fcom = document.getElementById('fcom'), fctl = document.getElementById('fctl');
+  const f3d = document.getElementById('f3d'), fcom = document.getElementById('fcom'), fctl = document.getElementById('fctl'), fop = document.getElementById('fop');
+  const DICAS = { op: 'As duas linhas e as 40 estações: volumes por hora, produtividade e capacidade.' };
+  const dicaPadrao = document.getElementById('dica').textContent;
   const para3d = (m) => { try { f3d.contentWindow.postMessage(Object.assign({ ptlPai: true }, m), '*'); } catch (e) { /* ainda carregando */ } };
   const paraCom = (m) => { try { fcom.contentWindow.postMessage(m, '*'); } catch (e) { /* ainda carregando */ } };
   const paraCtl = (m) => { try { fctl.contentWindow.postMessage(m, '*'); } catch (e) { /* ainda carregando */ } };
@@ -67,6 +74,9 @@ body.modo-com #pipRot { display: block; }
   function aplicar(m) {
     modo = m;
     document.body.className = 'modo-' + m;
+    document.getElementById('dica').textContent = DICAS[m] || dicaPadrao;
+    if (m === 'op' && !fop.getAttribute('src') && !fop.srcdoc) fop.setAttribute('src', fop.dataset.src);   // só carrega quando abrir a aba
+    try { fop.contentWindow.postMessage({ ptlPai: true, tipo: 'visivel', valor: m === 'op' }, '*'); } catch (e) { /* ainda carregando */ }
     document.querySelectorAll('.abas button').forEach((b) => b.classList.toggle('on', b.dataset.m === m));
     para3d({ tipo: 'compacto', valor: m !== '3d' });
     para3d({ tipo: 'pip', valor: m === 'com' });
@@ -78,7 +88,7 @@ body.modo-com #pipRot { display: block; }
   document.getElementById('pipRot').addEventListener('click', () => aplicar('3d'));
   window.addEventListener('keydown', (e) => {
     if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
-    const m = { Digit1: '3d', Digit2: 'com', Digit3: 'lado', Digit4: 'ctl' }[e.code];
+    const m = { Digit1: '3d', Digit2: 'com', Digit3: 'lado', Digit4: 'ctl', Digit5: 'op' }[e.code];
     if (m) aplicar(m);
   });
   window.addEventListener('message', (e) => {
@@ -88,6 +98,7 @@ body.modo-com #pipRot { display: block; }
       if (d.tipo === 'pronto') { para3d({ tipo: 'pedirMapa' }); aplicar(modo); }
       if (d.tipo === 'gatilho' || d.tipo === 'apertar' || d.tipo === 'rede') para3d(d);
     }
+    if (e.source === fop.contentWindow && d.ptlFilho && d.tipo === 'pronto') fop.contentWindow.postMessage({ ptlPai: true, tipo: 'visivel', valor: modo === 'op' }, '*');
     if (e.source === fctl.contentWindow && d.ptlFilho) {
       if (d.tipo === 'pronto') para3d({ tipo: 'pedirMapa' });
       if (DO_CONTROLE.includes(d.tipo)) para3d(d);

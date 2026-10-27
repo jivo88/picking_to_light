@@ -9,6 +9,9 @@ Junta as aplicações em uma só tela, sincronizadas:
 - **Controle** (`controle.html`): a interface de controle da manutenção. Mostra qual LED falhou (endereço no
   formato da etiqueta, por exemplo `0.05.0042.A`, nó e porta ou endereço RS-485 do E+Q, local e tipo de falha)
   e tem o cadastro de LED por endereço, com busca, teste (888) e troca de módulo por tela + botão.
+- **Operação completa** (`operacao.html`): as duas linhas inteiras (Medicamento · Asi 3 e Perfumaria · Asi 1,
+  40 estações, 1 operador por estação) em uma planta 2D animada, com volumes por hora, itens por hora,
+  produtividade por operador e a capacidade máxima de cada linha com e sem PTL.
 
 Abra `index.html` (funciona sem internet). As abas no topo alternam a visualização:
 
@@ -18,8 +21,9 @@ Abra `index.html` (funciona sem internet). As abas no topo alternam a visualiza�
 | Comunicação | o diagrama de comunicação, com o 3D em uma janela pequena no canto (clique em "ampliar" para voltar) |
 | Lado a lado | 3D e comunicação juntos |
 | Controle | interface de controle (falhas e cadastro de LED) ao lado do 3D |
+| Operação completa | simulação das duas linhas com indicadores (só avança com a aba aberta) |
 
-Atalhos: teclas 1, 2, 3 e 4 (com o foco fora das telas). A aba escolhida fica salva no navegador.
+Atalhos: teclas 1 a 5 (com o foco fora das telas). A aba escolhida fica salva no navegador.
 
 ## O que fica sincronizado
 
@@ -51,3 +55,32 @@ mensagens, mas anima só quando a fila de eventos diminui.
 
 A tabela **LEDs cadastrados por endereço** permite buscar qualquer endereço, testar (888 por 3 s) e cadastrar
 de novo, por exemplo quando um módulo muda de lugar.
+
+## Operação completa
+
+Simula a entrada de volumes nas duas esteiras e a separação nas 40 estações. Cada volume pertence a uma
+linha só (um pedido com Medicamento e Perfumaria vira volumes separados). As estações EP_01 e EP_02 não
+entram na simulação.
+
+Como funciona:
+
+- **Entrada**: volumes por hora em cada linha. Cada volume tem em média N itens (varia de 0,5 a 1,5 vez),
+  sorteados entre as estações proporcionalmente ao número de endereços de cada uma (`projeto/dados/estacoes.json`),
+  com a fração de itens no alto giro ajustável.
+- **Transferência**: cada transferência atende as estações do seu grupo (2 de cada lado; na ponta 1 + 2),
+  como no 3D. A caixa entra se a estação tiver lugar na esteira de separação (padrão: 2 caixas). Se não
+  tiver, segue e volta pelo retorno (TR_04) para tentar de novo: isso conta como recirculação.
+- **Separação**: tempo por item conforme o local (alto giro 0-3, andares 4-5 ou baixo giro, com
+  deslocamento) mais um tempo por unidade e o tempo de abrir, fechar e empurrar a caixa. No modo
+  **Sem PTL** soma o tempo de procurar o endereço em cada item.
+- **Mesma transferência**: terminada uma estação, a caixa vai direto para a próxima estação do mesmo grupo
+  pela esteira de separação, sem voltar ao transporte.
+
+Indicadores por linha e da operação: volumes por hora e itens por hora (média da última hora), itens por
+hora por operador, itens por hora de trabalho efetivo, ocupação das estações, tempo médio do volume na linha,
+volumes esperando, recirculações e a estação mais ocupada. O botão **Simular turno de 8 h** roda o turno
+inteiro de uma vez, e **Calcular capacidade máxima** procura o maior volume por hora que cada linha ainda
+escoa, com e sem PTL.
+
+Todos os tempos são premissas iniciais, editáveis em **Premissas de tempo e esteira**. Os dados das
+estações são embutidos na página por `projeto/dados/embutir_operacao.py`.

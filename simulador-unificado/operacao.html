@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operação completa</title>
+<style>
+/* Operação completa: simulação das duas linhas (Medicamento · Asi 3 e Perfumaria · Asi 1) com as 40 estações */
+:root {
+  --bg: #eef1f5; --painel: #ffffff; --tinta: #1b2638; --suave: #5b6675; --linha: #d5dbe3; --chip: #f6f8fb;
+  --azul: #2f5597; --verde: #2e8b57; --ambar: #d68910; --vermelho: #c0392b; --med: #2f5597; --perf: #b0569b;
+  --mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161f; --painel: #19202c; --tinta: #e8ecf2; --suave: #9aa6b8; --linha: #2c3647; --chip: #202938;
+  --med: #6f9be8; --perf: #e08ccd; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #11161f; --painel: #19202c; --tinta: #e8ecf2; --suave: #9aa6b8; --linha: #2c3647; --chip: #202938;
+  --med: #6f9be8; --perf: #e08ccd; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--tinta); font: 13.5px/1.45 var(--sans); padding: 10px 12px 18px; }
+button, select, input { font: inherit; color: inherit; }
+h2 { font-size: 12px; margin: 0 0 8px; color: var(--suave); text-transform: uppercase; letter-spacing: .6px; }
+:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+.topo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 10px; }
+.topo .tit { font-size: 16px; font-weight: 700; }
+.topo .sub { color: var(--suave); font-size: 12.5px; }
+.btn { background: var(--painel); border: 1px solid var(--linha); border-radius: 8px; padding: 5px 11px; cursor: pointer; font-size: 12.5px; }
+.btn:hover { border-color: var(--azul); }
+.btn.forte { background: #f2a33a; border-color: #f2a33a; color: #1b2638; font-weight: 700; }
+.seg { display: inline-flex; background: var(--painel); border: 1px solid var(--linha); border-radius: 8px; padding: 2px; }
+.seg button { border: 0; background: transparent; padding: 3px 9px; border-radius: 6px; cursor: pointer; font-size: 12.5px; color: var(--suave); }
+.seg button.on { background: #f2a33a; color: #1b2638; font-weight: 700; }
+.relogio { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; }
+.relogio b { font-size: 18px; }
+.relogio small { display: block; color: var(--suave); font-size: 11px; }
+.grade { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 10px; align-items: start; }
+@media (max-width: 900px) { .grade { grid-template-columns: 1fr; } }
+.caixa { background: var(--painel); border: 1px solid var(--linha); border-radius: 12px; padding: 12px; margin-bottom: 10px; min-width: 0; }
+.param { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; margin-bottom: 8px; }
+.param label { font-size: 12.5px; }
+.param output { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 12.5px; }
+.param input[type=range] { grid-column: 1 / 3; accent-color: #f2a33a; width: 100%; }
+.cab { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.cab .ponto { width: 10px; height: 10px; border-radius: 50%; }
+.cab b { font-size: 14px; }
+.chk { display: inline-flex; gap: 6px; align-items: center; font-size: 12.5px; cursor: pointer; margin-left: auto; }
+details summary { cursor: pointer; font-weight: 600; font-size: 12.5px; color: var(--suave); }
+.nota { color: var(--suave); font-size: 12px; margin: 6px 0 0; }
+canvas { display: block; width: 100%; }
+#planta { height: 360px; border-radius: 8px; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 700px) { .kpis { grid-template-columns: 1fr; } }
+.kpi { border: 1px solid var(--linha); border-radius: 10px; padding: 10px 12px; background: var(--chip); }
+.kpi h3 { margin: 0 0 6px; font-size: 13px; display: flex; gap: 6px; align-items: center; }
+.kpi table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.kpi td { padding: 2px 0; }
+.kpi td:last-child { text-align: right; font-weight: 700; }
+.kpi .grande td:last-child { font-size: 18px; }
+.leg { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--suave); margin-top: 6px; }
+.leg i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -2px; }
+#grafico { height: 190px; }
+#ocupacao { height: 170px; }
+.duas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+@media (max-width: 1000px) { .duas { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="topo">
+  <div><div class="tit">Operação completa</div><div class="sub">As duas linhas e as 40 estações com PTL · volumes entrando, transferências, separação e recirculação</div></div>
+  <button class="btn forte" id="btnPlay">Pausar</button>
+  <button class="btn" id="btnReset">Reiniciar</button>
+  <span class="seg" id="selVel" role="group" aria-label="Velocidade">
+    <button data-v="1">1×</button><button data-v="10" class="on">10×</button><button data-v="60">60×</button><button data-v="300">300×</button>
+  </span>
+  <button class="btn" id="btnTurno">Simular turno de 8 h</button>
+  <div class="relogio"><b id="relogio">00:00:00</b><small>tempo simulado</small></div>
+</div>
+
+<div class="grade">
+  <div>
+    <section class="caixa" id="pM"></section>
+    <section class="caixa" id="pP"></section>
+    <section class="caixa">
+      <h2>Comum às duas linhas</h2>
+      <div class="param"><label for="modo">Modo de separação</label><span></span>
+        <select id="modo" class="btn" style="grid-column:1/3"><option value="ptl">Com PTL (displays acendem)</option><option value="manual">Sem PTL (procura o endereço na tela)</option></select></div>
+      <div class="param"><label for="pAlto">Itens no alto giro</label><output id="opAlto"></output><input type="range" id="pAlto" min="30" max="95" step="1"></div>
+      <details>
+        <summary>Premissas de tempo e esteira</summary>
+        <div style="margin-top:8px">
+          <div class="param"><label for="vEst">Velocidade da esteira (m/s)</label><output id="ovEst"></output><input type="range" id="vEst" min="0.2" max="1" step="0.05"></div>
+          <div class="param"><label for="tAlto">Pega no alto giro 0-3 (s)</label><output id="otAlto"></output><input type="range" id="tAlto" min="1" max="10" step="0.5"></div>
+          <div class="param"><label for="t45">Pega nos andares 4-5 (s)</label><output id="ot45"></output><input type="range" id="t45" min="2" max="15" step="0.5"></div>
+          <div class="param"><label for="tBaixo">Pega no baixo giro, com deslocamento (s)</label><output id="otBaixo"></output><input type="range" id="tBaixo" min="3" max="25" step="0.5"></div>
+          <div class="param"><label for="tUni">Por unidade a mais (s)</label><output id="otUni"></output><input type="range" id="tUni" min="0.2" max="2" step="0.1"></div>
+          <div class="param"><label for="tCaixa">Abrir, fechar e empurrar a caixa (s)</label><output id="otCaixa"></output><input type="range" id="tCaixa" min="2" max="20" step="1"></div>
+          <div class="param"><label for="tProc">Procura sem PTL, por item (s)</label><output id="otProc"></output><input type="range" id="tProc" min="0" max="15" step="0.5"></div>
+          <div class="param"><label for="fila">Caixas na esteira de separação por estação</label><output id="ofila"></output><input type="range" id="fila" min="1" max="4" step="1"></div>
+        </div>
+      </details>
+      <button class="btn" id="btnCap" style="width:100%;margin-top:4px">Calcular capacidade máxima (com e sem PTL)</button>
+      <div id="cap" class="nota" aria-live="polite"></div>
+      <p class="nota">Valores iniciais são premissas: ~3.000 volumes/dia e 250 a 270 mil produtos/dia em 2 turnos. Ajuste com os dados reais da operação.</p>
+    </section>
+  </div>
+
+  <div>
+    <section class="caixa">
+      <h2>Planta das esteiras</h2>
+      <canvas id="planta" role="img" aria-label="Planta animada das duas linhas com as estações, as transferências e as caixas"></canvas>
+      <div class="leg">
+        <span><i style="background:#2E9E4F"></i>Caixa (volume)</span>
+        <span><i style="background:#e8eef6;border:1px solid #9aa6b8"></i>Estação ociosa</span>
+        <span><i style="background:#f6c36b"></i>Ocupação média</span>
+        <span><i style="background:#e0533f"></i>Gargalo (ocupação alta)</span>
+        <span><i style="background:#2e8b57"></i>Transferência</span>
+        <span>● operador separando · número = caixas esperando</span>
+      </div>
+    </section>
+    <section class="caixa">
+      <h2>Indicadores</h2>
+      <div class="kpis" id="kpis"></div>
+    </section>
+    <div class="duas">
+      <section class="caixa"><h2>Volumes por hora (média da última hora)</h2><canvas id="grafico" role="img" aria-label="Gráfico de volumes por hora ao longo do tempo"></canvas></section>
+      <section class="caixa"><h2>Ocupação por estação</h2><canvas id="ocupacao" role="img" aria-label="Ocupação de cada estação"></canvas></section>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  // DADOS-INICIO (gerado de dados/estacoes.json: rua -> [segmento, alto 0-3, alto 4-5, baixo])
+  const ESTACOES = {"03":["Medicamento",29,20,82],"04":["Medicamento",29,16,156],"05":["Medicamento",29,20,160],"06":["Medicamento",29,20,160],"07":["Medicamento",29,20,160],"08":["Medicamento",29,16,160],"09":["Medicamento",29,20,192],"10":["Medicamento",29,20,188],"11":["Medicamento",29,16,160],"12":["Medicamento",29,20,160],"13":["Medicamento",29,14,160],"14":["Medicamento",29,20,160],"15":["Medicamento",29,10,192],"16":["Medicamento",29,20,188],"17":["Medicamento",29,16,160],"18":["Medicamento",29,20,160],"19":["Medicamento",29,14,160],"20":["Medicamento",29,20,160],"21":["Medicamento",29,10,160],"22":["Medicamento",29,10,4],"26":["Perfumaria",35,13,128],"27":["Perfumaria",35,15,131],"28":["Perfumaria",35,15,131],"29":["Perfumaria",35,15,131],"30":["Perfumaria",35,13,131],"31":["Perfumaria",35,15,131],"32":["Perfumaria",35,15,230],"33":["Perfumaria",35,15,227],"34":["Perfumaria",35,13,131],"35":["Perfumaria",35,15,131],"36":["Perfumaria",35,11,131],"37":["Perfumaria",35,15,131],"38":["Perfumaria",35,9,230],"39":["Perfumaria",35,15,227],"40":["Perfumaria",35,13,131],"41":["Perfumaria",35,15,131],"42":["Perfumaria",35,11,131],"43":["Perfumaria",35,15,131],"44":["Perfumaria",35,7,131],"45":["Perfumaria",35,15,131]};
+  // DADOS-FIM
+  const $ = (s) => document.querySelector(s);
+  const pad = (n) => String(n).padStart(2, '0');
+  const fmtT = (s) => { s = Math.floor(s); return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`; };
+  const fmt = (n, d = 0) => (Number.isFinite(n) ? n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d }) : '–');
+
+  // ------------------------------------------------------------------ parâmetros
+  const P = {
+    M: { on: true, vph: 95, itens: 20, unid: 4 },
+    P: { on: true, vph: 95, itens: 20, unid: 4 },
+    modo: 'ptl', pAlto: 70, vEst: 0.5, tAlto: 3, t45: 5, tBaixo: 9, tUni: 0.6, tCaixa: 7, tProc: 4, fila: 2,
+  };
+  const PASSO = 2.5, ENTRADA = 6, SAIDA = 4, LOOP = 40;   // metros
+  const LINHAS = {
+    M: { id: 'M', nome: 'Medicamento', esteira: 'Asi 3', cor: '#2f5597' },
+    P: { id: 'P', nome: 'Perfumaria', esteira: 'Asi 1', cor: '#b0569b' },
+  };
+  Object.values(LINHAS).forEach((L) => {
+    L.ruas = Object.keys(ESTACOES).filter((r) => ESTACOES[r][0] === L.nome).sort();
+    L.n = L.ruas.length;
+    L.comp = ENTRADA + L.n * PASSO + SAIDA;
+    const p0 = +L.ruas[0], p1 = +L.ruas[L.n - 1];
+    L.est = L.ruas.map((r, k) => {
+      const [, a03, a45, bx] = ESTACOES[r];
+      // transferência: cada uma atende 2 estações à esquerda e 2 à direita (ponta: 1 + 2)
+      let b = p0 + 4 * Math.round((+r - p0 - 0.5) / 4);
+      if (b + 1 > p1) b = p1 - 1;
+      if (b < p0) b = p0;
+      const kb = L.ruas.indexOf(pad(b));
+      return { rua: r, k, x: ENTRADA + k * PASSO + PASSO / 2, a03, a45, bx, grupo: b, xt: ENTRADA + (kb + 1) * PASSO,
+        fila: [], chegando: 0, atual: null, fim: 0, ocupado: 0, itens: 0 };
+    });
+    L.alto = L.est.reduce((s, e) => s + e.a03 + e.a45, 0);
+    L.baixo = L.est.reduce((s, e) => s + e.bx, 0);
+    L.transf = [...new Set(L.est.map((e) => e.grupo))].map((b) => ({ b, x: L.est.find((e) => e.grupo === b).xt }));
+  });
+
+  // ------------------------------------------------------------------ estado
+  let T = 0, seq = 0, vols = [], acum = { M: 0, P: 0 }, conc = { M: [], P: [] }, itensFeitos = { M: [], P: [] };
+  let serie = [], proxAmostra = 0, proxLimpa = 0, rodando = true, vel = 10, recirc = { M: 0, P: 0 }, lead = { M: [], P: [] };
+  function reiniciar() {
+    T = 0; seq = 0; vols = []; acum = { M: 0, P: 0 }; conc = { M: [], P: [] }; itensFeitos = { M: [], P: [] };
+    serie = []; proxAmostra = 0; proxLimpa = 0; recirc = { M: 0, P: 0 }; lead = { M: [], P: [] };
+    Object.values(LINHAS).forEach((L) => L.est.forEach((e) => { e.fila = []; e.chegando = 0; e.atual = null; e.fim = 0; e.ocupado = 0; e.itens = 0; }));
+  }
+
+  // sorteio de itens: % no alto giro (P.pAlto); dentro de cada área, proporcional ao número de endereços da estação
+  function sortearEstacao(L) {
+    const alto = Math.random() * 100 < P.pAlto;
+    let r = Math.random() * (alto ? L.alto : L.baixo);
+    for (const e of L.est) {
+      const w = alto ? e.a03 + e.a45 : e.bx;
+      if (r < w) {
+        const cat = !alto ? 'baixo' : Math.random() * (e.a03 + e.a45) < e.a03 ? 'a03' : 'a45';
+        return [e, cat];
+      }
+      r -= w;
+    }
+    return [L.est[L.n - 1], 'baixo'];
+  }
+  const geom = (media) => { let u = 1; const p = 1 / Math.max(1, media); while (Math.random() > p && u < 60) u++; return u; };
+  function novoVolume(L) {
+    const pl = P[L.id];
+    const n = Math.max(1, Math.round(pl.itens * (0.5 + Math.random())));
+    const porEst = new Map();
+    for (let i = 0; i < n; i++) {
+      const [e, cat] = sortearEstacao(L);
+      if (!porEst.has(e)) porEst.set(e, []);
+      porEst.get(e).push({ cat, u: geom(pl.unid) });
+    }
+    const alvos = [...porEst.entries()].sort((a, b) => a[0].k - b[0].k).map(([e, its]) => ({ e, its, feito: false }));
+    vols.push({ id: ++seq, L, x: 0, est: 'T', alvos, t0: T, delay: 0, para: null, itens: n, rec: 0 });
+  }
+  const proximo = (v) => v.alvos.find((a) => !a.feito);
+  const lotacao = (e) => e.fila.length + e.chegando + (e.atual ? 1 : 0);
+  function tempoSeparacao(alvo) {
+    let t = P.tCaixa;
+    alvo.its.forEach((it) => {
+      t += (it.cat === 'a03' ? P.tAlto : it.cat === 'a45' ? P.t45 : P.tBaixo) + (it.u - 1) * P.tUni;
+      if (P.modo === 'manual') t += P.tProc;
+    });
+    return t;
+  }
+  function desviar(v, e, de) {   // vai pela esteira de separação até a estação e
+    v.est = 'D';
+    v.para = e;
+    v.delay = Math.abs(e.x - de) / P.vEst + 1;
+    e.chegando++;
+  }
+
+  // ------------------------------------------------------------------ passo da simulação (dt em segundos)
+  function passo(dt) {
+    T += dt;
+    Object.values(LINHAS).forEach((L) => {
+      if (!P[L.id].on) return;
+      acum[L.id] += (P[L.id].vph * dt) / 3600;
+      while (acum[L.id] >= 1) { acum[L.id] -= 1; novoVolume(L); }
+    });
+    for (const v of vols) {
+      const L = v.L;
+      if (v.est === 'T') {
+        const x0 = v.x;
+        v.x += P.vEst * dt;
+        // tenta entrar em cada estação pendente cuja transferência foi cruzada neste passo
+        for (const a of v.alvos) {
+          if (a.feito || a.e.xt <= x0 || a.e.xt > v.x) continue;
+          if (lotacao(a.e) < P.fila) { desviar(v, a.e, a.e.xt); break; }
+        }
+        if (v.est === 'T' && v.x >= L.comp) {
+          if (proximo(v)) { v.est = 'R'; v.delay = LOOP / P.vEst; v.rec++; recirc[L.id]++; }
+          else { v.est = 'X'; conc[L.id].push(T); lead[L.id].push(T - v.t0); }
+        }
+      } else if (v.est === 'D' || v.est === 'R') {
+        v.delay -= dt;
+        if (v.delay <= 0) {
+          if (v.est === 'R') { v.est = 'T'; v.x = 0; }
+          else { v.est = 'F'; v.para.chegando--; v.para.fila.push(v); }
+        }
+      }
+    }
+    // estações
+    Object.values(LINHAS).forEach((L) => L.est.forEach((e) => {
+      if (e.atual && T >= e.fim) {
+        const v = e.atual, a = v.alvos.find((x) => x.e === e && !x.feito);
+        a.feito = true;
+        e.itens += a.its.length;
+        itensFeitos[L.id].push([T, a.its.length]);
+        e.atual = null;
+        const prox = v.alvos.find((x) => !x.feito && x.e.grupo === e.grupo && lotacao(x.e) < P.fila);
+        if (prox) desviar(v, prox.e, e.x);
+        else { v.est = 'T'; v.x = Math.max(e.x, e.xt) + 0.01; }
+      }
+      if (!e.atual && e.fila.length) {
+        const v = e.fila.shift(), a = v.alvos.find((x) => x.e === e && !x.feito);
+        v.est = 'S';
+        e.atual = v;
+        const t = tempoSeparacao(a);
+        e.fim = T + t;
+      }
+      if (e.atual) e.ocupado += dt;
+    }));
+    if (T >= proxLimpa) { proxLimpa = T + 30; vols = vols.filter((v) => v.est !== 'X'); }
+    // série para o gráfico
+    if (T >= proxAmostra) {
+      proxAmostra = T + 300;
+      serie.push({ t: T, M: porHora(conc.M), P: porHora(conc.P) });
+      if (serie.length > 400) serie.shift();
+    }
+  }
+  // média da última hora (ou desde o início, se ainda não deu 1 h)
+  function porHora(lista, peso) {
+    const jan = Math.min(3600, T);
+    if (jan < 60) return 0;
+    let s = 0;
+    for (let i = lista.length - 1; i >= 0; i--) {
+      const it = lista[i];
+      const t = peso ? it[0] : it;
+      if (t < T - jan) break;
+      s += peso ? it[1] : 1;
+    }
+    return (s * 3600) / jan;
+  }
+
+  // ------------------------------------------------------------------ indicadores
+  function indicadores(id) {
+    const L = LINHAS[id];
+    const ops = P[id].on ? L.n : 0;
+    const vh = porHora(conc[id]), ih = porHora(itensFeitos[id], true);
+    const ocup = T > 0 ? L.est.reduce((s, e) => s + e.ocupado, 0) / (L.n * T) : 0;
+    const top = L.est.slice().sort((a, b) => b.ocupado - a.ocupado)[0];
+    const ld = lead[id].slice(-300);
+    const fila = vols.filter((v) => v.L === L && (v.est === 'F' || v.est === 'D')).length;
+    const linha = vols.filter((v) => v.L === L && v.est !== 'X').length;
+    const ocupH = L.est.reduce((s, e) => s + e.ocupado, 0) / 3600;
+    const itensTot = L.est.reduce((s, e) => s + e.itens, 0);
+    return { vh, ih, prod: ops ? ih / ops : 0, ocup, efet: ocupH > 0 ? itensTot / ocupH : 0, ocupH, itensTot, top, lead: ld.length ? ld.reduce((s, x) => s + x, 0) / ld.length : 0,
+      fila, linha, rec: recirc[id], total: conc[id].length, ops };
+  }
+  function renderKPIs() {
+    const k = { M: indicadores('M'), P: indicadores('P') };
+    const card = (titulo, cor, x) => `<div class="kpi"><h3><span style="width:10px;height:10px;border-radius:50%;background:${cor};display:inline-block"></span>${titulo}</h3><table>
+      <tr class="grande"><td>Volumes por hora</td><td>${fmt(x.vh)}</td></tr>
+      <tr><td>Itens por hora</td><td>${fmt(x.ih)}</td></tr>
+      <tr><td>Itens/h por operador</td><td>${fmt(x.prod)}</td></tr>
+      <tr><td>Itens por hora de trabalho efetivo</td><td>${fmt(x.efet)}</td></tr>
+      <tr><td>Ocupação média das estações</td><td>${fmt(x.ocup * 100)}%</td></tr>
+      <tr><td>Tempo médio do volume na linha</td><td>${x.lead ? (x.lead >= 3600 ? fmtT(x.lead) : fmtT(x.lead).slice(3)) : '–'}</td></tr>
+      <tr><td>Volumes na linha / esperando</td><td>${fmt(x.linha)} / ${fmt(x.fila)}</td></tr>
+      <tr><td>Recirculações</td><td>${fmt(x.rec)}</td></tr>
+      ${x.top ? `<tr><td>Estação mais ocupada</td><td>est. ${x.top.rua} · ${fmt(T ? (x.top.ocupado / T) * 100 : 0)}%</td></tr>` : ''}
+      <tr><td>Volumes concluídos</td><td>${fmt(x.total)}</td></tr></table></div>`;
+    const tot = { vh: k.M.vh + k.P.vh, ih: k.M.ih + k.P.ih, ops: k.M.ops + k.P.ops, linha: k.M.linha + k.P.linha, fila: k.M.fila + k.P.fila,
+      rec: k.M.rec + k.P.rec, total: k.M.total + k.P.total };
+    tot.prod = tot.ops ? tot.ih / tot.ops : 0;
+    tot.efet = k.M.ocupH + k.P.ocupH > 0 ? (k.M.itensTot + k.P.itensTot) / (k.M.ocupH + k.P.ocupH) : 0;
+    tot.ocup = (k.M.ocup * k.M.ops + k.P.ocup * k.P.ops) / Math.max(1, tot.ops);
+    const lds = lead.M.slice(-300).concat(lead.P.slice(-300));
+    tot.lead = lds.length ? lds.reduce((s, x) => s + x, 0) / lds.length : 0;
+    tot.top = (k.M.top && k.P.top) ? (k.M.top.ocupado >= k.P.top.ocupado ? k.M.top : k.P.top) : null;
+    $('#kpis').innerHTML = card('Medicamento · Asi 3', LINHAS.M.cor, k.M) + card('Perfumaria · Asi 1', LINHAS.P.cor, k.P) +
+      card(`Operação (${tot.ops} operadores)`, '#f2a33a', tot);
+    $('#relogio').textContent = fmtT(T);
+  }
+
+  // ------------------------------------------------------------------ desenho da planta
+  const cv = $('#planta'), cx = cv.getContext('2d');
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function ajustar(c) {
+    const r = c.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1);
+    if (c.width !== Math.round(r.width * d) || c.height !== Math.round(r.height * d)) { c.width = Math.round(r.width * d); c.height = Math.round(r.height * d); }
+    return [r.width, r.height, d];
+  }
+  function corOcup(o) {   // 0..1 -> claro, âmbar, vermelho
+    const a = [232, 238, 246], b = [246, 195, 107], c = [224, 83, 63];
+    const m = o < 0.5 ? [a, b, o / 0.5] : [b, c, Math.min(1, (o - 0.5) / 0.4)];
+    return `rgb(${m[0].map((v, i) => Math.round(v + (m[1][i] - v) * m[2])).join(',')})`;
+  }
+  function desenhar() {
+    const [w, h, d] = ajustar(cv);
+    cx.setTransform(d, 0, 0, d, 0, 0);
+    cx.clearRect(0, 0, w, h);
+    const tinta = css('--tinta'), suave = css('--suave'), linha = css('--linha');
+    const maxComp = Math.max(LINHAS.M.comp, LINHAS.P.comp);
+    const mx = 34, s = (w - mx * 2 - 40) / maxComp;   // px por metro
+    const X = (m) => mx + m * s;
+    const hEst = Math.min(46, h * 0.13), hEsteira = 14;
+    const conf = [ // Perfumaria em cima (estações acima da esteira), Medicamento embaixo (estações abaixo)
+      { L: LINHAS.P, y: h * 0.3, lado: -1 },
+      { L: LINHAS.M, y: h * 0.7, lado: 1 },
+    ];
+    // entrada e saída
+    cx.font = '600 11px system-ui, sans-serif';
+    cx.fillStyle = suave;
+    cx.textAlign = 'center';
+    cx.fillText('ENTRADA', X(1.5), h * 0.5 + 4);
+    cx.fillText('SAÍDA / TR_04', X(maxComp) + 6, h * 0.5 + 4);
+    conf.forEach(({ L, y, lado }) => {
+      // retorno (recirculação) pelo meio
+      const yr = y - lado * (hEsteira + 18);
+      cx.strokeStyle = linha;
+      cx.setLineDash([4, 4]);
+      cx.lineWidth = 2;
+      cx.beginPath();
+      cx.moveTo(X(L.comp), y); cx.lineTo(X(L.comp) + 14, y); cx.lineTo(X(L.comp) + 14, yr); cx.lineTo(X(0) - 12, yr); cx.lineTo(X(0) - 12, y); cx.lineTo(X(0), y);
+      cx.stroke();
+      cx.setLineDash([]);
+      // esteira de transporte
+      cx.fillStyle = css('--chip');
+      cx.strokeStyle = suave;
+      cx.lineWidth = 1;
+      cx.fillRect(X(0), y - hEsteira / 2, L.comp * s, hEsteira);
+      cx.strokeRect(X(0), y - hEsteira / 2, L.comp * s, hEsteira);
+      cx.fillStyle = L.cor;
+      cx.textAlign = 'left';
+      cx.font = '700 12px system-ui, sans-serif';
+      cx.fillText(`${L.nome} · ${L.esteira}${P[L.id].on ? '' : ' (desligada)'}`, X(0), lado < 0 ? y - hEsteira / 2 - hEst - 14 : y + hEsteira / 2 + hEst + 24);
+      // estações
+      L.est.forEach((e) => {
+        const ox = X(e.x - PASSO / 2) + 1, oy = lado < 0 ? y - hEsteira / 2 - 6 - hEst : y + hEsteira / 2 + 6;
+        const o = T > 0 ? e.ocupado / T : 0;
+        cx.fillStyle = corOcup(o);
+        cx.strokeStyle = '#9aa6b8';
+        cx.fillRect(ox, oy, PASSO * s - 2, hEst);
+        cx.strokeRect(ox, oy, PASSO * s - 2, hEst);
+        cx.fillStyle = '#1b2638';
+        cx.textAlign = 'center';
+        cx.font = '700 11px system-ui, sans-serif';
+        cx.fillText(e.rua, X(e.x), oy + 13);
+        // operador
+        cx.beginPath();
+        cx.arc(X(e.x) - 6, oy + hEst - 12, 4.5, 0, Math.PI * 2);
+        cx.fillStyle = e.atual ? '#2E9E4F' : '#9aa6b8';
+        cx.fill();
+        const nf = e.fila.length + e.chegando;
+        if (nf) { cx.fillStyle = '#1b2638'; cx.font = '700 11px system-ui, sans-serif'; cx.fillText(String(nf), X(e.x) + 7, oy + hEst - 8); }
+      });
+      // transferências
+      L.transf.forEach((t) => {
+        cx.fillStyle = '#2e8b57';
+        cx.fillRect(X(t.x) - 3, y - hEsteira / 2 - 5, 6, 5);
+        cx.fillRect(X(t.x) - 3, y + hEsteira / 2, 6, 5);
+      });
+      // caixas
+      vols.forEach((v) => {
+        if (v.L !== L || v.est === 'X') return;
+        let px, py;
+        if (v.est === 'T') { px = X(v.x); py = y; }
+        else if (v.est === 'R') { const f = 1 - Math.max(0, v.delay) / (LOOP / P.vEst); px = X(L.comp) - f * (X(L.comp) - X(0)); py = yr; }
+        else if (v.est === 'D') { px = X(v.para.x); py = y + lado * (hEsteira / 2 + 3); }
+        else return;
+        cx.fillStyle = '#2E9E4F';
+        cx.fillRect(px - 3.5, py - 3.5, 7, 7);
+      });
+      L.est.forEach((e) => {   // caixa sendo separada
+        if (!e.atual) return;
+        const oy = lado < 0 ? y - hEsteira / 2 - 6 - hEst : y + hEsteira / 2 + 6;
+        cx.fillStyle = '#2E9E4F';
+        cx.fillRect(X(e.x) + 2, oy + hEst / 2 - 9, 9, 9);
+      });
+    });
+    cx.fillStyle = suave;
+    cx.textAlign = 'center';
+    cx.font = '11px system-ui, sans-serif';
+    cx.fillText('linha tracejada = retorno da caixa que não conseguiu entrar na estação (recirculação)', w / 2, h * 0.5 + 4);
+  }
+
+  // ------------------------------------------------------------------ gráficos
+  function grafico() {
+    const c = $('#grafico'), g = c.getContext('2d'), [w, h, d] = ajustar(c);
+    g.setTransform(d, 0, 0, d, 0, 0);
+    g.clearRect(0, 0, w, h);
+    const suave = css('--suave'), linha = css('--linha');
+    const ml = 40, mb = 20, mt = 8, mr = 8;
+    const maxV = Math.max(50, ...serie.map((p) => Math.max(p.M, p.P)), P.M.vph, P.P.vph) * 1.15;
+    const tMax = Math.max(3600, T);
+    g.font = '10.5px system-ui, sans-serif';
+    g.fillStyle = suave;
+    g.strokeStyle = linha;
+    g.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+      const v = (maxV * i) / 4, yy = h - mb - ((h - mb - mt) * i) / 4;
+      g.beginPath(); g.moveTo(ml, yy); g.lineTo(w - mr, yy); g.stroke();
+      g.fillText(fmt(v), ml - 4, yy + 3);
+    }
+    g.textAlign = 'center';
+    for (let hh = 0; hh <= tMax / 3600; hh += Math.max(1, Math.round(tMax / 3600 / 8))) {
+      g.fillText(hh + ' h', ml + ((w - ml - mr) * hh * 3600) / tMax, h - 5);
+    }
+    [['M', LINHAS.M.cor], ['P', LINHAS.P.cor]].forEach(([k, cor]) => {
+      // meta: volumes que entram por hora (tracejado)
+      g.strokeStyle = cor;
+      g.setLineDash([3, 4]);
+      const ym = h - mb - ((h - mb - mt) * P[k].vph) / maxV;
+      g.beginPath(); g.moveTo(ml, ym); g.lineTo(w - mr, ym); g.stroke();
+      g.setLineDash([]);
+      g.lineWidth = 2;
+      g.beginPath();
+      serie.forEach((p, i) => {
+        const xx = ml + ((w - ml - mr) * p.t) / tMax, yy = h - mb - ((h - mb - mt) * p[k]) / maxV;
+        if (i) g.lineTo(xx, yy); else g.moveTo(xx, yy);
+      });
+      g.stroke();
+      g.lineWidth = 1;
+    });
+    g.textAlign = 'left';
+    g.fillStyle = suave;
+    g.fillText('tracejado = volumes que entram por hora', ml + 6, mt + 10);
+  }
+  function ocupacao() {
+    const c = $('#ocupacao'), g = c.getContext('2d'), [w, h, d] = ajustar(c);
+    g.setTransform(d, 0, 0, d, 0, 0);
+    g.clearRect(0, 0, w, h);
+    const suave = css('--suave'), linha = css('--linha');
+    const est = LINHAS.M.est.concat(LINHAS.P.est);
+    const ml = 30, mb = 18, mt = 6, bw = (w - ml - 4) / est.length;
+    g.strokeStyle = linha;
+    g.fillStyle = suave;
+    g.font = '10px system-ui, sans-serif';
+    g.textAlign = 'right';
+    [0, 50, 100].forEach((p) => { const yy = h - mb - ((h - mb - mt) * p) / 100; g.beginPath(); g.moveTo(ml, yy); g.lineTo(w, yy); g.stroke(); g.fillText(p + '%', ml - 3, yy + 3); });
+    est.forEach((e, i) => {
+      const o = T > 0 ? e.ocupado / T : 0;
+      const hh = (h - mb - mt) * Math.min(1, o);
+      g.fillStyle = corOcup(o);
+      g.fillRect(ml + i * bw + 1, h - mb - hh, bw - 2, hh);
+      if (i % 2 === 0 || bw > 18) { g.fillStyle = suave; g.textAlign = 'center'; g.fillText(e.rua, ml + i * bw + bw / 2, h - 5); }
+    });
+  }
+
+  // ------------------------------------------------------------------ controles
+  function painelLinha(id) {
+    const L = LINHAS[id], el = $('#p' + id);
+    el.innerHTML = `<div class="cab"><span class="ponto" style="background:${L.cor}"></span><b>${L.nome}</b><span class="sub" style="color:var(--suave);font-size:12px;white-space:nowrap">${L.esteira} · ${L.n} estações</span>
+      <label class="chk"><input type="checkbox" data-k="on" ${P[id].on ? 'checked' : ''}> ligada</label></div>
+      <div class="param"><label>Volumes que entram por hora</label><output data-o="vph"></output><input type="range" data-k="vph" min="0" max="600" step="5" value="${P[id].vph}"></div>
+      <div class="param"><label>Itens por volume (média)</label><output data-o="itens"></output><input type="range" data-k="itens" min="1" max="60" step="1" value="${P[id].itens}"></div>
+      <div class="param"><label>Unidades por item (média)</label><output data-o="unid"></output><input type="range" data-k="unid" min="1" max="12" step="0.5" value="${P[id].unid}"></div>
+      <p class="nota">${L.n} operadores (1 por estação). Produtos por volume ≈ <b data-o="prod"></b>.</p>`;
+    const at = () => {
+      el.querySelectorAll('[data-o]').forEach((o) => {
+        const k = o.dataset.o;
+        o.textContent = k === 'prod' ? fmt(P[id].itens * P[id].unid) : fmt(P[id][k], k === 'unid' ? 1 : 0);
+      });
+    };
+    el.addEventListener('input', (ev) => {
+      const k = ev.target.dataset.k;
+      if (!k) return;
+      P[id][k] = ev.target.type === 'checkbox' ? ev.target.checked : +ev.target.value;
+      at();
+    });
+    at();
+  }
+  painelLinha('M');
+  painelLinha('P');
+  const comuns = { pAlto: [0, '%'], vEst: [2, ''], tAlto: [1, ' s'], t45: [1, ' s'], tBaixo: [1, ' s'], tUni: [1, ' s'], tCaixa: [0, ' s'], tProc: [1, ' s'], fila: [0, ''] };
+  Object.entries(comuns).forEach(([k, [dec, un]]) => {
+    const i = $('#' + k), o = $('#o' + k);
+    i.value = P[k];
+    const at = () => { P[k] = +i.value; o.textContent = fmt(P[k], dec) + un; };
+    i.addEventListener('input', at);
+    at();
+  });
+  $('#modo').addEventListener('change', (e) => { P.modo = e.target.value; });
+  $('#btnPlay').addEventListener('click', () => { rodando = !rodando; $('#btnPlay').textContent = rodando ? 'Pausar' : 'Continuar'; });
+  $('#btnReset').addEventListener('click', () => { reiniciar(); tudo(); });
+  $('#selVel').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    vel = +b.dataset.v;
+    $('#selVel').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+  });
+  $('#btnTurno').addEventListener('click', () => {
+    const b = $('#btnTurno');
+    b.disabled = true;
+    b.textContent = 'Simulando…';
+    setTimeout(() => {
+      reiniciar();
+      while (T < 8 * 3600) passo(0.5);
+      tudo();
+      b.disabled = false;
+      b.textContent = 'Simular turno de 8 h';
+      rodando = false;
+      $('#btnPlay').textContent = 'Continuar';
+    }, 30);
+  });
+  // capacidade: maior entrada de volumes/h que a linha ainda escoa (>= 97% concluído nas horas 2 e 3, sem fila crescendo)
+  function escoa(id, vph) {
+    const L = LINHAS[id];
+    P[id].vph = vph;
+    reiniciar();
+    let ent = 0;
+    while (T < 3 * 3600) { passo(1); if (T > 3600) ent += (vph * 1) / 3600; }
+    const feitos = conc[id].filter((t) => t > 3600).length;
+    const naLinha = vols.filter((v) => v.L === L && v.est !== 'X').length;
+    return feitos >= 0.97 * ent && naLinha < Math.max(30, vph * 0.35);
+  }
+  function capacidade(id, modo) {
+    const guarda = JSON.stringify(P), outro = id === 'M' ? 'P' : 'M';
+    P[outro].on = false; P[id].on = true; P.modo = modo;
+    let lo = 20, hi = 1000;
+    while (hi - lo > 10) { const m = Math.round((lo + hi) / 2); if (escoa(id, m)) lo = m; else hi = m; }
+    const r = { vph: lo, ih: lo * P[id].itens };
+    Object.assign(P, JSON.parse(guarda));
+    P.M = JSON.parse(guarda).M; P.P = JSON.parse(guarda).P;
+    return r;
+  }
+  $('#btnCap').addEventListener('click', () => {
+    const b = $('#btnCap'), out = $('#cap');
+    b.disabled = true;
+    out.textContent = 'Calculando… (a simulação atual será reiniciada)';
+    setTimeout(() => {
+      const t0 = performance.now();
+      const r = {};
+      ['M', 'P'].forEach((id) => { r[id] = { ptl: capacidade(id, 'ptl'), manual: capacidade(id, 'manual') }; });
+      reiniciar();
+      const lin = (id) => {
+        const x = r[id], g = x.manual.vph ? (x.ptl.vph / x.manual.vph - 1) * 100 : 0;
+        return `<b>${LINHAS[id].nome}</b>: até <b>${fmt(x.ptl.vph)}</b> volumes/h com PTL (${fmt(x.ptl.ih / LINHAS[id].n)} itens/h por operador) e ${fmt(x.manual.vph)} sem PTL, <b>${g >= 0 ? '+' : ''}${fmt(g)}%</b>.`;
+      };
+      out.innerHTML = `${lin('M')}<br>${lin('P')}<br>Com os itens por volume e as premissas atuais. Calculado em ${fmt((performance.now() - t0) / 1000, 1)} s.`;
+      window.PTL_OP.capacidade = r;
+      b.disabled = false;
+      tudo();
+    }, 30);
+  });
+  function tudo() { desenhar(); renderKPIs(); grafico(); ocupacao(); }
+
+  // ------------------------------------------------------------------ laço
+  let tAnt = performance.now(), uiT = 0, visivel = window.parent === window;
+  if (!visivel) window.parent.postMessage({ ptlFilho: true, tipo: 'pronto' }, '*');
+  // dentro do simulador unificado: só avança quando a aba "Operação completa" está aberta
+  window.addEventListener('message', (e) => { const d = e.data || {}; if (d.ptlPai && d.tipo === 'visivel') visivel = !!d.valor; });
+  function laco(agora) {
+    requestAnimationFrame(laco);
+    const real = Math.min(0.25, (agora - tAnt) / 1000);
+    tAnt = agora;
+    if (rodando && visivel && !document.hidden) {
+      let falta = real * vel;
+      while (falta > 0) { const dt = Math.min(0.5, falta); passo(dt); falta -= dt; }
+    }
+    desenhar();
+    uiT += real;
+    if (uiT > 0.4) { uiT = 0; renderKPIs(); grafico(); ocupacao(); }
+  }
+  window.addEventListener('resize', tudo);
+  window.PTL_OP = { P, LINHAS, passo, reiniciar, indicadores, T: () => T };
+  requestAnimationFrame(laco);
+})();
+</script>
+</body>
+</html>
