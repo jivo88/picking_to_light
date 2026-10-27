@@ -272,7 +272,7 @@ c.push(H2("6.3 Coletor hoje e RFID depois"));
 c.push(tabela(["Critério", "Coletor (POC e implantação)", "RFID com pulseira (futuro)"], [
   ["Leitura", "Coletores MovFast que já temos", "Tag em cada caixa e pulseira no operador"],
   ["O que o operador faz", "Aponta e aperta o gatilho, uma vez para abrir e outra para fechar", "Encosta o pulso na tag para abrir e de novo para fechar"],
-  ["Hardware, 40 estações*", "R$ 326 mil", "Acréscimo de cerca de R$ 29 mil (R$ 32 mil com contingência)"],
+  ["Hardware, 40 estações*", "R$ 305 mil", "Acréscimo de cerca de R$ 29 mil (R$ 32 mil com contingência)"],
   ["Custo contínuo", "Nenhum novo", "Tags para caixas novas ou danificadas"],
   ["Riscos", "Disponibilidade e bateria dos coletores; Wi-Fi", "Conforto e bateria da pulseira; tamanho da frota"],
   ["Prazo", "Menor, porque usa os coletores atuais", "Depois da POC: etiquetar a frota e cadastrar as tags"],
@@ -402,7 +402,7 @@ c.push(P("Cálculo de referência: 10 m de Cat5e (24 AWG, cerca de 0,084 Ω/m po
 c.push(tabela(["Critério", "12 V (indicado)", "5 V"], [
   ["Queda de tensão em cabo longo", "Os reguladores dos módulos compensam", "Crítica; exige cabos de força extras"],
   ["Componentes", "Um regulador por nó ou módulo, cerca de R$ 11", "Sem reguladores"],
-  ["Custo dos materiais (operação completa)", "Cerca de R$ 244 mil", "Cerca de R$ 264 mil; a fonte de 5 V e o cabo de força extra custam mais do que os reguladores economizados"],
+  ["Custo dos materiais (operação completa)", "Cerca de R$ 223 mil", "Cerca de R$ 243 mil; a fonte de 5 V e o cabo de força extra custam mais do que os reguladores economizados"],
   ["Manutenção", "Menor: um cabo só por trecho", "Maior: mais pontos de ligação de energia"],
   ["Indicação", "Adotar", "Só em trechos curtos"],
 ], [2, 2.4, 2.4]));
@@ -438,18 +438,18 @@ c.push(...img("manutencao", 640, 273, "Figura 10. Aviso de falha e cadastro de L
 
 // 12 ORCAMENTO
 c.push(H1("12. Orçamento"));
-c.push(P("Os valores de hardware estão na planilha Orcamento_PTL.xlsx, com preços consultados em lojas on-line em 27/10/2026. Cada peça tem loja, produto e link na aba Fontes da planilha e na planilha Orcamento_Pecas_Fontes.xlsx. Só o ponto de tomada novo (serviço a cotar com a manutenção predial) e a bateria da pulseira do RFID ficaram com valor estimado. Câmbio usado: US$ 1 = R$ 5,04, só para a placa do concentrador, que é importada. Fator de importação estimado: 1,9."));
+c.push(P("Os valores de hardware estão na planilha Orcamento_PTL.xlsx, com preços consultados em lojas on-line em 27/10/2026. Cada peça tem loja, produto e link na aba Fontes da planilha e na planilha Orcamento_Pecas_Fontes.xlsx. Ficaram sem preço de loja, por decisão do projeto, as carcaças dos LEDs (impressas em 3D, em medida padrão compacta, com valor estipulado) e o ponto de tomada novo (serviço a cotar com a manutenção predial). As peças do RFID futuro ficam em abas separadas; nelas, só a bateria da pulseira ficou estimada. Câmbio usado: US$ 1 = R$ 5,04, só para a placa do concentrador, que é importada. Fator de importação estimado: 1,9."));
 c.push(tabela(["Cenário", "Piloto (04 e 27)", "Operação completa", "Por estação"], [
-  ["A interno, só materiais (12 V)", "R$ 15.479", "R$ 243.797", "R$ 6.095"],
-  ["A interno, só materiais (5 V)", "R$ 16.813", "R$ 264.262", "R$ 6.607"],
-  ["A interno, materiais e mão de obra", "R$ 20.180", "R$ 326.069", "R$ 8.152"],
-  ["A com placa própria (EMS)", "R$ 35.194", "R$ 342.032", "R$ 8.551"],
+  ["A interno, só materiais (12 V)", "R$ 14.434", "R$ 223.030", "R$ 5.576"],
+  ["A interno, só materiais (5 V)", "R$ 15.768", "R$ 243.495", "R$ 6.087"],
+  ["A interno, materiais e mão de obra", "R$ 19.135", "R$ 305.303", "R$ 7.633"],
+  ["A com placa própria (EMS)", "R$ 34.489", "R$ 328.049", "R$ 8.201"],
   ["A com PTL comercial importado", "R$ 41.047", "R$ 754.457", "R$ 18.861"],
   ["Melhoria futura: RFID (acréscimo)", "R$ 1.550", "R$ 29.017", "R$ 725"],
 ], [3, 1.5, 1.7, 1.3], { direita: [1, 2, 3] }));
 c.push(P("Os materiais incluem, além dos módulos: canaleta calculada pelo layout de cada estação (cerca de 27 m por estação, com as medidas do desenho), cabos, alimentação e protetor de surto dos concentradores, pontos de tomada novos onde faltar, switches com nobreak e mini rack, cabo de uplink, ferramentas de montagem e 5% de frete. A mão de obra inclui montagem, instalação fora do horário de separação (hora extra de 50%), comissionamento e treinamento."));
 c.push(P("Software, com desenvolvimento interno: cerca de 1.144 h para a Arquitetura A (mais 80 h quando o RFID for feito), a R$ 103,78 por hora (salário médio de analista de desenvolvimento, R$ 8.458,30, salario.com.br, CBO 212405, com encargos), ou cerca de R$ 119 mil. Inclui a interface de controle com o cadastro de LED. É custo da equipe interna, não desembolso novo, a menos que o desenvolvimento seja contratado."));
-c.push(P("Com 10% de contingência sobre o hardware e somando o software, o investimento total fica em cerca de R$ 477 mil na Arquitetura A. A POC (bancada + estações 04 e 27) custa cerca de R$ 23,4 mil de hardware com contingência (aba POC)."));
+c.push(P("Com 10% de contingência sobre o hardware e somando o software, o investimento total fica em cerca de R$ 455 mil na Arquitetura A. A POC (bancada + estações 04 e 27) custa cerca de R$ 22,2 mil de hardware com contingência (aba POC)."));
 c.push(P("Mão de obra interna: R$ 34,93 por hora de técnico, calculados com salário médio de R$ 2.846,84 (salario.com.br, CBO 313215, outubro de 2026), encargos de 100% e 163 horas por mês."));
 
 // 13 IMPLANTACAO
@@ -457,7 +457,7 @@ c.push(H1("13. Plano de implantação"));
 c.push(tabela(["Fase", "Entregas", "Duração estimada"], [
   ["0. Proposta", "Arquitetura, orçamento e simulador 3D", "Concluída"],
   ["1. Protótipo de bancada", "Um concentrador, um nó com quatro módulos Q e dois módulos E+Q; firmware e versão mínima do Serviço PTL", "3 a 4 semanas"],
-  ["2. POC", "Bancada (3 a 4 semanas) e depois as estações 04 e 27 completas, app do coletor e interface de controle; medição do tempo por caixa antes e depois. Hardware: cerca de R$ 23,4 mil com contingência (aba POC)", "cerca de 10 semanas"],
+  ["2. POC", "Bancada (3 a 4 semanas) e depois as estações 04 e 27 completas, app do coletor e interface de controle; medição do tempo por caixa antes e depois. Hardware: cerca de R$ 22,2 mil com contingência (aba POC)", "cerca de 10 semanas"],
   ["3. Avaliação", "Resultados do piloto, ajuste de zonas e rota, decisão entre A e B e entre fazer e comprar", "2 semanas"],
   ["4. Expansão", "Medicamento e depois Perfumaria, em lotes de cinco estações", "10 a 14 semanas"],
   ["5. Estabilização", "Ajustes finais, documentação e entrega para a sustentação", "4 semanas"],

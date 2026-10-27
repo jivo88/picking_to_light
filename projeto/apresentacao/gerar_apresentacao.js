@@ -98,8 +98,8 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   const stats = [
     ["40", "estações", "20 de Medicamento e 20 de Perfumaria"],
     ["7.981", "endereços", "1.280 com display próprio no alto giro"],
-    ["R$ 326 mil", "operação completa", "Arquitetura A, produção interna"],
-    ["R$ 23,4 mil", "POC", "bancada + estações 04 e 27"],
+    ["R$ 305 mil", "operação completa", "Arquitetura A, produção interna"],
+    ["R$ 22,2 mil", "POC", "bancada + estações 04 e 27"],
   ];
   stats.forEach(([n, r, d], i) => {
     const x = 0.6 + i * 3.08;
@@ -214,7 +214,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     [cab("Critério"), cab("Coletor (POC e implantação)"), cab("RFID com pulseira (futuro)")],
     ["Leitura da caixa", "Coletores MovFast que já temos", "Tag em cada caixa e pulseira no operador"],
     ["O que o operador faz", "Aperta o gatilho para abrir e para fechar", "Encosta o pulso na tag para abrir e fechar"],
-    ["Hardware, 40 estações", "R$ 326 mil", "+ R$ 29 mil sobre o coletor"],
+    ["Hardware, 40 estações", "R$ 305 mil", "+ R$ 29 mil sobre o coletor"],
     ["Custo recorrente novo", "Nenhum", "Tags de caixas novas ou danificadas"],
     ["Software (estimativa)", "Cerca de 1.144 h", "+ 80 h e o cadastro das tags"],
     ["Principais riscos", "Wi-Fi e disponibilidade dos coletores", "Conforto e bateria da pulseira; frota de tags"],
@@ -318,7 +318,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   // ================================================================ 15 ORCAMENTO GRAFICO
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Orçamento" });
   titulo(s, "Custo de hardware por cenário");
-  s.addChart(pres.charts.BAR, [{ name: "Operação completa (R$ mil)", labels: ["A interna, só materiais", "A interna, com mão de obra", "A com placa própria (EMS)", "A com PTL comercial"], values: [244, 326, 342, 754] }], {
+  s.addChart(pres.charts.BAR, [{ name: "Operação completa (R$ mil)", labels: ["A interna, só materiais", "A interna, com mão de obra", "A com placa própria (EMS)", "A com PTL comercial"], values: [223, 305, 328, 754] }], {
     x: 0.5, y: 1.35, w: 8.3, h: 5.4, barDir: "bar", chartColors: [THEME.colors.accent3],
     catAxisLabelColor: "5B6675", valAxisLabelColor: "8A97AB", catAxisLabelFontSize: 12, valAxisLabelFontSize: 10,
     catAxisLabelFontFace: "+mn-lt", valAxisLabelFontFace: "+mn-lt", dataLabelFontFace: "+mn-lt",
@@ -328,23 +328,23 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   });
   const tabP = [
     [cab("Piloto 04 e 27"), cab("R$")],
-    ["A interna, materiais", "15.479"],
-    ["A interna, com mão de obra", "20.180"],
-    ["POC com contingência", "23.397"],
-    ["A, placa própria", "35.194"],
+    ["A interna, materiais", "14.434"],
+    ["A interna, com mão de obra", "19.135"],
+    ["POC com contingência", "22.244"],
+    ["A, placa própria", "34.489"],
     ["A, PTL comercial", "41.047"],
   ];
   s.addTable(tabP, { x: 9.15, y: 1.45, w: 3.6, colW: [2.45, 1.15], fontSize: 13, color: C.text2, border: { type: "solid", pt: 0.75, color: "D5DBE3" }, rowH: 0.45, align: "left" });
-  s.addText("Software interno: cerca de 1.144 h, ou R$ 119 mil. RFID futuro: + R$ 29 mil e 80 h. Com 10% de contingência e o software, a Arquitetura A soma cerca de R$ 477 mil.", { x: 9.15, y: 4.45, w: 3.6, h: 1.6, fontSize: 12, italic: true, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
+  s.addText("Software interno: cerca de 1.144 h, ou R$ 119 mil. RFID futuro: + R$ 29 mil e 80 h. Com 10% de contingência e o software, a Arquitetura A soma cerca de R$ 455 mil.", { x: 9.15, y: 4.45, w: 3.6, h: 1.6, fontSize: 12, italic: true, color: C.accent6, margin: 0, valign: "top", isTextBox: true });
   s.addNotes("Fonte: Orcamento_PTL.xlsx. A placa própria só compensa em escala, por causa do projeto (cerca de R$ 15 mil) e da importação. Quantidades e preços podem ser alterados na planilha. Mão de obra a R$ 34,93/h (técnico) e software a R$ 103,78/h (analista de desenvolvimento), salários médios do salario.com.br com encargos. Os materiais incluem canaleta pelo layout real, alimentação dos concentradores, tomadas novas, nobreak e rack dos switches, ferramentas e frete.");
 
   // ================================================================ 16 INTERNO x TERCEIROS
   s = pres.addSlide({ masterName: "CONTEUDO", sectionTitle: "Orçamento" });
   titulo(s, "Fazer internamente ou comprar");
   const col = [
-    ["Produção interna", C.accent2, "R$ 326 mil", ["Displays e placas comprados no Brasil", "Montagem e manutenção pela equipe", "Reposição imediata", "Precisa de técnico de eletrônica"]],
-    ["Placa própria (EMS)", C.accent3, "R$ 342 mil", ["Projeto da placa, cerca de R$ 15 mil", "Fabricação e montagem industrial", "Peças sempre iguais", "Importação e prazo maiores"]],
-    ["PTL comercial", C.accent5, "R$ 754 mil", ["Produto pronto e com garantia", "Cerca de 2,3 vezes o custo interno", "Dependência do fornecedor", "Precisa de cotação formal"]],
+    ["Produção interna", C.accent2, "R$ 305 mil", ["Displays e placas comprados no Brasil", "Montagem e manutenção pela equipe", "Reposição imediata", "Precisa de técnico de eletrônica"]],
+    ["Placa própria (EMS)", C.accent3, "R$ 328 mil", ["Projeto da placa, cerca de R$ 15 mil", "Fabricação e montagem industrial", "Peças sempre iguais", "Importação e prazo maiores"]],
+    ["PTL comercial", C.accent5, "R$ 754 mil", ["Produto pronto e com garantia", "Cerca de 2,5 vezes o custo interno", "Dependência do fornecedor", "Precisa de cotação formal"]],
   ];
   col.forEach(([t1, cor, v, itens], i) => {
     const x = 0.6 + i * 4.1;
@@ -355,7 +355,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
     s.addText("operação completa", { x: x + 0.3, y: 3.1, w: 3.3, h: 0.35, fontSize: 12, color: C.accent6, margin: 0, isTextBox: true });
     s.addText(itens.map((it, k) => ({ text: it, options: { bullet: true, breakLine: k < itens.length - 1 } })), { x: x + 0.3, y: 3.6, w: 3.35, h: 2.5, fontSize: 14, color: C.text2, paraSpaceAfter: 6, valign: "top", isTextBox: true });
   });
-  s.addNotes("Valores com instalação. 12 V × 5 V: o 5 V fica mais caro (R$ 244 mil × R$ 264 mil em materiais), porque a fonte de 5 V e o cabo de força extra custam mais do que os reguladores economizados, e o 5 V ainda aumenta a manutenção. Por isso a indicação é 12 V.");
+  s.addNotes("Valores com instalação. 12 V × 5 V: o 5 V fica mais caro (R$ 223 mil × R$ 243 mil em materiais), porque a fonte de 5 V e o cabo de força extra custam mais do que os reguladores economizados, e o 5 V ainda aumenta a manutenção. Por isso a indicação é 12 V.");
 
   // ================================================================ 17 PLANO
   pres.addSection({ title: "Próximos passos" });
@@ -427,7 +427,7 @@ const imgSize = (nome) => { const b = fs.readFileSync(nome); return { w: b.readU
   // ================================================================ 20 DECISAO
   s = pres.addSlide({ masterName: "CAPA", sectionTitle: "Próximos passos" });
   s.addText("Decisões", { placeholder: "title" });
-  s.addText("1. Aprovar a POC: bancada + estações 04 e 27 (cerca de R$ 23,4 mil)\n2. Usar a Arquitetura A como base e deixar a B para depois\n3. Montar os módulos internamente, em 12 V\n4. Liberar medidas, dados de volume, API do BHT e acesso ao Sybase", { placeholder: "body" });
+  s.addText("1. Aprovar a POC: bancada + estações 04 e 27 (cerca de R$ 22,2 mil)\n2. Usar a Arquitetura A como base e deixar a B para depois\n3. Montar os módulos internamente, em 12 V\n4. Liberar medidas, dados de volume, API do BHT e acesso ao Sybase", { placeholder: "body" });
   s.addNotes("Com essas quatro decisões, o protótipo de bancada pode começar na semana seguinte.");
 
   await pres.writeFile({ fileName: SAIDA });

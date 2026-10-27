@@ -94,7 +94,7 @@ linhas = [
     ("Premissas: câmbio, fator de importação, custos-hora, horas de montagem/instalação, metragens, reserva, frete, contingência.", PRETO),
     ("Estações: dimensionamento por estação (40 estações: 20 Medicamento + 20 Perfumaria).", PRETO),
     ("Preços: catálogo de peças; o preço de cada código vem da aba Fontes (loja, link e preço consultados em 27/10/2026).", PRETO),
-    ("Fontes: cada componente com loja, produto, link clicável, preço publicado e observações de estoque.", PRETO),
+    ("Fontes: cada componente do projeto com loja, produto, link clicável, preço publicado e observações de estoque. Fontes RFID: o mesmo para a melhoria futura, separado.", PRETO),
     ("Composição: lista de materiais (BOM) de cada tipo de módulo e custo unitário.", PRETO),
     ("A-Interno: Arquitetura A com produção interna: peças, infraestrutura, mão de obra, treinamento, variante 5 V.", PRETO),
     ("A-Terceiros: Arquitetura A com produção de terceiros: (T1) placa própria montada por EMS e (T2) PTL comercial importado.", PRETO),
@@ -387,46 +387,59 @@ precos = [
     ("P47", "Sinal luminoso de baixo giro (sinaleiro LED âmbar 12 V 22 mm + haste + transistor no nó)", "un", 45.00, None,
      "Estimativa, cotar", "Estimativa"),
 ]
-# --- aba Fontes: cada componente com loja, link e preço publicado (consulta de 27/10/2026)
-wf = wb.create_sheet("Fontes")
-cabecalho(wf, 1, ["Código", "Componente", "Loja", "Produto (como aparece na loja)", "Link", "Preço publicado",
-                  "Forma do preço", "Unidades na embalagem", "Qtd por unidade do código", "Preço no código (R$)",
-                  "Data", "Observação"], [8, 30, 16, 52, 40, 14, 16, 12, 12, 14, 11, 60])
-for i, c in enumerate(FP.C, 2):
-    cel(wf, "A%d" % i, c["cod"])
-    cel(wf, "B%d" % i, c["componente"], wrap=True)
-    cel(wf, "C%d" % i, c["loja"])
-    cel(wf, "D%d" % i, c["produto"], wrap=True)
-    lk = cel(wf, "E%d" % i, c["url"] or "sem link (cotar)", wrap=True)
-    if c["url"]:
-        lk.hyperlink = c["url"]
-        lk.font = Font(name="Arial", size=10, color="0563C1", underline="single")
-    estimado = c["forma"].startswith("estimativa")
-    cel(wf, "F%d" % i, c["preco"], AZUL, '"US$ "#,##0.00' if c["moeda"] == "USD" else BRL,
-        fill=AMARELO if estimado else None)
-    cel(wf, "G%d" % i, c["forma"], fill=AMARELO if estimado else None)
-    cel(wf, "H%d" % i, c["divisor"], AZUL, NUM2)
-    cel(wf, "I%d" % i, c["qtd"], AZUL, NUM2)
-    conv = "*%s*%s" % (REF["cambio"], REF["fator_imp"]) if c["moeda"] == "USD" else ""
-    cel(wf, "J%d" % i, "=F%d/H%d*I%d%s" % (i, i, i, conv), PRETO, BRL)
-    cel(wf, "K%d" % i, FP.DATA)
-    cel(wf, "L%d" % i, c["obs"], NOTA, wrap=True)
-wf.freeze_panes = "C2"
-FONTE_FIM = len(FP.C) + 1
+# --- abas Fontes (projeto) e Fontes RFID (melhoria futura): loja, link e preço de cada componente (27/10/2026)
+FONTE_ABA = {}
+
+
+def aba_fontes(nome, comps):
+    wf = wb.create_sheet(nome)
+    cabecalho(wf, 1, ["Código", "Componente", "Loja", "Produto (como aparece na loja)", "Link", "Preço publicado",
+                      "Forma do preço", "Unidades na embalagem", "Qtd por unidade do código", "Preço no código (R$)",
+                      "Data", "Observação"], [8, 30, 16, 52, 40, 14, 16, 12, 12, 14, 11, 60])
+    for i, c in enumerate(comps, 2):
+        cel(wf, "A%d" % i, c["cod"])
+        cel(wf, "B%d" % i, c["componente"], wrap=True)
+        cel(wf, "C%d" % i, c["loja"])
+        cel(wf, "D%d" % i, c["produto"], wrap=True)
+        lk = cel(wf, "E%d" % i, c["url"] or "sem link (%s)" % c["loja"].lower(), wrap=True)
+        if c["url"]:
+            lk.hyperlink = c["url"]
+            lk.font = Font(name="Arial", size=10, color="0563C1", underline="single")
+        est = FP.estimado(c)
+        cel(wf, "F%d" % i, c["preco"], AZUL, '"US$ "#,##0.00' if c["moeda"] == "USD" else BRL,
+            fill=AMARELO if est else None)
+        cel(wf, "G%d" % i, c["forma"], fill=AMARELO if est else None)
+        cel(wf, "H%d" % i, c["divisor"], AZUL, NUM2)
+        cel(wf, "I%d" % i, c["qtd"], AZUL, NUM2)
+        conv = "*%s*%s" % (REF["cambio"], REF["fator_imp"]) if c["moeda"] == "USD" else ""
+        cel(wf, "J%d" % i, "=F%d/H%d*I%d%s" % (i, i, i, conv), PRETO, BRL)
+        cel(wf, "K%d" % i, FP.DATA)
+        cel(wf, "L%d" % i, c["obs"], NOTA, wrap=True)
+    wf.freeze_panes = "C2"
+    for c in comps:
+        FONTE_ABA[c["cod"]] = (nome, len(comps) + 1)
+
+
+aba_fontes("Fontes", [c for c in FP.C if c["cod"] not in FP.RFID])
+aba_fontes("Fontes RFID", [c for c in FP.C if c["cod"] in FP.RFID])
 
 PRECO = {}
 for i, (cod, item, un, brl, usd, fonte, st) in enumerate(precos, 2):
     if cod in FP.CODIGOS:       # preço vem da aba Fontes
         comps = [c for c in FP.C if c["cod"] == cod]
         item, un = FP.CODIGOS[cod]
-        brl = "=SUMIF(Fontes!$A$2:$A$%d,A%d,Fontes!$J$2:$J$%d)" % (FONTE_FIM, i, FONTE_FIM)
+        aba, fim_ = FONTE_ABA[cod]
+        brl = "=SUMIF('%s'!$A$2:$A$%d,A%d,'%s'!$J$2:$J$%d)" % (aba, fim_, i, aba, fim_)
         usd = comps[0]["preco"] if comps[0]["moeda"] == "USD" else None
         if len(comps) == 1:
             fonte = "%s, %s, %s: %s" % (comps[0]["loja"], comps[0]["produto"], FP.DATA, comps[0]["url"] or "sem link")
         else:
-            fonte = "Kit com %d componentes, ver aba Fontes: " % len(comps) + "; ".join(c["componente"] for c in comps)
-        est_ = any(c["forma"].startswith("estimativa") for c in comps)
-        st = "Estimativa (cotar)" if cod == "P46" else ("Cotado com link, 1 item estimado" if est_ else "Cotado com link")
+            fonte = "Kit com %d componentes, ver aba %s: " % (len(comps), aba) + "; ".join(c["componente"] for c in comps)
+        est_ = any(FP.estimado(c) for c in comps)
+        if not any(c["url"] for c in comps):
+            st = "Estimativa (cotar)" if cod == "P46" else "Valor estipulado"
+        else:
+            st = "Cotado com link, 1 item estimado" if est_ else "Cotado com link"
     PRECO[cod] = "'Preços'!$D$%d" % i
     cel(wpr, "A%d" % i, cod)
     cel(wpr, "B%d" % i, item, wrap=True)
@@ -437,13 +450,13 @@ for i, (cod, item, un, brl, usd, fonte, st) in enumerate(precos, 2):
         cel(wpr, "D%d" % i, C.format(r=i), PRETO, BRL)
     else:
         cel(wpr, "D%d" % i, brl, AZUL if not str(brl).startswith("=") else PRETO, BRL,
-            fill=AMARELO if st.startswith("Estimativa") else None)
+            fill=AMARELO if st.startswith(("Estimativa", "Valor")) else None)
     if usd is not None:
-        cel(wpr, "E%d" % i, usd, AZUL, '"US$ "#,##0.00', fill=AMARELO if st.startswith("Estimativa") else None)
+        cel(wpr, "E%d" % i, usd, AZUL, '"US$ "#,##0.00', fill=AMARELO if st.startswith(("Estimativa", "Valor")) else None)
     else:
         cel(wpr, "E%d" % i, None)
     cel(wpr, "F%d" % i, fonte, wrap=True)
-    cel(wpr, "G%d" % i, st, fill=AMARELO if st.startswith("Estimativa") else None)
+    cel(wpr, "G%d" % i, st, fill=AMARELO if st.startswith(("Estimativa", "Valor")) else None)
 wpr.freeze_panes = "C2"
 
 # =====================================================================

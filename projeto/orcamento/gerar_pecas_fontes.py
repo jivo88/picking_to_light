@@ -163,60 +163,65 @@ for i, (rot, v, fmt, fonte) in enumerate(PREM):
 CAMBIO, FATOR, FRETE = "Premissas!$B$4", "Premissas!$B$5", "Premissas!$B$6"
 nota(wp, 8, "Só a placa W5500-EVB-Pico (P05) é importada; as outras peças têm preço em reais em lojas do Brasil.", "C")
 
-# ================================================================ Fontes
-wf = wb.create_sheet("Fontes")
-larguras(wf, [8, 30, 16, 52, 44, 14, 18, 12, 12, 14, 11, 62])
-cabecalho(wf, 1, ["Código", "Componente", "Loja", "Produto (como aparece na loja)", "Link", "Preço publicado",
-                  "Forma do preço", "Unidades na embalagem", "Qtd por unidade do código", "Preço no código (R$)",
-                  "Data", "Observação"], 42)
-for i, c in enumerate(FP.C, 2):
-    est = c["forma"].startswith("estimativa")
-    put(wf, f"A{i}", c["cod"])
-    put(wf, f"B{i}", c["componente"], wrap=True)
-    put(wf, f"C{i}", c["loja"])
-    put(wf, f"D{i}", c["produto"], wrap=True)
-    lk = put(wf, f"E{i}", c["url"] or "sem link (cotar com a manutenção predial)", wrap=True)
-    if c["url"]:
-        lk.hyperlink = c["url"]
-        lk.font = LINK
-    put(wf, f"F{i}", c["preco"], AZUL, '"US$ "#,##0.00' if c["moeda"] == "USD" else BRL, F_EST if est else None)
-    put(wf, f"G{i}", c["forma"], fill=F_EST if est else None, wrap=True)
-    put(wf, f"H{i}", c["divisor"], AZUL, NUM)
-    put(wf, f"I{i}", c["qtd"], AZUL, NUM)
-    conv = f"*{CAMBIO}*{FATOR}" if c["moeda"] == "USD" else ""
-    put(wf, f"J{i}", f"=F{i}/H{i}*I{i}{conv}", PRETO, BRL)
-    put(wf, f"K{i}", FP.DATA)
-    put(wf, f"L{i}", c["obs"], NOTA, wrap=True)
-FF = len(FP.C) + 1
-wf.freeze_panes = "C2"
-wf.auto_filter.ref = f"A1:L{FF}"
-
-# ================================================================ Peças
-wq = wb.create_sheet("Peças", 0)
-larguras(wq, [8, 50, 8, 14, 12, 12, 16, 16, 34, 26])
-put(wq, "A1", "Orçamento das peças com fontes: Arquitetura A (equipe interna) e RFID futuro", TIT, borda=False)
-nota(wq, 2, f"Preços consultados em {FP.DATA}; o preço de cada código soma os componentes da aba Fontes, onde estão a loja, "
-            "o produto e o link de cada um. Quantidades do orçamento completo (com 10% de reserva). Só peças e materiais: "
-            "mão de obra e software ficam fora.", "J", 40)
-cabecalho(wq, 4, ["Código", "Peça", "Unid.", "Preço unit. (R$)", "Qtd POC (04 e 27 + bancada)", "Qtd projeto (40 estações)",
-                  "Total POC (R$)", "Total projeto (R$)", "Onde é usada", "Fonte"], 44)
+# ================================================================ Fontes (projeto) e Fontes RFID (separadas)
+CAB_F = ["Código", "Componente", "Loja", "Produto (como aparece na loja)", "Link", "Preço publicado", "Forma do preço",
+         "Unidades na embalagem", "Qtd por unidade do código", "Preço no código (R$)", "Data", "Observação"]
 
 
-def bloco(r, titulo, ordem, qtds):
-    for i in range(1, 11):
-        wq.cell(row=r, column=i).fill = F_SEC
-        wq.cell(row=r, column=i).border = BORDA
-    wq.cell(row=r, column=1, value=titulo).font = NEG
-    r += 1
+def aba_fontes(nome, comps, pos=None):
+    wf = wb.create_sheet(nome, pos)
+    larguras(wf, [8, 30, 16, 52, 44, 14, 18, 12, 12, 14, 11, 62])
+    cabecalho(wf, 1, CAB_F, 42)
+    for i, c in enumerate(comps, 2):
+        est = FP.estimado(c)
+        put(wf, f"A{i}", c["cod"])
+        put(wf, f"B{i}", c["componente"], wrap=True)
+        put(wf, f"C{i}", c["loja"])
+        put(wf, f"D{i}", c["produto"], wrap=True)
+        lk = put(wf, f"E{i}", c["url"] or f"sem link ({c['loja'].lower()})", wrap=True, fill=None if c["url"] else F_EST)
+        if c["url"]:
+            lk.hyperlink = c["url"]
+            lk.font = LINK
+        put(wf, f"F{i}", c["preco"], AZUL, '"US$ "#,##0.00' if c["moeda"] == "USD" else BRL, F_EST if est else None)
+        put(wf, f"G{i}", c["forma"], fill=F_EST if est else None, wrap=True)
+        put(wf, f"H{i}", c["divisor"], AZUL, NUM)
+        put(wf, f"I{i}", c["qtd"], AZUL, NUM)
+        conv = f"*{CAMBIO}*{FATOR}" if c["moeda"] == "USD" else ""
+        put(wf, f"J{i}", f"=F{i}/H{i}*I{i}{conv}", PRETO, BRL)
+        put(wf, f"K{i}", FP.DATA)
+        put(wf, f"L{i}", c["obs"], NOTA, wrap=True)
+    ff = len(comps) + 1
+    wf.freeze_panes = "C2"
+    wf.auto_filter.ref = f"A1:L{ff}"
+    return ff
+
+
+C_A = [c for c in FP.C if c["cod"] not in FP.RFID]
+C_RF = [c for c in FP.C if c["cod"] in FP.RFID]
+FF_A = aba_fontes("Fontes", C_A)
+FF_RF = aba_fontes("RFID - Fontes", C_RF)
+
+
+# ================================================================ Peças (projeto) e RFID - Peças (separadas)
+def aba_pecas(nome, titulo, texto, fontes, ff, ordem, qtds, pos):
+    wq = wb.create_sheet(nome, pos)
+    larguras(wq, [8, 50, 8, 14, 12, 12, 16, 16, 34, 26])
+    put(wq, "A1", titulo, TIT, borda=False)
+    nota(wq, 2, texto, "J", 40)
+    cabecalho(wq, 4, ["Código", "Peça", "Unid.", "Preço unit. (R$)", "Qtd POC (04 e 27 + bancada)" if fontes == "Fontes"
+                      else "Qtd piloto (04 e 27)", "Qtd projeto (40 estações)", "Total POC (R$)" if fontes == "Fontes"
+                      else "Total piloto (R$)", "Total projeto (R$)", "Onde é usada", "Fonte"], 44)
+    r = 5
     ini = r
     for cod in ordem:
         desc, un = FP.CODIGOS[cod]
         comps = [c for c in FP.C if c["cod"] == cod]
-        est = any(c["forma"].startswith("estimativa") for c in comps)
+        est = any(FP.estimado(c) for c in comps)
         put(wq, f"A{r}", cod)
         put(wq, f"B{r}", desc, wrap=True)
         put(wq, f"C{r}", un)
-        put(wq, f"D{r}", f"=SUMIF(Fontes!$A$2:$A${FF},A{r},Fontes!$J$2:$J${FF})", VERDE, BRL, F_EST if est else None)
+        put(wq, f"D{r}", f"=SUMIF('{fontes}'!$A$2:$A${ff},A{r},'{fontes}'!$J$2:$J${ff})", VERDE, BRL,
+            F_EST if est else None)
         a, b = qtds.get(cod, (0, 0))
         put(wq, f"E{r}", round(a, 2), AZUL, NUM)
         put(wq, f"F{r}", round(b, 2), AZUL, NUM)
@@ -226,10 +231,10 @@ def bloco(r, titulo, ordem, qtds):
         if len(comps) == 1 and comps[0]["url"]:
             lk = put(wq, f"J{r}", comps[0]["loja"], LINK)
             lk.hyperlink = comps[0]["url"]
-        elif not comps[0]["url"]:
-            put(wq, f"J{r}", "cotar (sem link)", fill=F_EST)
+        elif not any(c["url"] for c in comps):
+            put(wq, f"J{r}", comps[0]["loja"] + " (sem link)", fill=F_EST, wrap=True)
         else:
-            put(wq, f"J{r}", f"{len(comps)} componentes, aba Fontes" + (" (1 estimado)" if est else ""), wrap=True,
+            put(wq, f"J{r}", f"{len(comps)} componentes, aba {fontes}" + (" (1 estimado)" if est else ""), wrap=True,
                 fill=F_EST if est else None)
         r += 1
     fim = r - 1
@@ -239,48 +244,70 @@ def bloco(r, titulo, ordem, qtds):
     put(wq, f"G{r}", f"=SUM(G{ini}:G{fim})*{FRETE}", PRETO, BRL)
     put(wq, f"H{r}", f"=SUM(H{ini}:H{fim})*{FRETE}", PRETO, BRL)
     r += 1
-    faixa(wq, r, 10, "Total " + titulo.lower(), F_TOT)
+    faixa(wq, r, 10, "TOTAL", F_TOT)
     put(wq, f"G{r}", f"=SUM(G{ini}:G{r - 1})", NEG, BRL, F_TOT)
     put(wq, f"H{r}", f"=SUM(H{ini}:H{r - 1})", NEG, BRL, F_TOT)
-    return r
+    wq.freeze_panes = "C5"
+    return wq, r
 
 
-R_A = bloco(5, "Peças e materiais da Arquitetura A", ORDEM_A, QTD)
-R_RF = bloco(R_A + 2, "RFID futuro (fora do investimento inicial)", ORDEM_RF, QTD_RF)
-nota(wq, R_RF + 2, "Colunas da POC: estações 04 e 27 com reserva, mais os itens só da bancada (sinal, cabo, plugs, painel de MDF "
-                   "e switch de 5 portas); o concentrador, o nó e os módulos da bancada vão para a estação 04 e não são "
-                   "contados duas vezes. No RFID, a coluna POC é o piloto do RFID nas mesmas 2 estações.", "J", 40)
-nota(wq, R_RF + 3, "Fundo amarelo: valor sem preço lido em loja. P46 é serviço de eletricista (cotar com a manutenção "
-                   "predial). A bateria LiPo do P26 tem link, mas o site não respondeu na consulta.", "J", 28)
-wq.freeze_panes = "C5"
+TXT = (f"Preços consultados em {FP.DATA}; o preço de cada código soma os componentes da aba Fontes, onde estão a loja, "
+       "o produto e o link de cada um. Quantidades do orçamento completo (com 10% de reserva). Só peças e materiais: "
+       "mão de obra e software ficam fora. O RFID (melhoria futura) está nas abas próprias e não entra aqui.")
+wq, R_A = aba_pecas("Peças", "Peças do projeto: Arquitetura A, equipe interna", TXT, "Fontes", FF_A, ORDEM_A, QTD, 0)
+nota(wq, R_A + 2, "Colunas da POC: estações 04 e 27 com reserva, mais os itens só da bancada (sinal, cabo, plugs, painel de MDF "
+                  "e switch de 5 portas); o concentrador, o nó e os módulos da bancada vão para a estação 04 e não são "
+                  "contados duas vezes.", "J", 40)
+nota(wq, R_A + 3, "Fundo amarelo: valor sem preço de loja, por decisão do projeto. P13 e P14: carcaças dos LEDs impressas em 3D, "
+                  "em medida padrão compacta, com valor estipulado. P46: serviço de eletricista, a cotar com a manutenção "
+                  "predial.", "J", 40)
+TXT_RF = (f"Melhoria futura, separada do projeto e fora do investimento inicial. Preços consultados em {FP.DATA}, com o link "
+          "de cada componente na aba RFID - Fontes. Piloto = as mesmas estações 04 e 27.")
+wrf, R_RF = aba_pecas("RFID - Peças", "RFID futuro: peças (separado do projeto)", TXT_RF, "RFID - Fontes", FF_RF,
+                      ORDEM_RF, QTD_RF, None)
+wb.move_sheet("RFID - Peças", offset=-(len(wb.sheetnames) - 1 - wb.sheetnames.index("RFID - Fontes")))
+nota(wrf, R_RF + 2, "Fundo amarelo: a bateria LiPo do P26 tem link, mas o site não respondeu na consulta; o valor é estimado.",
+     "J")
 
 # ================================================================ Resumo
 wr = wb.create_sheet("Resumo", 0)
 larguras(wr, [52, 18, 18, 60])
 put(wr, "A1", "Peças do Pick-to-Light com fontes", TIT, borda=False)
-nota(wr, 2, f"Preços de lojas on-line consultados em {FP.DATA}. Cada componente tem o link na aba Fontes.", "D")
-cabecalho(wr, 4, ["Item", "POC (R$)", "Projeto 40 estações (R$)", "Observação"])
-LR = [("Peças e materiais da Arquitetura A (com frete)", f"='Peças'!G{R_A}", f"='Peças'!H{R_A}",
-       "igual à linha de materiais do orçamento completo e do projeto interno"),
-      ("RFID futuro: peças (com frete)", f"='Peças'!G{R_RF}", f"='Peças'!H{R_RF}", "fora do investimento inicial")]
-for i, (rot, a, b, obs) in enumerate(LR):
-    put(wr, f"A{5 + i}", rot)
-    put(wr, f"B{5 + i}", a, VERDE, BRL)
-    put(wr, f"C{5 + i}", b, VERDE, BRL)
-    put(wr, f"D{5 + i}", obs, NOTA, wrap=True)
-n_comp = len(FP.C)
-n_link = sum(1 for c in FP.C if c["url"])
-n_lido = sum(1 for c in FP.C if c["url"] and not c["forma"].startswith("estimativa"))
-put(wr, "A8", "Componentes pesquisados", NEG, borda=False)
-for i, (rot, v) in enumerate([("Componentes", n_comp), ("Com link", n_link), ("Com link e preço lido na página", n_lido),
-                              ("Sem link (serviço a cotar)", n_comp - n_link),
-                              ("Com link, preço não lido (estimado)", n_link - n_lido)]):
-    put(wr, f"A{9 + i}", rot)
-    put(wr, f"B{9 + i}", v, PRETO, '0')
-nota(wr, 15, "Os preços são de varejo, para 1 unidade, sem frete (o frete entra como percentual). Em compras de centenas "
-             "de peças vale pedir cotação de atacado às mesmas lojas. Vários itens estavam com 'últimas unidades' na "
-             "consulta: ver a coluna Observação da aba Fontes.", "D", 42)
-nota(wr, 16, "Abas: Peças (quantidades e totais) · Fontes (loja, produto, link e preço de cada componente) · Premissas.", "D")
+nota(wr, 2, f"Preços de lojas on-line consultados em {FP.DATA}. Cada componente tem o link nas abas de fontes.", "D")
+cabecalho(wr, 4, ["Projeto (Arquitetura A, equipe interna)", "POC (R$)", "40 estações (R$)", "Observação"])
+put(wr, "A5", "Peças e materiais, com frete")
+put(wr, "B5", f"='Peças'!G{R_A}", VERDE, BRL)
+put(wr, "C5", f"='Peças'!H{R_A}", VERDE, BRL)
+put(wr, "D5", "igual à linha de materiais do orçamento completo e do projeto interno", NOTA, wrap=True)
+
+
+def contagem(r, titulo, comps):
+    put(wr, f"A{r}", titulo, NEG, borda=False)
+    n = len(comps)
+    lk = sum(1 for c in comps if c["url"])
+    lido = sum(1 for c in comps if c["url"] and not FP.estimado(c))
+    linhas = [("Componentes", n), ("Com link e preço lido na página", lido),
+              ("Sem link (valor estipulado ou serviço a cotar)", n - lk), ("Com link, preço não lido (estimado)", lk - lido)]
+    for i, (rot, v) in enumerate(linhas):
+        put(wr, f"A{r + 1 + i}", rot)
+        put(wr, f"B{r + 1 + i}", v, PRETO, '0')
+    return r + 1 + len(linhas)
+
+
+r = contagem(7, "Componentes do projeto", C_A)
+r += 1
+cabecalho(wr, r, ["RFID futuro (separado, não somado ao projeto)", "Piloto (R$)", "40 estações (R$)", "Observação"])
+put(wr, f"A{r + 1}", "Peças do RFID, com frete")
+put(wr, f"B{r + 1}", f"='RFID - Peças'!G{R_RF}", VERDE, BRL)
+put(wr, f"C{r + 1}", f"='RFID - Peças'!H{R_RF}", VERDE, BRL)
+put(wr, f"D{r + 1}", "melhoria futura; abas RFID - Peças e RFID - Fontes", NOTA, wrap=True)
+r = contagem(r + 3, "Componentes do RFID", C_RF)
+nota(wr, r + 1, "Os preços são de varejo, para 1 unidade, sem frete (o frete entra como percentual). Em compras de centenas "
+                "de peças vale pedir cotação de atacado às mesmas lojas. Vários itens estavam com 'últimas unidades' na "
+                "consulta: ver a coluna Observação das abas de fontes.", "D", 42)
+nota(wr, r + 2, "Abas do projeto: Peças · Fontes · Premissas. Abas do RFID futuro: RFID - Peças · RFID - Fontes.", "D")
+n_comp, n_link = len(FP.C), sum(1 for c in FP.C if c["url"])
+n_lido = sum(1 for c in FP.C if c["url"] and not FP.estimado(c))
 
 for w in wb.worksheets:
     w.sheet_view.showGridLines = False

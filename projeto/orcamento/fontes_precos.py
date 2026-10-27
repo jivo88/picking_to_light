@@ -5,8 +5,11 @@ Cada código de preço (P01...) é composto por um ou mais componentes. Para cad
   divisor (unidades na embalagem ou metros do rolo) e quantidade usada por unidade do código.
 Preço do código = soma de (preço publicado ÷ divisor × quantidade usada).
 
-Exceções: P46 (serviço de eletricista, sem link, a cotar com a manutenção predial, por decisão do projeto) e a
-bateria LiPo do P26 (link sem preço lido: o site não respondeu; valor estimado).
+Exceções, por decisão do projeto: P13 e P14 (carcaças dos LEDs impressas em 3D, valor estipulado) e P46 (serviço de
+eletricista, a cotar com a manutenção predial). No RFID futuro, a bateria LiPo do P26 tem link, mas o preço não foi lido
+(o site não respondeu; valor estimado).
+
+RFID = códigos da melhoria futura, sempre separados das peças do projeto.
 """
 
 DATA = "27/10/2026"
@@ -25,8 +28,8 @@ CODIGOS = {
     "P10": ("Conector RJ45 fêmea para placa (90°)", "un"),
     "P11": ("Plug RJ45 Cat5e (macho)", "un"),
     "P12": ("Cabo Cat5e (por metro)", "m"),
-    "P13": ("Carcaça do Módulo Q (caixa Patola PB-075, 36 × 60 × 75 mm)", "un"),
-    "P14": ("Carcaça do Módulo E+Q / Nó de coluna (caixa Patola PB-112, 53 × 85 × 124 mm)", "un"),
+    "P13": ("Carcaça do Módulo Q (impressão 3D, medida padrão compacta)", "un"),
+    "P14": ("Carcaça do Módulo E+Q / Nó de coluna (impressão 3D, medida padrão compacta)", "un"),
     "P15": ("Placa base perfurada 7 × 5 cm + 2 bornes KRE (nó / módulo E+Q)", "un"),
     "P16": ("Gabinete do concentrador (caixa Patola PB-220/70 + cooler 40 mm 12 V + grade)", "un"),
     "P17": ("Trilho DIN + disjuntor 2 A + bornes", "kit"),
@@ -98,12 +101,15 @@ comp("P11", "Plug RJ45 Cat5e (100 un)", "KaBuM", "Plug Conector Rj45 Macho Cat 5
 comp("P12", "Cabo Cat5e 305 m", "KaBuM", "Cabo de Rede CAT.5e Furukawa SOHOPLUS, 305 Metros, Branco - 23200101",
      "https://www.kabum.com.br/produto/114681/cabo-de-rede-cat-5e-furukawa-305-metros-branco-23200101", 799.90, "Pix",
      divisor=305, obs="normal R$ 1.111,00; restam 10 caixas")
-comp("P13", "Caixa Patola PB-075", "Usinainfo", "Caixa Patola PB-075 para Montagem 36 x 60 x 75 mm",
-     "https://www.usinainfo.com.br/caixas-patola/caixa-patola-pb-075-para-montagem-36-x-60-x-75-mm-4390.html", 12.34, "Pix",
-     obs="cartão R$ 12,99; últimas unidades (Patola também vende direto). Impressão 3D em PETG pode sair mais barata")
-comp("P14", "Caixa Patola PB-112", "Usinainfo", "Caixa Patola / Case para Montagem 53 x 85 x 124 mm - PB-112",
-     "https://www.usinainfo.com.br/caixas-patola/caixa-patola-case-para-montagem-53-x-85-x-124-mm-pb-112-3879.html", 28.17,
-     "Pix", obs="cartão R$ 29,65; últimas unidades")
+comp("P13", "Carcaça 3D do módulo Q", "Valor estipulado", "Carcaça impressa em 3D, medida padrão compacta (definida pelo projeto)",
+     "", 5.00, "valor estipulado",
+     obs="Valor estipulado pelo projeto: carcaça compacta impressa em 3D, sem ocupar espaço na frente da prateleira. "
+         "Referência do material: filamento PETG 1 kg R$ 169,82 (Pix) na KaBuM, "
+         "https://www.kabum.com.br/produto/1063679/filamento-1-75mm-petg-basico-1kg-marrom-escuro-para-impressora-3d-com-carretel-reutilizavel-bambu-lab")
+comp("P14", "Carcaça 3D do módulo E+Q / nó", "Valor estipulado", "Carcaça impressa em 3D, medida padrão compacta (definida pelo projeto)",
+     "", 15.00, "valor estipulado",
+     obs="Valor estipulado pelo projeto: carcaça compacta impressa em 3D para o E+Q e o nó de coluna. Mesma referência de "
+         "filamento do P13")
 comp("P15", "Placa fenolite perfurada 7 × 5 cm", "Eletrogate", "Placa Fenolite Perfurada 7x5cm",
      "https://www.eletrogate.com/placa-fenolite-perfurada-7x5cm", 2.38, "Pix", obs="normal R$ 2,50; disponível")
 comp("P15", "Borne KRE 2 vias", "Baú da Eletrônica", "Borne KRE KF128 2 Vias - Verde",
@@ -225,6 +231,9 @@ comp("P49", "Switch 5 portas TL-SG1005D", "KaBuM", "Switch 5 Portas Gigabit - Tp
      obs="4x R$ 27,53; vendido por STORN35")
 
 
+RFID = ["P22", "P23", "P24", "P25", "P26", "P27", "P45"]
+
+
 def preco_codigo(cod, cambio_x_fator=None):
     """Preço em R$ de um código (soma dos componentes). Componentes sem preço lido contam 0 e são sinalizados."""
     tot = 0.0
@@ -234,3 +243,8 @@ def preco_codigo(cod, cambio_x_fator=None):
         p = c["preco"] * (cambio_x_fator if c["moeda"] == "USD" else 1)
         tot += p / c["divisor"] * c["qtd"]
     return tot
+
+
+def estimado(c):
+    """Componente sem preço lido em loja (valor estipulado ou estimado)."""
+    return c["forma"].startswith(("estimativa", "valor estipulado"))
