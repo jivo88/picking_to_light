@@ -1,0 +1,34 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Simulador: instalar dependências",
+      "type": "shell",
+      "command": "npm install",
+      "options": { "cwd": "${workspaceFolder}/app-desktop" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Simulador: abrir (testar)",
+      "type": "shell",
+      "command": "npm start",
+      "options": { "cwd": "${workspaceFolder}/app-desktop" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Simulador: gerar .exe",
+      "type": "shell",
+      "command": "npm run dist",
+      "options": { "cwd": "${workspaceFolder}/app-desktop" },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Simulador: atualizar HTML a partir dos simuladores",
+      "type": "shell",
+      "command": "node preparar.js --regerar",
+      "options": { "cwd": "${workspaceFolder}/app-desktop" },
+      "problemMatcher": []
+    }
+  ]
+}

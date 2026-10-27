@@ -1,0 +1,37 @@
+{
+  "name": "simulador-ptl",
+  "productName": "Simulador PTL",
+  "version": "1.0.0",
+  "description": "Simulador Pick-to-Light (estação 3D, comunicação, controle e operação completa) como aplicativo de desktop",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "preparar": "node preparar.js",
+    "start": "npm run preparar && electron .",
+    "dist": "npm run preparar && electron-builder --win portable",
+    "dist:pasta": "npm run preparar && electron-builder --win dir"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "br.ptl.simulador",
+    "productName": "Simulador PTL",
+    "files": [
+      "main.js",
+      "app/**"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": "portable",
+      "icon": "build/icon.png"
+    },
+    "portable": {
+      "artifactName": "Simulador_PTL_${version}.exe"
+    }
+  }
+}
