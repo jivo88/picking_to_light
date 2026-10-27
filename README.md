@@ -15,7 +15,7 @@ O navegador abre em http://127.0.0.1:8780 com as abas *Estação 3D*, *Comunica�
 | [`simulador-unificado/`](simulador-unificado/) | **Versão unificada**: estação 3D, comunicação e interface de controle sincronizadas, com abas para alternar (3D, comunicação, lado a lado, controle) e a aba *Operação completa*, que simula as duas linhas com as 40 estações e mostra volumes por hora, produtividade e capacidade. Abra `index.html`. |
 | [`demo-comunicacao/`](demo-comunicacao/) | **Demonstração da comunicação** entre coletor, Serviço PTL, broker MQTT, concentrador e módulos de LED, com os bytes de cada mensagem. Abra `index.html`. |
 | [`simulador-3d/`](simulador-3d/) | **Simulador 3D da estação completa** (estações 05 e 27, endereços reais, arquiteturas A e B). Abra `index.html`. |
-| [`projeto/entregaveis/`](projeto/entregaveis/) | Apresentação (.pptx), documento técnico (.docx), orçamentos (.xlsx: completo, só da POC e projeto interno com RFID futuro) e `Simulador_PTL.html`, o simulador unificado em um único arquivo que abre com duplo clique, sem internet |
+| [`projeto/entregaveis/`](projeto/entregaveis/) | Apresentação (.pptx), documento técnico (.docx), orçamentos (.xlsx: completo, só da POC, projeto interno com RFID futuro e peças com o link de cada preço) e `Simulador_PTL.html`, o simulador unificado em um único arquivo que abre com duplo clique, sem internet |
 | [`ferramentas/`](ferramentas/) | `montar_offline.py` gera o `Simulador_PTL.html` a partir das pastas dos simuladores (`python3 ferramentas/montar_offline.py`) |
 | [`projeto/`](projeto/) | Scripts que geram os entregáveis, os diagramas e os dados das estações |
 | raiz (`iniciar_placas.py`, `placas/`, `simulador/`) | Simulador antigo das 3 placas do protótipo (MicroPython), descrito abaixo |
