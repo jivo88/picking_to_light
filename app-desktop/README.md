@@ -4,7 +4,16 @@ Empacota o simulador unificado (estação 3D, comunicação, lado a lado, contro
 aplicativo de desktop com [Electron](https://www.electronjs.org/). O Electron leva o próprio Chromium, então
 o 3D funciona igual ao navegador e o `.exe` abre com duplo clique, sem internet e sem instalar nada.
 
-## O que precisa no computador
+## Sem Node no computador: o GitHub gera o .exe
+
+1. Abra github.com/jivo88/picking_to_light, aba **Actions**, workflow **Gerar .exe do simulador**.
+2. Clique em **Run workflow** (branch `main`) e espere uns 5 minutos.
+3. Baixe o `.exe` na página **Releases** do repositório.
+
+Quando o simulador mudar, rode o workflow de novo: o `.exe` da release é substituído. Para uma versão nova,
+aumente `version` no `package.json`.
+
+## O que precisa no computador (para gerar localmente)
 
 - [Node.js](https://nodejs.org/) 18 ou mais novo (LTS).
 - VS Code com o repositório aberto.
