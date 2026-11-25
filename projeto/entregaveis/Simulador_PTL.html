@@ -5412,7 +5412,11 @@ canvas { display: block; width: 100%; }
 #planta { height: 470px; min-width: 900px; border-radius: 8px; }
 #vista3d { position: relative; height: 560px; border-radius: 8px; overflow: hidden; background: var(--chip); }
 #vista3d canvas { width: 100%; height: 100%; }
-#vista3d .cams { position: absolute; left: 8px; top: 8px; z-index: 2; }
+#vista3d .cams { position: absolute; left: 8px; top: 8px; z-index: 2; flex-wrap: wrap; max-width: calc(100% - 200px); }
+#vista3d .qual { position: absolute; right: 8px; top: 8px; z-index: 2; }
+#seguirInfo { position: absolute; left: 8px; bottom: 8px; z-index: 2; background: rgba(27,38,56,.9); color: #fff; border-radius: 10px; padding: 8px 12px; font-size: 13px; max-width: min(460px, calc(100% - 16px)); }
+#seguirInfo b { color: #8fe3a8; }
+#seguirInfo small { display: block; color: #c5cfdb; margin-top: 2px; }
 #vista3d .aviso3d { position: absolute; inset: 0; display: grid; place-items: center; color: var(--suave); font-size: 13px; padding: 20px; text-align: center; }
 .cabsec { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
 .cabsec h2 { margin: 0; }
@@ -5522,7 +5526,7 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
     &lt;section class=&quot;caixa&quot;&gt;
       &lt;div class=&quot;cabsec&quot;&gt;&lt;h2&gt;Planta das esteiras (como no desenho)&lt;/h2&gt;
         &lt;span class=&quot;seg&quot; id=&quot;selVista&quot; role=&quot;group&quot; aria-label=&quot;Vista&quot;&gt;&lt;button data-v=&quot;2d&quot; class=&quot;on&quot;&gt;2D&lt;/button&gt;&lt;button data-v=&quot;3d&quot;&gt;3D · 40 estações&lt;/button&gt;&lt;/span&gt;&lt;/div&gt;
-      &lt;div id=&quot;vista3d&quot; class=&quot;oculto&quot;&gt;&lt;span class=&quot;seg cams&quot; id=&quot;selCam3d&quot;&gt;&lt;button data-v=&quot;geral&quot; class=&quot;on&quot;&gt;Geral&lt;/button&gt;&lt;button data-v=&quot;P&quot;&gt;Perfumaria&lt;/button&gt;&lt;button data-v=&quot;M&quot;&gt;Medicamento&lt;/button&gt;&lt;button data-v=&quot;est&quot;&gt;Estação&lt;/button&gt;&lt;button data-v=&quot;conf&quot;&gt;Conferência&lt;/button&gt;&lt;button data-v=&quot;div&quot;&gt;Divisor&lt;/button&gt;&lt;/span&gt;&lt;/div&gt;
+      &lt;div id=&quot;vista3d&quot; class=&quot;oculto&quot;&gt;&lt;span class=&quot;seg cams&quot; id=&quot;selCam3d&quot;&gt;&lt;button data-v=&quot;geral&quot; class=&quot;on&quot;&gt;Geral&lt;/button&gt;&lt;button data-v=&quot;P&quot;&gt;Perfumaria&lt;/button&gt;&lt;button data-v=&quot;M&quot;&gt;Medicamento&lt;/button&gt;&lt;button data-v=&quot;est&quot;&gt;Estação&lt;/button&gt;&lt;button data-v=&quot;conf&quot;&gt;Conferência&lt;/button&gt;&lt;button data-v=&quot;div&quot;&gt;Divisor&lt;/button&gt;&lt;button data-v=&quot;seguir&quot;&gt;Seguir caixa&lt;/button&gt;&lt;/span&gt;&lt;span class=&quot;seg qual&quot; id=&quot;selQual&quot; role=&quot;group&quot; aria-label=&quot;Qualidade do 3D&quot;&gt;&lt;button data-v=&quot;leve&quot;&gt;Leve&lt;/button&gt;&lt;button data-v=&quot;normal&quot; class=&quot;on&quot;&gt;Normal&lt;/button&gt;&lt;button data-v=&quot;alta&quot;&gt;Alta&lt;/button&gt;&lt;/span&gt;&lt;div id=&quot;seguirInfo&quot; class=&quot;oculto&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;&lt;/div&gt;
       &lt;div class=&quot;rolar&quot; id=&quot;vista2d&quot;&gt;&lt;canvas id=&quot;planta&quot; role=&quot;img&quot; aria-label=&quot;Planta animada: divisor, linhas Asi 1 e Asi 3 com as estações, transferências, áreas de desvio e o loop da conferência&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
       &lt;div class=&quot;leg&quot;&gt;
         &lt;span&gt;&lt;i style=&quot;background:#2E9E4F&quot;&gt;&lt;/i&gt;Caixa (volume)&lt;/span&gt;
@@ -5719,6 +5723,9 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
       } else if (v.est === &#x27;D&#x27;) {
         v.delay -= dt;
         if (v.delay &lt;= 0) { v.est = &#x27;F&#x27;; v.para.chegando--; v.para.fila.push(v); }
+      } else if (v.est === &#x27;V&#x27;) {   // voltando da estação para a esteira de transporte pela TR
+        v.delay -= dt;
+        if (v.delay &lt;= 0) { v.est = &#x27;T&#x27;; v.x = v.reentra ? v.tr.x - 0.01 : v.tr.x + 0.01; }   // reentra: a TR desvia de novo para o outro lado
       }
     }
     // estações
@@ -5729,13 +5736,16 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
         e.itens += a.its.length;
         itensFeitos[L.id].push([T, a.its.length]);
         e.atual = null;
-        // outra estação da mesma TR: vai direto pela esteira de separação
-        const outras = v.alvos.filter((x) =&gt; pendente(x) &amp;&amp; x.e.tr === e.tr);
-        const prox = outras.find((x) =&gt; lotacao(x.e) &lt; P.fila);
+        // outra estação da MESMA área de desvio (ex.: 06 → 07 na EP_01_03): vai direto pela esteira de separação.
+        // Estação do outro lado da TR (ex.: 08 e 09 na EP_01_04): volta pela TR para a esteira de transporte e é desviada de novo.
+        const mesmaEP = v.alvos.filter((x) =&gt; pendente(x) &amp;&amp; x.e.ep === e.ep);
+        const prox = mesmaEP.find((x) =&gt; lotacao(x.e) &lt; P.fila);
         if (prox) desviar(v, prox.e, e.x);
         else {
-          outras.forEach((x) =&gt; perder(v, x));
-          v.est = &#x27;T&#x27;; v.x = e.tr.x + 0.01;
+          mesmaEP.forEach((x) =&gt; perder(v, x));
+          const outraEP = v.alvos.some((x) =&gt; pendente(x) &amp;&amp; x.e.tr === e.tr);
+          v.est = &#x27;V&#x27;; v.de = e.x; v.tr = e.tr; v.reentra = outraEP;
+          v.delay = Math.abs(e.x - e.tr.x) / P.vEst + 1; v.delay0 = v.delay;   // pela separação até a TR e de volta ao transporte
         }
       }
       if (!e.atual &amp;&amp; e.fila.length) {
@@ -5793,7 +5803,7 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
     const top = L.est.slice().sort((a, b) =&gt; b.ocupado - a.ocupado)[0];
     const ld = lead[id].slice(-300);
     const fila = vols.filter((v) =&gt; v.L === L &amp;&amp; (v.est === &#x27;F&#x27; || v.est === &#x27;D&#x27;)).length;
-    const linha = vols.filter((v) =&gt; v.L === L &amp;&amp; &#x27;TDFS&#x27;.includes(v.est)).length;
+    const linha = vols.filter((v) =&gt; v.L === L &amp;&amp; &#x27;TDFSV&#x27;.includes(v.est)).length;
     const ocupH = L.est.reduce((s, e) =&gt; s + e.ocupado, 0) / 3600;
     const itensTot = L.est.reduce((s, e) =&gt; s + e.itens, 0);
     return { vh, ih, prod: ops ? ih / ops : 0, ocup, efet: ocupH &gt; 0 ? itensTot / ocupH : 0, ocupH, itensTot, top, lead: ld.length ? ld.reduce((s, x) =&gt; s + x, 0) / ld.length : 0,
@@ -5958,6 +5968,7 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
         if (v.L !== L) return;
         if (v.est === &#x27;T&#x27;) { cx.fillStyle = &#x27;#2E9E4F&#x27;; cx.fillRect(X(v.x) - 3.5, yPista - 3.5, 7, 7); }
         else if (v.est === &#x27;D&#x27;) { cx.fillStyle = &#x27;#2E9E4F&#x27;; cx.fillRect(X(v.para.x) - 3.5, yEp + 4, 7, 7); }
+        else if (v.est === &#x27;V&#x27;) { cx.fillStyle = &#x27;#2E9E4F&#x27;; cx.fillRect(X(v.tr.x) - 3.5, yEp + 4, 7, 7); }
       });
     });
     cx.fillStyle = suave; cx.textAlign = &#x27;center&#x27;; cx.font = &#x27;11px system-ui, sans-serif&#x27;;
@@ -6122,7 +6133,7 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
     let ent = 0;
     while (T &lt; 3 * 3600) { passo(1); if (T &gt; 3600) ent += vph / 3600; }
     const feitos = conc[id].filter((t) =&gt; t &gt; 3600).length;
-    const naLinha = vols.filter((v) =&gt; v.L === L &amp;&amp; &#x27;TDFSC&#x27;.includes(v.est)).length;
+    const naLinha = vols.filter((v) =&gt; v.L === L &amp;&amp; &#x27;TDFSVC&#x27;.includes(v.est)).length;
     return feitos &gt;= 0.97 * ent &amp;&amp; incompletas[id] &lt;= 0.02 * conc[id].length &amp;&amp; escape[id] &lt;= 0.01 * (conc[id].length + escape[id]) &amp;&amp; naLinha &lt; Math.max(30, vph * 0.35);
   }
   function capacidade(id, modo) {
@@ -6461,8 +6472,21 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
     esteiraZ(zTP, zTM + 7, xd, C.altTransp, C.largTransp);
     caixa(M.tr, xd, C.altTransp + 0.2, zTM, 0.9, 0.4, 0.9);
     rotulo(&#x27;Divisor: ← Medicamento · ↑ Perfumaria&#x27;, xd, 2.0, zTM, { fundo: &#x27;rgba(46,139,87,0.92)&#x27;, esc: 0.4 });
-    [zTM + 5.2, zTM + 6.2].forEach((z) =&gt; caixa(mat(&#x27;#3b4450&#x27;), xd + 1.1, 0.55, z, 0.8, 1.1, 0.7));
-    rotulo(&#x27;Impressoras&#x27;, xd + 1.1, 1.6, zTM + 5.7, { esc: 0.4 });
+    // impressoras de etiqueta sobre a esteira de entrada (imprimem e aplicam a etiqueta com a caixa passando por baixo)
+    const impressoras = [zTM + 5.0, zTM + 6.4].map((z) =&gt; {
+      const mPort = mat(&#x27;#5B6675&#x27;, { metalness: 0.4, roughness: 0.5 }), mImp = mat(&#x27;#2b313a&#x27;, { roughness: 0.45 });
+      [-1, 1].forEach((sd) =&gt; caixa(mPort, xd + sd * (C.largTransp / 2 + 0.14), 0.95, z, 0.06, 1.9, 0.06));
+      caixa(mPort, xd, 1.9, z, C.largTransp + 0.34, 0.06, 0.08);
+      const corpo = new THREE.Mesh(BOX, mImp); corpo.scale.set(0.42, 0.34, 0.46); corpo.position.set(xd, 1.68, z); scene.add(corpo);
+      const faixa = new THREE.Mesh(BOX, mat(&#x27;#F2A33A&#x27;)); faixa.scale.set(0.43, 0.04, 0.47); faixa.position.set(xd, 1.6, z); scene.add(faixa);
+      const rolo = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.1, 18), mat(&#x27;#f4f4f2&#x27;)); rolo.rotation.x = Math.PI / 2; rolo.position.set(xd + 0.29, 1.72, z); scene.add(rolo);
+      const haste = new THREE.Mesh(BOX, mPort); haste.scale.set(0.04, 0.2, 0.04); scene.add(haste);
+      const sapata = new THREE.Mesh(BOX, mat(&#x27;#e8eef6&#x27;)); sapata.scale.set(0.16, 0.03, 0.12); scene.add(sapata);
+      return { z, haste, sapata, t: -9 };
+    });
+    const posAplicador = (imp, k) =&gt; { const y = 1.47 - 0.14 * k; imp.haste.position.set(xd, (1.51 + y) / 2 + 0.02, imp.z); imp.haste.scale.y = 1.51 - y + 0.04; imp.sapata.position.set(xd, y - 0.01, imp.z); };
+    impressoras.forEach((imp) =&gt; posAplicador(imp, 0));
+    rotulo(&#x27;Impressoras de etiqueta&#x27;, xd + 0.9, 2.35, zTM + 5.7, { esc: 0.4 });
     // conferência: loop TR_04 (do transporte da Perfumaria ao da Medicamento), bancadas e conferentes; escape embaixo
     const xl1 = XW(maxComp) - 0.4 - C.largTransp / 2, xl0 = xl1 - 6, xlc = (xl0 + xl1) / 2;
     esteiraZ(zTP, zTM, xl1, C.altTransp, C.largTransp); esteiraZ(zTP, zTM, xl0, C.altTransp, C.largTransp);
@@ -6471,7 +6495,8 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
     const zEsc = zTM + 2.6;
     caixa(mat(&#x27;#4a5361&#x27;), xlc, 0.18, zEsc, 6, 0.35, 1.4);
     rotulo(&#x27;Escape (após 6 voltas)&#x27;, xlc, 1.25, zEsc, { fundo: &#x27;rgba(192,57,43,0.9)&#x27;, esc: 0.4 });
-    for (const [, { m, geo, ms }] of lotes) { const im = new THREE.InstancedMesh(geo, m, ms.length); ms.forEach((mt, i) =&gt; im.setMatrixAt(i, mt)); scene.add(im); }
+    const inst3 = [];
+    for (const [, { m, geo, ms }] of lotes) { const im = new THREE.InstancedMesh(geo, m, ms.length); ms.forEach((mt, i) =&gt; im.setMatrixAt(i, mt)); im.userData.tipo = geo === ROL ? &#x27;rolete&#x27; : m === M.trilho ? &#x27;trilho&#x27; : &#x27;&#x27;; inst3.push(im); scene.add(im); }
     // módulos: corpo preto, display (vermelho quando aceso) e botão (verde quando aceso), como criarModulo da Estação 3D
     const modCorpo = new THREE.InstancedMesh(BOX, mat(&#x27;#1d2129&#x27;, { roughness: 0.5 }), mods.length);
     const modDisp = new THREE.InstancedMesh(BOX, new THREE.MeshBasicMaterial({ color: &#x27;#ffffff&#x27; }), mods.length);
@@ -6547,8 +6572,65 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
         conf: [[xlc + 9, 12, 13], [xlc, 0.5, 0]], div: [[xd + 9, 8, 15], [xd - 3, 0.5, 4]] }[v];
       camera.position.set(...p[0]); controls.target.set(...p[1]); controls.update();
     }
-    $(&#x27;#selCam3d&#x27;).addEventListener(&#x27;click&#x27;, (e) =&gt; { const b = e.target.closest(&#x27;button&#x27;); if (!b) return; $(&#x27;#selCam3d&#x27;).querySelectorAll(&#x27;button&#x27;).forEach((x) =&gt; x.classList.toggle(&#x27;on&#x27;, x === b)); cam(b.dataset.v); });
+    $(&#x27;#selCam3d&#x27;).addEventListener(&#x27;click&#x27;, (e) =&gt; {
+      const b = e.target.closest(&#x27;button&#x27;); if (!b) return;
+      $(&#x27;#selCam3d&#x27;).querySelectorAll(&#x27;button&#x27;).forEach((x) =&gt; x.classList.toggle(&#x27;on&#x27;, x === b));
+      V3.cam = b.dataset.v;
+      $(&#x27;#seguirInfo&#x27;).classList.toggle(&#x27;oculto&#x27;, V3.cam !== &#x27;seguir&#x27;);
+      if (V3.cam === &#x27;seguir&#x27;) { seg.id = null; seg.fim = 0; escolherCaixa(); } else cam(b.dataset.v);
+    });
     cam(&#x27;geral&#x27;);
+    // ---- seguir caixa: a câmera acompanha uma caixa do divisor até a conferência (dá para girar e aproximar em volta dela)
+    const seg = { id: null, ult: null, fim: 0, txt: &#x27;&#x27; };
+    const infoEl = $(&#x27;#seguirInfo&#x27;);
+    function escolherCaixa() {
+      const cand = vols.filter((v) =&gt; v.est === &#x27;T&#x27; &amp;&amp; v.x &lt; 15 &amp;&amp; visBac.has(v.id) &amp;&amp; v.alvos.length &gt; 1).sort((a, b) =&gt; b.id - a.id);
+      const v = cand[0] || vols.filter((x) =&gt; &#x27;TDFSV&#x27;.includes(x.est) &amp;&amp; visBac.has(x.id)).sort((a, b) =&gt; b.id - a.id)[0];
+      seg.id = v ? v.id : null; seg.ult = null; seg.fim = 0;
+      if (!v) { infoEl.innerHTML = &#x27;Nenhuma caixa nas linhas agora. Deixe a simulação rodar (ou escolha &lt;b&gt;Pedido em ondas&lt;/b&gt;) e clique de novo em &lt;b&gt;Seguir caixa&lt;/b&gt;.&#x27;; return; }
+      const b = visBac.get(v.id);
+      camera.position.set(b.x + 3.2, b.y + 2.4, b.z + (v.L.id === &#x27;M&#x27; ? -2.6 : 2.6)); controls.target.set(b.x, b.y, b.z); controls.update();
+    }
+    function descricao(v) {
+      const est = v.alvos.map((a) =&gt; a.e.rua), feitas = v.alvos.filter((a) =&gt; a.feito).length, perd = v.alvos.filter((a) =&gt; a.perdido).map((a) =&gt; a.e.rua);
+      const onde = v.est === &#x27;T&#x27; ? `na esteira de transporte da ${v.L.nome} (${v.L.esteira})`
+        : v.est === &#x27;D&#x27; ? (v.daTR ? `desviando na &lt;b&gt;${v.para.tr.cod}&lt;/b&gt; → ${v.para.ep.cod} → estação &lt;b&gt;${v.para.rua}&lt;/b&gt;` : `indo pela esteira de separação para a estação &lt;b&gt;${v.para.rua}&lt;/b&gt;`)
+        : v.est === &#x27;V&#x27; ? `voltando pela &lt;b&gt;${v.tr.cod}&lt;/b&gt; para a esteira de transporte${v.reentra ? &#x27; para entrar do outro lado da TR&#x27; : &#x27;&#x27;}`
+        : v.est === &#x27;F&#x27; ? `na fila da estação &lt;b&gt;${v.para.rua}&lt;/b&gt;`
+        : v.est === &#x27;S&#x27; ? `sendo separada na estação &lt;b&gt;${v.para.rua}&lt;/b&gt; (${v.alvos.find((a) =&gt; a.e === v.para).its.length} itens)`
+        : v.est === &#x27;C&#x27; ? `no loop da conferência, volta ${v.voltas + 1} de ${P.voltas}` : v.est === &#x27;K&#x27; ? &#x27;sendo conferida&#x27; : &#x27;&#x27;;
+      return `Seguindo a caixa &lt;b&gt;CX${String(v.id).padStart(5, &#x27;0&#x27;)}&lt;/b&gt; · ${v.L.nome}&lt;br&gt;${onde}&lt;small&gt;${v.itens} itens · estações ${est.join(&#x27;, &#x27;)} · feitas ${feitas} de ${est.length}${perd.length ? ` · &lt;span style=&quot;color:#f5b041&quot;&gt;passou direto (cheia): ${perd.join(&#x27;, &#x27;)}&lt;/span&gt;` : &#x27;&#x27;}&lt;/small&gt;`;
+    }
+    function seguirQuadro() {
+      if (V3.cam !== &#x27;seguir&#x27;) return;
+      if (seg.id == null) { if (!seg.fim || agoraSeg() - seg.fim &gt; 2.5) escolherCaixa(); return; }
+      const v = vols.find((x) =&gt; x.id === seg.id), b = visBac.get(seg.id);
+      if (!v || !b || v.est === &#x27;X&#x27; || v.est === &#x27;E&#x27;) {
+        if (!seg.fim) { seg.fim = agoraSeg(); infoEl.innerHTML = seg.txt.replace(/&lt;br&gt;.*?&lt;small&gt;/, v &amp;&amp; v.est === &#x27;E&#x27; ? &#x27;&lt;br&gt;foi para a &lt;b&gt;área de escape&lt;/b&gt; (6 voltas sem conferência)&lt;small&gt;&#x27; : &#x27;&lt;br&gt;&lt;b&gt;conferida ✓&lt;/b&gt;&lt;small&gt;&#x27;) + &#x27;&lt;small&gt;Em instantes a câmera passa para outra caixa.&lt;/small&gt;&#x27;; }
+        if (agoraSeg() - seg.fim &gt; 2.5) { seg.id = null; escolherCaixa(); }
+        return;
+      }
+      if (seg.ult) { camera.position.x += b.x - seg.ult[0]; camera.position.y += b.y - seg.ult[1]; camera.position.z += b.z - seg.ult[2]; }
+      controls.target.set(b.x, b.y, b.z);
+      seg.ult = [b.x, b.y, b.z];
+      seg.txt = descricao(v); infoEl.innerHTML = seg.txt;
+    }
+    const agoraSeg = () =&gt; performance.now() / 1000;
+    // ---- qualidade: leve (sem roletes e trilhos, resolução 1×), normal, alta (com sombras)
+    sol.shadow.mapSize.set(4096, 4096);
+    Object.assign(sol.shadow.camera, { left: -45, right: 45, top: 22, bottom: -22, near: 1, far: 120 });
+    sol.target.position.set(-4, 0, 0); scene.add(sol.target);
+    function qualidade(q) {
+      renderer.setPixelRatio(q === &#x27;leve&#x27; ? 1 : Math.min(2, window.devicePixelRatio || 1));
+      inst3.forEach((im) =&gt; { im.visible = q !== &#x27;leve&#x27; || !im.userData.tipo; im.castShadow = q === &#x27;alta&#x27; &amp;&amp; im.userData.tipo !== &#x27;rolete&#x27;; im.receiveShadow = q === &#x27;alta&#x27;; });
+      piso.receiveShadow = q === &#x27;alta&#x27;;
+      ops.forEach((o) =&gt; o.g.traverse((m) =&gt; { m.castShadow = q === &#x27;alta&#x27;; }));
+      renderer.shadowMap.enabled = q === &#x27;alta&#x27;;
+      sol.castShadow = q === &#x27;alta&#x27;;
+      scene.traverse((m) =&gt; { if (m.material) [].concat(m.material).forEach((x) =&gt; { x.needsUpdate = true; }); });
+      renderer.setSize(1, 1, false);   // força o ajuste de tamanho no próximo quadro
+    }
+    $(&#x27;#selQual&#x27;).addEventListener(&#x27;click&#x27;, (e) =&gt; { const b = e.target.closest(&#x27;button&#x27;); if (!b) return; $(&#x27;#selQual&#x27;).querySelectorAll(&#x27;button&#x27;).forEach((x) =&gt; x.classList.toggle(&#x27;on&#x27;, x === b)); qualidade(b.dataset.v); });
     const cIncomp = new THREE.Color(&#x27;#e67e22&#x27;), cOk = new THREE.Color(&#x27;#2E9E4F&#x27;);
     function atualizar() {
       const r = box.getBoundingClientRect(), pr = renderer.getPixelRatio();
@@ -6578,6 +6660,12 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
             q -= segs[k];
           }
         }
+        if (v.est === &#x27;V&#x27;) {
+          const f = Math.min(1, Math.max(0, 1 - v.delay / (v.delay0 || 1))), pts = [[XW(v.de), yS, a.zS], [XW(v.tr.x), yS, a.zS], [XW(v.tr.x), yT, a.zT]];
+          const d1 = Math.abs(pts[1][0] - pts[0][0]) + 1e-6, d2 = Math.abs(pts[2][2] - pts[1][2]), q = f * (d1 + d2);
+          if (q &lt;= d1) return [pts[0][0] + (pts[1][0] - pts[0][0]) * (q / d1), yS, a.zS, 0];
+          const u = (q - d1) / (d2 || 1); return [pts[1][0], yS + (yT - yS) * u, a.zS + (a.zT - a.zS) * u, 0];
+        }
         if (v.est === &#x27;F&#x27;) { const k = (filaPos.get(v.para) || 0) + 1; filaPos.set(v.para, k); return [XW(v.para.x) + 0.62 * k, yS, a.zS, 0]; }
         if (v.est === &#x27;S&#x27;) return [XW(v.para.x), yS, a.zS, 0];
         if (v.est === &#x27;C&#x27;) { const [px, pz, rot] = pontoLoop((((T - v.tC) / voltaS()) + (L.id === &#x27;M&#x27; ? fEntradaM : 0)) % 1); return [px, yT, pz, rot ? Math.PI / 2 : 0]; }
@@ -6595,9 +6683,16 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
         if (!alvo) return;
         vivos.add(v.id);
         let b = visBac.get(v.id);
-        if (!b) { b = { x: alvo[0], y: alvo[1], z: alvo[2], ry: alvo[3], conf: null }; visBac.set(v.id, b); if (v.est === &#x27;K&#x27;) alvoDe(v); }
-        const dx = alvo[0] - b.x, dy = alvo[1] - b.y, dz = alvo[2] - b.z, d = Math.hypot(dx, dy, dz), passo = vMax * dtR;
-        if (d &lt;= passo || d &gt; 40) { b.x = alvo[0]; b.y = alvo[1]; b.z = alvo[2]; } else { b.x += (dx / d) * passo; b.y += (dy / d) * passo; b.z += (dz / d) * passo; }
+        if (!b) {
+          b = { x: alvo[0], y: alvo[1], z: alvo[2], ry: alvo[3], conf: null }; visBac.set(v.id, b);
+          if (v.est === &#x27;K&#x27;) alvoDe(v);
+          if (v.est === &#x27;T&#x27; &amp;&amp; v.x &lt; 4) {   // nasce embaixo de uma impressora e sobe pela esteira de entrada até o divisor
+            const imp = impressoras[v.id % impressoras.length];
+            Object.assign(b, { x: xd, y: yT, z: imp.z, via: [xd, yT, v.L.v3.zT] }); imp.t = agoraR;
+          }
+        }
+        const meta = b.via || alvo, dx = meta[0] - b.x, dy = meta[1] - b.y, dz = meta[2] - b.z, d = Math.hypot(dx, dy, dz), passo = vMax * dtR * (b.via ? 2 : 1);
+        if (d &lt;= passo || d &gt; 40) { b.x = meta[0]; b.y = meta[1]; b.z = meta[2]; if (b.via) b.via = null; } else { b.x += (dx / d) * passo; b.y += (dy / d) * passo; b.z += (dz / d) * passo; }
         b.ry = alvo[3];
         por(b.x, b.y, b.z, b.ry, v.alvos.some((x) =&gt; x.perdido) ? cIncomp : cOk);
       });
@@ -6633,6 +6728,8 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
         op.g.userData.pernas[0].rotation.x = sw; op.g.userData.pernas[1].rotation.x = -sw;
         op.g.userData.tronco.material = ocup ? camVerde : camCinza;
       });
+      impressoras.forEach((imp) =&gt; { const k = agoraR - imp.t &lt; 0.7 ? Math.sin(((agoraR - imp.t) / 0.7) * Math.PI) : 0; posAplicador(imp, k); });
+      seguirQuadro();
       acender();
       controls.update();
       renderer.render(scene, camera);
@@ -6668,7 +6765,7 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
     if (uiT &gt; 0.4) { uiT = 0; renderKPIs(); grafico(); ocupacao(); }
   }
   window.addEventListener(&#x27;resize&#x27;, tudo);
-  window.PTL_OP = { P, LINHAS, passo, reiniciar, indicadores, T: () =&gt; T, aplicarModo, rodarPedido, compararPedido, estado: () =&gt; ({ perdidos, incompletas, escape, emConf, conc, ped }) };
+  window.PTL_OP = { P, LINHAS, passo, reiniciar, indicadores, T: () =&gt; T, vols: () =&gt; vols, aplicarModo, rodarPedido, compararPedido, estado: () =&gt; ({ perdidos, incompletas, escape, emConf, conc, ped }) };
   requestAnimationFrame(laco);
 })();
 &lt;/script&gt;

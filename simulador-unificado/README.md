@@ -87,7 +87,12 @@ geral, Perfumaria, Medicamento, estação 05, conferência e divisor. Também co
 do alto giro 0–3, displays E+Q nos andares 4–5 e nas zonas do baixo giro, prédio 015 na frente do bloco, barra âmbar
 do baixo giro, placa do alto giro, nome da estação no piso e concentrador atrás. Com LEDs, os módulos dos itens da
 caixa em separação acendem. Os operadores andam de verdade entre a bacia, o alto giro e o corredor do baixo giro, e as caixas
-percorrem as esteiras (transporte, TR, área de desvio, estação, volta ao transporte e loop da conferência) sem saltar. O 3D com os endereços reais e os displays continua
+percorrem as esteiras (transporte, TR, área de desvio, estação, volta ao transporte e loop da conferência) sem saltar.
+As caixas nascem embaixo das **impressoras de etiqueta**, montadas num pórtico sobre a esteira de entrada (o aplicador
+desce a cada etiqueta), e sobem até o divisor. **Seguir caixa** acompanha uma caixa do divisor até a conferência,
+mostrando onde ela está (TR, área de desvio, fila, estação, volta pela TR, loop) e quais estações já fez; dá para girar e
+aproximar em volta dela. **Qualidade**: *Leve* (sem roletes e trilhos, resolução 1×, para computador mais fraco),
+*Normal* e *Alta* (com sombras). O 3D com os endereços reais e os displays continua
 na aba Estação 3D (05 e 27).
 
 Transferências e áreas de desvio (iguais no 3D e em `projeto/layout-2d/`):
@@ -113,7 +118,9 @@ Como funciona:
   sorteados entre as estações proporcionalmente ao número de endereços de cada uma (`projeto/dados/estacoes.json`),
   com a fração de itens no alto giro ajustável.
 - **Desvio**: ao passar por uma TR, a caixa entra na área de desvio da estação que tem item dela, se a estação tiver
-  lugar na esteira de separação (padrão: 2 caixas). Terminada uma estação, vai direto para a próxima da mesma TR.
+  lugar na esteira de separação (padrão: 2 caixas). Terminada uma estação, vai direto pela esteira de separação só para outra estação da **mesma área de desvio**
+  (ex.: 06 → 07, na EP_01_03). Para uma estação do outro lado da mesma TR (ex.: 08 e 09, na EP_01_04), volta pela TR para
+  a esteira de transporte e é desviada de novo.
 - **Sem retorno às linhas** (como no desenho): se a estação estiver cheia, a caixa segue e o item fica sem separar;
   ela chega **incompleta** à conferência. Os indicadores mostram os itens não separados e os volumes incompletos.
 - **Conferência**: a caixa tenta um conferente a cada volta no loop. Depois de 6 voltas sem ser conferida vai para a
