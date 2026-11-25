@@ -17,6 +17,9 @@ sct = open(R + 'simulador-unificado/controle.html').read()
 sh = sh.replace('src="controle.html"', 'srcdoc="' + html.escape(sct, quote=True) + '"')
 assert 'src="controle.html"' not in sh
 sop = open(R + 'simulador-unificado/operacao.html').read()
+sop = sop.replace('<script src="../simulador-3d/vendor/three.min.js"></script>', '<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>')
+sop = sop.replace('<script src="../simulador-3d/vendor/OrbitControls.js"></script>', '<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>')
+assert 'vendor/three.min.js' not in sop
 sh = sh.replace('data-src="operacao.html"', 'srcdoc="' + html.escape(sop, quote=True) + '"')
 assert 'data-src="operacao.html"' not in sh
 head = re.search(r'<head>(.*?)</head>', sh, re.S).group(1)

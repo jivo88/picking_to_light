@@ -13,7 +13,7 @@ orbit = open(R + 'simulador-3d/vendor/OrbitControls.js').read()
 for url, code in [('https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js', three),
                   ('https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js', orbit)]:
     tag = html.escape(f'<script src="{url}"></script>', quote=True)
-    assert s.count(tag) == 1, url
+    assert s.count(tag) >= 1, url   # estação 3D e vista 3D da Operação completa
     code = code.replace('</script', '<\\/script')
     s = s.replace(tag, html.escape('<script>\n' + code + '\n</script>', quote=True))
 assert 'cdn.jsdelivr' not in s

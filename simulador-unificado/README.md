@@ -68,7 +68,21 @@ Cada volume pertence a uma linha só (um pedido com Medicamento e Perfumaria vir
 juntos, e *Sem LEDs (como hoje)*, em que o coletor mostra um endereço por vez e o operador procura e bipa (soma o
 tempo de procura por item). O seletor acompanha o da Estação 3D. `operacao.html?semled` já abre sem LEDs.
 
-Transferências e áreas de desvio (iguais no 3D):
+**Pedido em ondas.** No topo, *Pedido em ondas* troca a entrada contínua (volumes por hora) por um pedido de até
+4.000 volumes, com operador nas 40 estações: divisão Medicamento/Perfumaria (padrão 55% / 45%), volumes por onda,
+intervalo entre ondas (0 = a próxima onda sai quando a anterior termina de entrar) e ritmo de entrada no divisor
+(caixas por minuto). O botão **Comparar o pedido com e sem LEDs** roda o pedido inteiro nos dois modos com as mesmas
+caixas (semente fixa, editável nas premissas) e mostra lado a lado o tempo até o último volume conferido, volumes e
+itens por hora, ocupação, incompletos e escape, além do **ritmo máximo** de entrada de cada modo (até 2% de volumes
+incompletos e 1% no escape) e a curva de volumes conferidos.
+
+**Vista 3D das 40 estações.** O botão *3D · 40 estações* na planta mostra a operação inteira em 3D, andando junto com
+a simulação: cada estação com o alto giro (transporte por dentro) e a esteira de separação na frente do operador e o
+corredor do baixo giro atrás, as linhas espelhadas (corredores de costas no meio), as TRs, as áreas de desvio, o
+divisor com as impressoras e o loop da conferência com os conferentes. Os racks são esquemáticos (o número de caixas
+do alto giro segue `estacoes.json`); o 3D detalhado com os endereços reais continua na aba Estação 3D (05 e 27).
+
+Transferências e áreas de desvio (iguais no 3D e em `projeto/layout-2d/`):
 
 | Linha | TR | Fica entre | Áreas de desvio (estações) |
 |---|---|---|---|
