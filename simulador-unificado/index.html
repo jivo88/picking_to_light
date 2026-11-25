@@ -93,11 +93,15 @@ body.modo-com #pipRot { display: block; }
   });
   window.addEventListener('message', (e) => {
     const d = e.data || {};
-    if (e.source === f3d.contentWindow && d.ptl) { paraCom(d); paraCtl(d); }
+    if (e.source === f3d.contentWindow && d.ptl) {
+      paraCom(d); paraCtl(d);
+      if (d.evento === 'led') { try { fop.contentWindow.postMessage({ ptlPai: true, tipo: 'led', valor: d.led }, '*'); } catch (x) { /* ainda carregando */ } }
+    }
     if (e.source === fcom.contentWindow && d.ptlFilho) {
       if (d.tipo === 'pronto') { para3d({ tipo: 'pedirMapa' }); aplicar(modo); }
       if (d.tipo === 'gatilho' || d.tipo === 'apertar' || d.tipo === 'rede') para3d(d);
     }
+    if (e.source === fop.contentWindow && d.ptlFilho && d.tipo === 'led') para3d({ tipo: 'led', valor: d.valor });
     if (e.source === fop.contentWindow && d.ptlFilho && d.tipo === 'pronto') fop.contentWindow.postMessage({ ptlPai: true, tipo: 'visivel', valor: modo === 'op' }, '*');
     if (e.source === fctl.contentWindow && d.ptlFilho) {
       if (d.tipo === 'pronto') para3d({ tipo: 'pedirMapa' });

@@ -5,18 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Operação completa</title>
 <style>
-/* Operação completa: simulação das duas linhas (Medicamento · Asi 3 e Perfumaria · Asi 1) com as 40 estações */
+/* Operação completa: as duas linhas no layout do Desenho_esteira (25/11/2026), com as 40 estações,
+   as transferências TR_02/TR_03, as áreas de desvio EP_01/EP_02, o divisor e o loop da conferência (TR_04). */
 :root {
   --bg: #eef1f5; --painel: #ffffff; --tinta: #1b2638; --suave: #5b6675; --linha: #d5dbe3; --chip: #f6f8fb;
-  --azul: #2f5597; --verde: #2e8b57; --ambar: #d68910; --vermelho: #c0392b; --med: #2f5597; --perf: #b0569b;
-  --mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --azul: #2f5597; --verde: #2e8b57; --ambar: #d68910; --vermelho: #c0392b; --asi1: #2b5f9e; --asi3: #7a4aa8;
+  --ep: #d9741f; --epf: #fdeedd;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #11161f; --painel: #19202c; --tinta: #e8ecf2; --suave: #9aa6b8; --linha: #2c3647; --chip: #202938;
-  --med: #6f9be8; --perf: #e08ccd; color-scheme: dark; } }
+  --asi1: #6f9be8; --asi3: #b48ae0; --ep: #f0a060; --epf: #3a2716; color-scheme: dark; } }
 :root[data-theme="dark"] { --bg: #11161f; --painel: #19202c; --tinta: #e8ecf2; --suave: #9aa6b8; --linha: #2c3647; --chip: #202938;
-  --med: #6f9be8; --perf: #e08ccd; color-scheme: dark; }
+  --asi1: #6f9be8; --asi3: #b48ae0; --ep: #f0a060; --epf: #3a2716; color-scheme: dark; }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body { background: var(--bg); color: var(--tinta); font: 13.5px/1.45 var(--sans); padding: 10px 12px 18px; }
@@ -32,6 +33,8 @@ h2 { font-size: 12px; margin: 0 0 8px; color: var(--suave); text-transform: uppe
 .seg { display: inline-flex; background: var(--painel); border: 1px solid var(--linha); border-radius: 8px; padding: 2px; }
 .seg button { border: 0; background: transparent; padding: 3px 9px; border-radius: 6px; cursor: pointer; font-size: 12.5px; color: var(--suave); }
 .seg button.on { background: #f2a33a; color: #1b2638; font-weight: 700; }
+#selLed button { padding: 5px 12px; font-size: 13px; }
+#selLed button[data-v="manual"].on { background: #5b6675; color: #fff; }
 .relogio { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; }
 .relogio b { font-size: 18px; }
 .relogio small { display: block; color: var(--suave); font-size: 11px; }
@@ -49,15 +52,18 @@ h2 { font-size: 12px; margin: 0 0 8px; color: var(--suave); text-transform: uppe
 details summary { cursor: pointer; font-weight: 600; font-size: 12.5px; color: var(--suave); }
 .nota { color: var(--suave); font-size: 12px; margin: 6px 0 0; }
 canvas { display: block; width: 100%; }
-#planta { height: 360px; border-radius: 8px; }
-.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.rolar { overflow-x: auto; }
+#planta { height: 470px; min-width: 900px; border-radius: 8px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 1250px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .kpis { grid-template-columns: 1fr; } }
 .kpi { border: 1px solid var(--linha); border-radius: 10px; padding: 10px 12px; background: var(--chip); }
 .kpi h3 { margin: 0 0 6px; font-size: 13px; display: flex; gap: 6px; align-items: center; }
 .kpi table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .kpi td { padding: 2px 0; }
-.kpi td:last-child { text-align: right; font-weight: 700; }
+.kpi td:last-child { text-align: right; font-weight: 700; padding-left: 6px; }
 .kpi .grande td:last-child { font-size: 18px; }
+.kpi .ruim td:last-child { color: var(--vermelho); }
 .leg { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--suave); margin-top: 6px; }
 .leg i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -2px; }
 #grafico { height: 190px; }
@@ -68,7 +74,10 @@ canvas { display: block; width: 100%; }
 </head>
 <body>
 <div class="topo">
-  <div><div class="tit">Operação completa</div><div class="sub">As duas linhas e as 40 estações com PTL · volumes entrando, transferências, separação e recirculação</div></div>
+  <div><div class="tit">Operação completa</div><div class="sub">Layout do desenho: divisor → linhas Asi 1 e Asi 3 → conferência · 40 estações, 12 TRs, 22 áreas de desvio</div></div>
+  <span class="seg" id="selLed" role="group" aria-label="Separação com ou sem LEDs">
+    <button data-v="ptl" class="on">Com LEDs (PTL)</button><button data-v="manual">Sem LEDs (como hoje)</button>
+  </span>
   <button class="btn forte" id="btnPlay">Pausar</button>
   <button class="btn" id="btnReset">Reiniciar</button>
   <span class="seg" id="selVel" role="group" aria-label="Velocidade">
@@ -80,15 +89,14 @@ canvas { display: block; width: 100%; }
 
 <div class="grade">
   <div>
-    <section class="caixa" id="pM"></section>
     <section class="caixa" id="pP"></section>
+    <section class="caixa" id="pM"></section>
     <section class="caixa">
       <h2>Comum às duas linhas</h2>
-      <div class="param"><label for="modo">Modo de separação</label><span></span>
-        <select id="modo" class="btn" style="grid-column:1/3"><option value="ptl">Com PTL (displays acendem)</option><option value="manual">Sem PTL (procura o endereço na tela)</option></select></div>
       <div class="param"><label for="pAlto">Itens no alto giro</label><output id="opAlto"></output><input type="range" id="pAlto" min="30" max="95" step="1"></div>
+      <div class="param"><label for="fila">Caixas na esteira de separação por estação</label><output id="ofila"></output><input type="range" id="fila" min="1" max="4" step="1"></div>
       <details>
-        <summary>Premissas de tempo e esteira</summary>
+        <summary>Tempos de separação e esteira</summary>
         <div style="margin-top:8px">
           <div class="param"><label for="vEst">Velocidade da esteira (m/s)</label><output id="ovEst"></output><input type="range" id="vEst" min="0.2" max="1" step="0.05"></div>
           <div class="param"><label for="tAlto">Pega no alto giro 0-3 (s)</label><output id="otAlto"></output><input type="range" id="tAlto" min="1" max="10" step="0.5"></div>
@@ -96,11 +104,20 @@ canvas { display: block; width: 100%; }
           <div class="param"><label for="tBaixo">Pega no baixo giro, com deslocamento (s)</label><output id="otBaixo"></output><input type="range" id="tBaixo" min="3" max="25" step="0.5"></div>
           <div class="param"><label for="tUni">Por unidade a mais (s)</label><output id="otUni"></output><input type="range" id="tUni" min="0.2" max="2" step="0.1"></div>
           <div class="param"><label for="tCaixa">Abrir, fechar e empurrar a caixa (s)</label><output id="otCaixa"></output><input type="range" id="tCaixa" min="2" max="20" step="1"></div>
-          <div class="param"><label for="tProc">Procura sem PTL, por item (s)</label><output id="otProc"></output><input type="range" id="tProc" min="0" max="15" step="0.5"></div>
-          <div class="param"><label for="fila">Caixas na esteira de separação por estação</label><output id="ofila"></output><input type="range" id="fila" min="1" max="4" step="1"></div>
+          <div class="param"><label for="tProc">Sem LEDs: procurar o endereço e bipar, por item (s)</label><output id="otProc"></output><input type="range" id="tProc" min="0" max="15" step="0.5"></div>
+          <div class="param"><label for="entrada">Do divisor até a primeira estação (m)</label><output id="oentrada"></output><input type="range" id="entrada" min="2" max="40" step="1"></div>
         </div>
       </details>
-      <button class="btn" id="btnCap" style="width:100%;margin-top:4px">Calcular capacidade máxima (com e sem PTL)</button>
+      <details>
+        <summary>Conferência (loop TR_04)</summary>
+        <div style="margin-top:8px">
+          <div class="param"><label for="conf">Conferentes</label><output id="oconf"></output><input type="range" id="conf" min="1" max="12" step="1"></div>
+          <div class="param"><label for="tConf">Conferência por caixa (s)</label><output id="otConf"></output><input type="range" id="tConf" min="5" max="120" step="1"></div>
+          <div class="param"><label for="loopM">Uma volta no loop (m)</label><output id="oloopM"></output><input type="range" id="loopM" min="10" max="120" step="1"></div>
+          <div class="param"><label for="voltas">Voltas antes do escape</label><output id="ovoltas"></output><input type="range" id="voltas" min="1" max="12" step="1"></div>
+        </div>
+      </details>
+      <button class="btn" id="btnCap" style="width:100%;margin-top:6px">Calcular capacidade máxima (com e sem LEDs)</button>
       <div id="cap" class="nota" aria-live="polite"></div>
       <p class="nota">Valores iniciais são premissas: ~3.000 volumes/dia e 250 a 270 mil produtos/dia em 2 turnos. Ajuste com os dados reais da operação.</p>
     </section>
@@ -108,14 +125,15 @@ canvas { display: block; width: 100%; }
 
   <div>
     <section class="caixa">
-      <h2>Planta das esteiras</h2>
-      <canvas id="planta" role="img" aria-label="Planta animada das duas linhas com as estações, as transferências e as caixas"></canvas>
+      <h2>Planta das esteiras (como no desenho)</h2>
+      <div class="rolar"><canvas id="planta" role="img" aria-label="Planta animada: divisor, linhas Asi 1 e Asi 3 com as estações, transferências, áreas de desvio e o loop da conferência"></canvas></div>
       <div class="leg">
         <span><i style="background:#2E9E4F"></i>Caixa (volume)</span>
+        <span><i style="background:#2e9e4f;opacity:.75"></i>TR (transferência)</span>
+        <span><i style="background:var(--epf);border:1px solid var(--ep)"></i>Área de desvio (EP)</span>
         <span><i style="background:#e8eef6;border:1px solid #9aa6b8"></i>Estação ociosa</span>
         <span><i style="background:#f6c36b"></i>Ocupação média</span>
-        <span><i style="background:#e0533f"></i>Gargalo (ocupação alta)</span>
-        <span><i style="background:#2e8b57"></i>Transferência</span>
+        <span><i style="background:#e0533f"></i>Gargalo</span>
         <span>● operador separando · número = caixas esperando</span>
       </div>
     </section>
@@ -124,7 +142,7 @@ canvas { display: block; width: 100%; }
       <div class="kpis" id="kpis"></div>
     </section>
     <div class="duas">
-      <section class="caixa"><h2>Volumes por hora (média da última hora)</h2><canvas id="grafico" role="img" aria-label="Gráfico de volumes por hora ao longo do tempo"></canvas></section>
+      <section class="caixa"><h2>Volumes conferidos por hora (média da última hora)</h2><canvas id="grafico" role="img" aria-label="Gráfico de volumes conferidos por hora ao longo do tempo"></canvas></section>
       <section class="caixa"><h2>Ocupação por estação</h2><canvas id="ocupacao" role="img" aria-label="Ocupação de cada estação"></canvas></section>
     </div>
   </div>
@@ -145,41 +163,62 @@ canvas { display: block; width: 100%; }
   const P = {
     M: { on: true, vph: 95, itens: 20, unid: 4 },
     P: { on: true, vph: 95, itens: 20, unid: 4 },
-    modo: 'ptl', pAlto: 70, vEst: 0.5, tAlto: 3, t45: 5, tBaixo: 9, tUni: 0.6, tCaixa: 7, tProc: 4, fila: 2,
+    modo: 'ptl', pAlto: 70, vEst: 0.5, tAlto: 3, t45: 5, tBaixo: 9, tUni: 0.6, tCaixa: 7, tProc: 4, fila: 2, entrada: 8,
+    conf: 4, tConf: 25, loopM: 40, voltas: 6,
   };
-  const PASSO = 2.5, ENTRADA = 6, SAIDA = 4, LOOP = 40;   // metros
+  const PASSO = 2.5, SAIDA = 4;   // metros
+  // transferências do desenho: [código, estação b (a TR fica entre b e b+1), [[área de desvio, estações], ...]]
+  const TRS = {
+    M: [['TR_02_01', 3, [['EP_01_01', [3]], ['EP_01_02', [4, 5]]]], ['TR_02_02', 7, [['EP_01_03', [6, 7]], ['EP_01_04', [8, 9]]]],
+      ['TR_02_03', 11, [['EP_01_05', [10, 11]], ['EP_01_06', [12, 13]]]], ['TR_02_04', 15, [['EP_01_07', [14, 15]]]],
+      ['TR_02_05', 17, [['EP_01_08', [16, 17]], ['EP_01_09', [18, 19]]]], ['TR_02_06', 21, [['EP_01_10', [20, 21]], ['EP_01_11', [22]]]]],
+    P: [['TR_03_01', 26, [['EP_02_01', [26]], ['EP_02_02', [27, 28]]]], ['TR_03_02', 30, [['EP_02_03', [29, 30]], ['EP_02_04', [31, 32]]]],
+      ['TR_03_03', 34, [['EP_02_05', [33, 34]], ['EP_02_06', [35, 36]]]], ['TR_03_04', 38, [['EP_02_07', [37, 38]]]],
+      ['TR_03_05', 40, [['EP_02_08', [39, 40]], ['EP_02_09', [41, 42]]]], ['TR_03_06', 44, [['EP_02_10', [43, 44]], ['EP_02_11', [45]]]]],
+  };
   const LINHAS = {
-    M: { id: 'M', nome: 'Medicamento', esteira: 'Asi 3', cor: '#2f5597' },
-    P: { id: 'P', nome: 'Perfumaria', esteira: 'Asi 1', cor: '#b0569b' },
+    P: { id: 'P', nome: 'Perfumaria', esteira: 'Asi 1', cor: '#2b5f9e' },
+    M: { id: 'M', nome: 'Medicamento', esteira: 'Asi 3', cor: '#7a4aa8' },
   };
-  Object.values(LINHAS).forEach((L) => {
-    L.ruas = Object.keys(ESTACOES).filter((r) => ESTACOES[r][0] === L.nome).sort();
-    L.n = L.ruas.length;
-    L.comp = ENTRADA + L.n * PASSO + SAIDA;
-    const p0 = +L.ruas[0], p1 = +L.ruas[L.n - 1];
-    L.est = L.ruas.map((r, k) => {
-      const [, a03, a45, bx] = ESTACOES[r];
-      // transferência: cada uma atende 2 estações à esquerda e 2 à direita (ponta: 1 + 2)
-      let b = p0 + 4 * Math.round((+r - p0 - 0.5) / 4);
-      if (b + 1 > p1) b = p1 - 1;
-      if (b < p0) b = p0;
-      const kb = L.ruas.indexOf(pad(b));
-      return { rua: r, k, x: ENTRADA + k * PASSO + PASSO / 2, a03, a45, bx, grupo: b, xt: ENTRADA + (kb + 1) * PASSO,
-        fila: [], chegando: 0, atual: null, fim: 0, ocupado: 0, itens: 0 };
+  function montarLinhas() {   // posições ao longo do fluxo (0 = divisor); recalcula quando muda a distância do divisor
+    Object.values(LINHAS).forEach((L) => {
+      L.ruas = Object.keys(ESTACOES).filter((r) => ESTACOES[r][0] === L.nome).sort();
+      L.n = L.ruas.length;
+      L.comp = P.entrada + L.n * PASSO + SAIDA;
+      const xDe = (r) => P.entrada + L.ruas.indexOf(pad(r)) * PASSO + PASSO / 2;
+      const antigas = L.est || [];
+      L.est = L.ruas.map((r, k) => {
+        const [, a03, a45, bx] = ESTACOES[r];
+        const velha = antigas[k];
+        return Object.assign(velha || { fila: [], chegando: 0, atual: null, fim: 0, ocupado: 0, itens: 0 }, { rua: r, k, x: xDe(+r), a03, a45, bx });
+      });
+      L.trs = TRS[L.id].map(([cod, b, eps]) => {
+        const tr = { cod, b, x: xDe(b) + PASSO / 2, eps: [] };
+        eps.forEach(([ep, rs]) => {
+          const e = { cod: ep, ruas: rs.map(pad), tr };
+          e.x0 = Math.min(...rs.map(xDe)) - PASSO / 2; e.x1 = Math.max(...rs.map(xDe)) + PASSO / 2;
+          e.dir = (e.x0 + e.x1) / 2 > tr.x ? 1 : -1;
+          tr.eps.push(e);
+          e.ruas.forEach((r) => { const s = L.est.find((x) => x.rua === r); s.tr = tr; s.ep = e; });
+        });
+        return tr;
+      });
+      L.alto = L.est.reduce((s, e) => s + e.a03 + e.a45, 0);
+      L.baixo = L.est.reduce((s, e) => s + e.bx, 0);
     });
-    L.alto = L.est.reduce((s, e) => s + e.a03 + e.a45, 0);
-    L.baixo = L.est.reduce((s, e) => s + e.bx, 0);
-    L.transf = [...new Set(L.est.map((e) => e.grupo))].map((b) => ({ b, x: L.est.find((e) => e.grupo === b).xt }));
-  });
+  }
+  montarLinhas();
 
   // ------------------------------------------------------------------ estado
-  let T = 0, seq = 0, vols = [], acum = { M: 0, P: 0 }, conc = { M: [], P: [] }, itensFeitos = { M: [], P: [] };
-  let serie = [], proxAmostra = 0, proxLimpa = 0, rodando = true, vel = 10, recirc = { M: 0, P: 0 }, lead = { M: [], P: [] };
+  let T, seq, vols, acum, conc, itensFeitos, serie, proxAmostra, proxLimpa, rodando = true, vel = 10, lead, perdidos, incompletas, escape, confOcup, voltasTot, emConf;
+  const zera2 = () => ({ M: 0, P: 0 });
   function reiniciar() {
-    T = 0; seq = 0; vols = []; acum = { M: 0, P: 0 }; conc = { M: [], P: [] }; itensFeitos = { M: [], P: [] };
-    serie = []; proxAmostra = 0; proxLimpa = 0; recirc = { M: 0, P: 0 }; lead = { M: [], P: [] };
+    T = 0; seq = 0; vols = []; acum = zera2(); conc = { M: [], P: [] }; itensFeitos = { M: [], P: [] };
+    serie = []; proxAmostra = 0; proxLimpa = 0; lead = { M: [], P: [] }; perdidos = zera2(); incompletas = zera2(); escape = zera2();
+    confOcup = 0; voltasTot = 0; emConf = 0;
     Object.values(LINHAS).forEach((L) => L.est.forEach((e) => { e.fila = []; e.chegando = 0; e.atual = null; e.fim = 0; e.ocupado = 0; e.itens = 0; }));
   }
+  reiniciar();
 
   // sorteio de itens: % no alto giro (P.pAlto); dentro de cada área, proporcional ao número de endereços da estação
   function sortearEstacao(L) {
@@ -205,10 +244,10 @@ canvas { display: block; width: 100%; }
       if (!porEst.has(e)) porEst.set(e, []);
       porEst.get(e).push({ cat, u: geom(pl.unid) });
     }
-    const alvos = [...porEst.entries()].sort((a, b) => a[0].k - b[0].k).map(([e, its]) => ({ e, its, feito: false }));
-    vols.push({ id: ++seq, L, x: 0, est: 'T', alvos, t0: T, delay: 0, para: null, itens: n, rec: 0 });
+    const alvos = [...porEst.entries()].sort((a, b) => a[0].k - b[0].k).map(([e, its]) => ({ e, its, feito: false, perdido: false }));
+    vols.push({ id: ++seq, L, x: 0, est: 'T', alvos, t0: T, delay: 0, para: null, itens: n, voltas: 0 });
   }
-  const proximo = (v) => v.alvos.find((a) => !a.feito);
+  const pendente = (a) => !a.feito && !a.perdido;
   const lotacao = (e) => e.fila.length + e.chegando + (e.atual ? 1 : 0);
   function tempoSeparacao(alvo) {
     let t = P.tCaixa;
@@ -218,12 +257,14 @@ canvas { display: block; width: 100%; }
     });
     return t;
   }
-  function desviar(v, e, de) {   // vai pela esteira de separação até a estação e
+  function desviar(v, e, de) {   // pela área de desvio (esteira de separação) até a estação e
     v.est = 'D';
     v.para = e;
     v.delay = Math.abs(e.x - de) / P.vEst + 1;
     e.chegando++;
   }
+  function perder(v, a) { a.perdido = true; perdidos[v.L.id] += a.its.length; }
+  const voltaS = () => P.loopM / P.vEst;
 
   // ------------------------------------------------------------------ passo da simulação (dt em segundos)
   function passo(dt) {
@@ -238,46 +279,65 @@ canvas { display: block; width: 100%; }
       if (v.est === 'T') {
         const x0 = v.x;
         v.x += P.vEst * dt;
-        // tenta entrar em cada estação pendente cuja transferência foi cruzada neste passo
-        for (const a of v.alvos) {
-          if (a.feito || a.e.xt <= x0 || a.e.xt > v.x) continue;
-          if (lotacao(a.e) < P.fila) { desviar(v, a.e, a.e.xt); break; }
+        // TRs cruzadas neste passo: desvia para a primeira estação pendente com lugar; se nenhuma tem lugar, passa direto
+        for (const tr of L.trs) {
+          if (tr.x <= x0 || tr.x > v.x) continue;
+          const aqui = v.alvos.filter((a) => pendente(a) && a.e.tr === tr);
+          if (!aqui.length) continue;
+          const livre = aqui.find((a) => lotacao(a.e) < P.fila);
+          if (livre) { desviar(v, livre.e, tr.x); break; }
+          aqui.forEach((a) => perder(v, a));   // não há retorno às linhas no desenho: o item fica para a conferência
         }
-        if (v.est === 'T' && v.x >= L.comp) {
-          if (proximo(v)) { v.est = 'R'; v.delay = LOOP / P.vEst; v.rec++; recirc[L.id]++; }
-          else { v.est = 'X'; conc[L.id].push(T); lead[L.id].push(T - v.t0); }
+        if (v.est === 'T' && v.x >= L.comp) {   // chega ao loop da conferência
+          v.est = 'C'; v.tC = T; v.prox = T; v.voltas = 0; emConf++;
         }
-      } else if (v.est === 'D' || v.est === 'R') {
+      } else if (v.est === 'D') {
         v.delay -= dt;
-        if (v.delay <= 0) {
-          if (v.est === 'R') { v.est = 'T'; v.x = 0; }
-          else { v.est = 'F'; v.para.chegando--; v.para.fila.push(v); }
-        }
+        if (v.delay <= 0) { v.est = 'F'; v.para.chegando--; v.para.fila.push(v); }
       }
     }
     // estações
     Object.values(LINHAS).forEach((L) => L.est.forEach((e) => {
       if (e.atual && T >= e.fim) {
-        const v = e.atual, a = v.alvos.find((x) => x.e === e && !x.feito);
+        const v = e.atual, a = v.alvos.find((x) => x.e === e && pendente(x));
         a.feito = true;
         e.itens += a.its.length;
         itensFeitos[L.id].push([T, a.its.length]);
         e.atual = null;
-        const prox = v.alvos.find((x) => !x.feito && x.e.grupo === e.grupo && lotacao(x.e) < P.fila);
+        // outra estação da mesma TR: vai direto pela esteira de separação
+        const outras = v.alvos.filter((x) => pendente(x) && x.e.tr === e.tr);
+        const prox = outras.find((x) => lotacao(x.e) < P.fila);
         if (prox) desviar(v, prox.e, e.x);
-        else { v.est = 'T'; v.x = Math.max(e.x, e.xt) + 0.01; }
+        else {
+          outras.forEach((x) => perder(v, x));
+          v.est = 'T'; v.x = e.tr.x + 0.01;
+        }
       }
       if (!e.atual && e.fila.length) {
-        const v = e.fila.shift(), a = v.alvos.find((x) => x.e === e && !x.feito);
+        const v = e.fila.shift(), a = v.alvos.find((x) => x.e === e && pendente(x));
         v.est = 'S';
         e.atual = v;
-        const t = tempoSeparacao(a);
-        e.fim = T + t;
+        e.fim = T + tempoSeparacao(a);
       }
       if (e.atual) e.ocupado += dt;
     }));
-    if (T >= proxLimpa) { proxLimpa = T + 30; vols = vols.filter((v) => v.est !== 'X'); }
-    // série para o gráfico
+    // conferência: a caixa tenta um conferente a cada volta; depois de P.voltas voltas vai para o escape
+    let ocupados = vols.reduce((s, v) => s + (v.est === 'K' ? 1 : 0), 0);
+    for (const v of vols) {
+      if (v.est === 'K' && T >= v.fimK) {
+        v.est = 'X'; ocupados--; emConf--;
+        conc[v.L.id].push(T); lead[v.L.id].push(T - v.t0);
+        if (v.alvos.some((a) => !a.feito)) incompletas[v.L.id]++;
+      }
+    }
+    const fila = vols.filter((v) => v.est === 'C' && T >= v.prox).sort((a, b) => a.prox - b.prox);
+    for (const v of fila) {
+      if (ocupados < P.conf) { v.est = 'K'; v.fimK = T + P.tConf; ocupados++; voltasTot += v.voltas; }
+      else if (v.voltas + 1 >= P.voltas) { v.est = 'E'; emConf--; escape[v.L.id]++; voltasTot += v.voltas + 1; }
+      else { v.voltas++; v.prox = T + voltaS(); }
+    }
+    confOcup += ocupados * dt;
+    if (T >= proxLimpa) { proxLimpa = T + 30; vols = vols.filter((v) => v.est !== 'X' && v.est !== 'E'); }
     if (T >= proxAmostra) {
       proxAmostra = T + 300;
       serie.push({ t: T, M: porHora(conc.M), P: porHora(conc.P) });
@@ -307,39 +367,50 @@ canvas { display: block; width: 100%; }
     const top = L.est.slice().sort((a, b) => b.ocupado - a.ocupado)[0];
     const ld = lead[id].slice(-300);
     const fila = vols.filter((v) => v.L === L && (v.est === 'F' || v.est === 'D')).length;
-    const linha = vols.filter((v) => v.L === L && v.est !== 'X').length;
+    const linha = vols.filter((v) => v.L === L && 'TDFS'.includes(v.est)).length;
     const ocupH = L.est.reduce((s, e) => s + e.ocupado, 0) / 3600;
     const itensTot = L.est.reduce((s, e) => s + e.itens, 0);
     return { vh, ih, prod: ops ? ih / ops : 0, ocup, efet: ocupH > 0 ? itensTot / ocupH : 0, ocupH, itensTot, top, lead: ld.length ? ld.reduce((s, x) => s + x, 0) / ld.length : 0,
-      fila, linha, rec: recirc[id], total: conc[id].length, ops };
+      fila, linha, perd: perdidos[id], inc: incompletas[id], esc: escape[id], total: conc[id].length, ops };
   }
+  const tempo = (s) => (s ? (s >= 3600 ? fmtT(s) : fmtT(s).slice(3)) : '–');
   function renderKPIs() {
     const k = { M: indicadores('M'), P: indicadores('P') };
     const card = (titulo, cor, x) => `<div class="kpi"><h3><span style="width:10px;height:10px;border-radius:50%;background:${cor};display:inline-block"></span>${titulo}</h3><table>
-      <tr class="grande"><td>Volumes por hora</td><td>${fmt(x.vh)}</td></tr>
-      <tr><td>Itens por hora</td><td>${fmt(x.ih)}</td></tr>
+      <tr class="grande"><td>Volumes conferidos por hora</td><td>${fmt(x.vh)}</td></tr>
+      <tr><td>Itens separados por hora</td><td>${fmt(x.ih)}</td></tr>
       <tr><td>Itens/h por operador</td><td>${fmt(x.prod)}</td></tr>
       <tr><td>Itens por hora de trabalho efetivo</td><td>${fmt(x.efet)}</td></tr>
       <tr><td>Ocupação média das estações</td><td>${fmt(x.ocup * 100)}%</td></tr>
-      <tr><td>Tempo médio do volume na linha</td><td>${x.lead ? (x.lead >= 3600 ? fmtT(x.lead) : fmtT(x.lead).slice(3)) : '–'}</td></tr>
+      <tr><td>Tempo do divisor até conferida</td><td>${tempo(x.lead)}</td></tr>
       <tr><td>Volumes na linha / esperando</td><td>${fmt(x.linha)} / ${fmt(x.fila)}</td></tr>
-      <tr><td>Recirculações</td><td>${fmt(x.rec)}</td></tr>
+      <tr class="${x.perd ? 'ruim' : ''}"><td>Itens não separados (estação cheia)</td><td>${fmt(x.perd)}</td></tr>
+      <tr class="${x.inc ? 'ruim' : ''}"><td>Volumes conferidos incompletos</td><td>${fmt(x.inc)}</td></tr>
       ${x.top ? `<tr><td>Estação mais ocupada</td><td>est. ${x.top.rua} · ${fmt(T ? (x.top.ocupado / T) * 100 : 0)}%</td></tr>` : ''}
-      <tr><td>Volumes concluídos</td><td>${fmt(x.total)}</td></tr></table></div>`;
+      <tr><td>Volumes conferidos</td><td>${fmt(x.total)}</td></tr></table></div>`;
     const tot = { vh: k.M.vh + k.P.vh, ih: k.M.ih + k.P.ih, ops: k.M.ops + k.P.ops, linha: k.M.linha + k.P.linha, fila: k.M.fila + k.P.fila,
-      rec: k.M.rec + k.P.rec, total: k.M.total + k.P.total };
+      perd: k.M.perd + k.P.perd, inc: k.M.inc + k.P.inc, total: k.M.total + k.P.total };
     tot.prod = tot.ops ? tot.ih / tot.ops : 0;
     tot.efet = k.M.ocupH + k.P.ocupH > 0 ? (k.M.itensTot + k.P.itensTot) / (k.M.ocupH + k.P.ocupH) : 0;
     tot.ocup = (k.M.ocup * k.M.ops + k.P.ocup * k.P.ops) / Math.max(1, tot.ops);
     const lds = lead.M.slice(-300).concat(lead.P.slice(-300));
     tot.lead = lds.length ? lds.reduce((s, x) => s + x, 0) / lds.length : 0;
     tot.top = (k.M.top && k.P.top) ? (k.M.top.ocupado >= k.P.top.ocupado ? k.M.top : k.P.top) : null;
-    $('#kpis').innerHTML = card('Medicamento · Asi 3', LINHAS.M.cor, k.M) + card('Perfumaria · Asi 1', LINHAS.P.cor, k.P) +
-      card(`Operação (${tot.ops} operadores)`, '#f2a33a', tot);
+    const nConf = conc.M.length + conc.P.length, esc = escape.M + escape.P;
+    const cardConf = `<div class="kpi"><h3><span style="width:10px;height:10px;border-radius:50%;background:#2e9e4f;display:inline-block"></span>Conferência · loop TR_04</h3><table>
+      <tr class="grande"><td>Caixas no loop agora</td><td>${fmt(emConf)}</td></tr>
+      <tr><td>Conferentes ocupados (média)</td><td>${fmt(T ? (confOcup / T / P.conf) * 100 : 0)}%</td></tr>
+      <tr><td>Voltas por caixa (média)</td><td>${fmt(nConf + esc ? voltasTot / (nConf + esc) : 0, 1)}</td></tr>
+      <tr class="${esc ? 'ruim' : ''}"><td>Foram para o escape (${P.voltas} voltas)</td><td>${fmt(esc)}</td></tr>
+      <tr><td>Capacidade dos conferentes</td><td>${fmt((P.conf * 3600) / P.tConf)} cx/h</td></tr>
+      <tr><td>Uma volta no loop</td><td>${tempo(voltaS())}</td></tr></table>
+      <p class="nota">${P.modo === 'manual' ? 'Separação <b>sem LEDs</b>: o operador procura cada endereço na tela do coletor.' : 'Separação <b>com LEDs</b>: os endereços da caixa acendem juntos.'}</p></div>`;
+    $('#kpis').innerHTML = card('Perfumaria · Asi 1', LINHAS.P.cor, k.P) + card('Medicamento · Asi 3', LINHAS.M.cor, k.M) +
+      card(`Operação (${tot.ops} operadores)`, '#f2a33a', tot) + cardConf;
     $('#relogio').textContent = fmtT(T);
   }
 
-  // ------------------------------------------------------------------ desenho da planta
+  // ------------------------------------------------------------------ desenho da planta (como no desenho: divisor à direita, conferência à esquerda)
   const cv = $('#planta'), cx = cv.getContext('2d');
   const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   function ajustar(c) {
@@ -352,93 +423,116 @@ canvas { display: block; width: 100%; }
     const m = o < 0.5 ? [a, b, o / 0.5] : [b, c, Math.min(1, (o - 0.5) / 0.4)];
     return `rgb(${m[0].map((v, i) => Math.round(v + (m[1][i] - v) * m[2])).join(',')})`;
   }
+  const rr = (x, y, w, h, r) => { cx.beginPath(); cx.roundRect ? cx.roundRect(x, y, w, h, r) : cx.rect(x, y, w, h); };
   function desenhar() {
     const [w, h, d] = ajustar(cv);
     cx.setTransform(d, 0, 0, d, 0, 0);
     cx.clearRect(0, 0, w, h);
-    const tinta = css('--tinta'), suave = css('--suave'), linha = css('--linha');
+    const tinta = css('--tinta'), suave = css('--suave'), linha = css('--linha'), chip = css('--chip'), ep = css('--ep'), epf = css('--epf');
+    const xLoop0 = 10, xLoop1 = 150, xDiv = w - 104;
     const maxComp = Math.max(LINHAS.M.comp, LINHAS.P.comp);
-    const mx = 34, s = (w - mx * 2 - 40) / maxComp;   // px por metro
-    const X = (m) => mx + m * s;
-    const hEst = Math.min(46, h * 0.13), hEsteira = 14;
-    const conf = [ // Perfumaria em cima (estações acima da esteira), Medicamento embaixo (estações abaixo)
-      { L: LINHAS.P, y: h * 0.3, lado: -1 },
-      { L: LINHAS.M, y: h * 0.7, lado: 1 },
+    const s = (xDiv - 10 - (xLoop1 + 14)) / maxComp;   // px por metro
+    const X = (m) => xDiv - 10 - m * s;                 // posição ao longo do fluxo → tela (fluxo da direita para a esquerda)
+    const hEst = 40, hEp = 26;
+    const conf = [   // Perfumaria em cima: estações, pistas, área de desvio; Medicamento embaixo, espelhado
+      { L: LINHAS.P, yEst: 34, yPista: 104, yEp: 120, yTag: 90 },
+      { L: LINHAS.M, yEst: h - 34 - hEst, yPista: h - 104, yEp: h - 120 - hEp, yTag: h - 90 },
     ];
-    // entrada e saída
     cx.font = '600 11px system-ui, sans-serif';
-    cx.fillStyle = suave;
-    cx.textAlign = 'center';
-    cx.fillText('ENTRADA', X(1.5), h * 0.5 + 4);
-    cx.fillText('SAÍDA / TR_04', X(maxComp) + 6, h * 0.5 + 4);
-    conf.forEach(({ L, y, lado }) => {
-      // retorno (recirculação) pelo meio
-      const yr = y - lado * (hEsteira + 18);
-      cx.strokeStyle = linha;
-      cx.setLineDash([4, 4]);
-      cx.lineWidth = 2;
-      cx.beginPath();
-      cx.moveTo(X(L.comp), y); cx.lineTo(X(L.comp) + 14, y); cx.lineTo(X(L.comp) + 14, yr); cx.lineTo(X(0) - 12, yr); cx.lineTo(X(0) - 12, y); cx.lineTo(X(0), y);
-      cx.stroke();
-      cx.setLineDash([]);
-      // esteira de transporte
-      cx.fillStyle = css('--chip');
-      cx.strokeStyle = suave;
-      cx.lineWidth = 1;
-      cx.fillRect(X(0), y - hEsteira / 2, L.comp * s, hEsteira);
-      cx.strokeRect(X(0), y - hEsteira / 2, L.comp * s, hEsteira);
+    // conferência (loop) e escape à esquerda
+    const yL0 = conf[0].yPista - 18, yL1 = conf[1].yPista + 18;
+    cx.strokeStyle = tinta; cx.lineWidth = 2.5; cx.fillStyle = chip;
+    rr(xLoop0, yL0, xLoop1 - xLoop0, yL1 - yL0, 22); cx.fill(); cx.stroke();
+    cx.fillStyle = tinta; cx.textAlign = 'center'; cx.font = '700 12px system-ui, sans-serif';
+    cx.fillText('Conferência', (xLoop0 + xLoop1) / 2, yL0 - 8);
+    cx.font = '11px system-ui, sans-serif'; cx.fillStyle = suave;
+    cx.fillText(`${P.conf} conferentes`, (xLoop0 + xLoop1) / 2 - 14, (yL0 + yL1) / 2 + 36);
+    cx.fillText(`até ${P.voltas} voltas`, (xLoop0 + xLoop1) / 2 - 14, (yL0 + yL1) / 2 + 51);
+    ['TR_04_03', 'TR_04_02', 'TR_04_01'].forEach((t, i) => {
+      const y = yL0 + 30 + i * ((yL1 - yL0 - 60) / 2);
+      cx.fillStyle = '#2e9e4f'; cx.fillRect(xLoop1 - 6, y - 7, 10, 14);
+      cx.fillStyle = suave; cx.textAlign = 'right'; cx.fillText(t, xLoop1 - 10, y + 4);
+    });
+    const yEsc = yL1 + 14;
+    cx.strokeStyle = tinta; cx.lineWidth = 2; cx.fillStyle = css('--painel');
+    rr(xLoop0, yEsc, xLoop1 - xLoop0, 22, 8); cx.fill(); cx.stroke();
+    cx.fillStyle = tinta; cx.textAlign = 'center'; cx.font = '600 11px system-ui, sans-serif';
+    cx.fillText(`Escape: ${fmt(escape.M + escape.P)}`, (xLoop0 + xLoop1) / 2, yEsc + 15);
+    // caixas girando no loop e sendo conferidas
+    const per = 2 * ((xLoop1 - xLoop0 - 20) + (yL1 - yL0 - 20));
+    const pontoLoop = (f) => {
+      const W = xLoop1 - xLoop0 - 20, H = yL1 - yL0 - 20; let q = f * per;
+      if (q < W) return [xLoop0 + 10 + q, yL0 + 10]; q -= W;
+      if (q < H) return [xLoop1 - 10, yL0 + 10 + q]; q -= H;
+      if (q < W) return [xLoop1 - 10 - q, yL1 - 10]; q -= W;
+      return [xLoop0 + 10, yL1 - 10 - q];
+    };
+    let nK = 0;
+    vols.forEach((v) => {
+      if (v.est === 'C') { const [px, py] = pontoLoop((((T - v.tC) / voltaS()) + (v.id % 7) / 7) % 1); cx.fillStyle = v.voltas >= P.voltas - 1 ? '#e0533f' : '#2E9E4F'; cx.fillRect(px - 3, py - 3, 6, 6); }
+      if (v.est === 'K') { cx.fillStyle = '#2E9E4F'; cx.fillRect(xLoop0 + 22 + (nK % 6) * 10, yL0 + 22 + Math.floor(nK / 6) * 10, 7, 7); nK++; }
+    });
+    // divisor e alimentação à direita
+    const yTop = conf[0].yPista, yBot = conf[1].yPista;
+    cx.fillStyle = chip; cx.strokeStyle = tinta; cx.lineWidth = 2;
+    rr(xDiv, yTop - 8, 22, h - yTop + 4, 5); cx.fill(); cx.stroke();
+    cx.fillStyle = '#2e9e4f'; cx.fillRect(xDiv - 3, yBot - 14, 28, 28);
+    cx.fillStyle = tinta; cx.textAlign = 'left'; cx.font = '700 11px system-ui, sans-serif';
+    cx.fillText('Divisor', xDiv + 28, yBot - 2);
+    cx.font = '10.5px system-ui, sans-serif'; cx.fillStyle = suave;
+    cx.fillText('↑ Perfumaria', xDiv + 28, yBot + 12);
+    cx.fillText('← Medicamento', xDiv + 28, yBot + 25);
+    cx.fillText('Impressoras', xDiv + 28, h - 22);
+    cx.fillText('↑ entrada', xDiv + 28, h - 9);
+    conf.forEach(({ L, yEst, yPista, yEp, yTag }) => {
+      const desl = !P[L.id].on;
+      // pista principal (do divisor até o loop)
+      cx.strokeStyle = L.cor; cx.lineWidth = 4; cx.globalAlpha = desl ? 0.35 : 1;
+      cx.beginPath(); cx.moveTo(xDiv, yPista); cx.lineTo(xLoop1, yPista); cx.stroke();
       cx.fillStyle = L.cor;
-      cx.textAlign = 'left';
-      cx.font = '700 12px system-ui, sans-serif';
-      cx.fillText(`${L.nome} · ${L.esteira}${P[L.id].on ? '' : ' (desligada)'}`, X(0), lado < 0 ? y - hEsteira / 2 - hEst - 14 : y + hEsteira / 2 + hEst + 24);
+      for (let m = 4; m < L.comp; m += 10) { const px = X(m); cx.beginPath(); cx.moveTo(px - 5, yPista); cx.lineTo(px + 2, yPista - 5); cx.lineTo(px + 2, yPista + 5); cx.fill(); }
+      cx.globalAlpha = 1;
+      cx.fillStyle = L.cor; cx.textAlign = 'right'; cx.font = '700 12px system-ui, sans-serif';
+      const yNome = yEst < h / 2 ? yEst - 10 : yEst + hEst + 20;
+      cx.fillText(`${L.esteira} · ${L.nome}${desl ? ' (desligada)' : ''}`, X(0), yNome);
+      // áreas de desvio
+      L.trs.forEach((tr) => tr.eps.forEach((e) => {
+        const a = X(e.x1) + 1, b = X(e.x0) - 1;
+        cx.fillStyle = epf; cx.strokeStyle = ep; cx.lineWidth = 1;
+        rr(a, yEp, b - a, hEp, 4); cx.fill(); cx.stroke();
+        cx.fillStyle = tinta; cx.textAlign = 'center'; cx.font = `600 ${b - a < 40 ? 8.5 : 10}px system-ui, sans-serif`;
+        cx.fillText(e.cod.replace('EP_', ''), (a + b) / 2, yEp + 17);
+      }));
+      // TRs
+      L.trs.forEach((tr) => {
+        const px = X(tr.x), y0 = Math.min(yPista, yEp) - 6, y1 = Math.max(yPista, yEp + hEp) + 4;
+        cx.fillStyle = '#2e9e4f'; cx.fillRect(px - 3, y0, 6, y1 - y0);
+        cx.fillStyle = suave; cx.textAlign = 'center'; cx.font = '600 10px system-ui, sans-serif';
+        cx.fillText(tr.cod.slice(3), px, yTag + 4);
+      });
       // estações
       L.est.forEach((e) => {
-        const ox = X(e.x - PASSO / 2) + 1, oy = lado < 0 ? y - hEsteira / 2 - 6 - hEst : y + hEsteira / 2 + 6;
+        const ox = X(e.x + PASSO / 2) + 1, wE = PASSO * s - 2;
         const o = T > 0 ? e.ocupado / T : 0;
-        cx.fillStyle = corOcup(o);
-        cx.strokeStyle = '#9aa6b8';
-        cx.fillRect(ox, oy, PASSO * s - 2, hEst);
-        cx.strokeRect(ox, oy, PASSO * s - 2, hEst);
-        cx.fillStyle = '#1b2638';
-        cx.textAlign = 'center';
-        cx.font = '700 11px system-ui, sans-serif';
-        cx.fillText(e.rua, X(e.x), oy + 13);
-        // operador
-        cx.beginPath();
-        cx.arc(X(e.x) - 6, oy + hEst - 12, 4.5, 0, Math.PI * 2);
-        cx.fillStyle = e.atual ? '#2E9E4F' : '#9aa6b8';
-        cx.fill();
+        cx.fillStyle = corOcup(o); cx.strokeStyle = '#9aa6b8'; cx.lineWidth = 1;
+        cx.fillRect(ox, yEst, wE, hEst); cx.strokeRect(ox, yEst, wE, hEst);
+        cx.fillStyle = '#1b2638'; cx.textAlign = 'center'; cx.font = '700 11px system-ui, sans-serif';
+        cx.fillText(e.rua, X(e.x), yEst + 13);
+        cx.beginPath(); cx.arc(X(e.x) - 6, yEst + hEst - 11, 4.5, 0, Math.PI * 2);
+        cx.fillStyle = e.atual ? '#2E9E4F' : '#9aa6b8'; cx.fill();
         const nf = e.fila.length + e.chegando;
-        if (nf) { cx.fillStyle = '#1b2638'; cx.font = '700 11px system-ui, sans-serif'; cx.fillText(String(nf), X(e.x) + 7, oy + hEst - 8); }
+        if (nf) { cx.fillStyle = '#1b2638'; cx.fillText(String(nf), X(e.x) + 7, yEst + hEst - 7); }
+        if (e.atual) { cx.fillStyle = '#2E9E4F'; cx.fillRect(X(e.x) + 2, yEst + 17, 8, 8); }
       });
-      // transferências
-      L.transf.forEach((t) => {
-        cx.fillStyle = '#2e8b57';
-        cx.fillRect(X(t.x) - 3, y - hEsteira / 2 - 5, 6, 5);
-        cx.fillRect(X(t.x) - 3, y + hEsteira / 2, 6, 5);
-      });
-      // caixas
+      // caixas na pista e na área de desvio
       vols.forEach((v) => {
-        if (v.L !== L || v.est === 'X') return;
-        let px, py;
-        if (v.est === 'T') { px = X(v.x); py = y; }
-        else if (v.est === 'R') { const f = 1 - Math.max(0, v.delay) / (LOOP / P.vEst); px = X(L.comp) - f * (X(L.comp) - X(0)); py = yr; }
-        else if (v.est === 'D') { px = X(v.para.x); py = y + lado * (hEsteira / 2 + 3); }
-        else return;
-        cx.fillStyle = '#2E9E4F';
-        cx.fillRect(px - 3.5, py - 3.5, 7, 7);
-      });
-      L.est.forEach((e) => {   // caixa sendo separada
-        if (!e.atual) return;
-        const oy = lado < 0 ? y - hEsteira / 2 - 6 - hEst : y + hEsteira / 2 + 6;
-        cx.fillStyle = '#2E9E4F';
-        cx.fillRect(X(e.x) + 2, oy + hEst / 2 - 9, 9, 9);
+        if (v.L !== L) return;
+        if (v.est === 'T') { cx.fillStyle = '#2E9E4F'; cx.fillRect(X(v.x) - 3.5, yPista - 3.5, 7, 7); }
+        else if (v.est === 'D') { cx.fillStyle = '#2E9E4F'; cx.fillRect(X(v.para.x) - 3.5, yEp + 4, 7, 7); }
       });
     });
-    cx.fillStyle = suave;
-    cx.textAlign = 'center';
-    cx.font = '11px system-ui, sans-serif';
-    cx.fillText('linha tracejada = retorno da caixa que não conseguiu entrar na estação (recirculação)', w / 2, h * 0.5 + 4);
+    cx.fillStyle = suave; cx.textAlign = 'center'; cx.font = '11px system-ui, sans-serif';
+    cx.fillText(`← as esteiras correm do divisor para a conferência · separação ${P.modo === 'manual' ? 'SEM LEDs (como hoje)' : 'COM LEDs (PTL)'}`, (xLoop1 + xDiv) / 2, h / 2 + 4);
   }
 
   // ------------------------------------------------------------------ gráficos
@@ -463,8 +557,7 @@ canvas { display: block; width: 100%; }
     for (let hh = 0; hh <= tMax / 3600; hh += Math.max(1, Math.round(tMax / 3600 / 8))) {
       g.fillText(hh + ' h', ml + ((w - ml - mr) * hh * 3600) / tMax, h - 5);
     }
-    [['M', LINHAS.M.cor], ['P', LINHAS.P.cor]].forEach(([k, cor]) => {
-      // meta: volumes que entram por hora (tracejado)
+    [['P', LINHAS.P.cor], ['M', LINHAS.M.cor]].forEach(([k, cor]) => {
       g.strokeStyle = cor;
       g.setLineDash([3, 4]);
       const ym = h - mb - ((h - mb - mt) * P[k].vph) / maxV;
@@ -512,7 +605,7 @@ canvas { display: block; width: 100%; }
       <div class="param"><label>Volumes que entram por hora</label><output data-o="vph"></output><input type="range" data-k="vph" min="0" max="600" step="5" value="${P[id].vph}"></div>
       <div class="param"><label>Itens por volume (média)</label><output data-o="itens"></output><input type="range" data-k="itens" min="1" max="60" step="1" value="${P[id].itens}"></div>
       <div class="param"><label>Unidades por item (média)</label><output data-o="unid"></output><input type="range" data-k="unid" min="1" max="12" step="0.5" value="${P[id].unid}"></div>
-      <p class="nota">${L.n} operadores (1 por estação). Produtos por volume ≈ <b data-o="prod"></b>.</p>`;
+      <p class="nota">${L.n} operadores (1 por estação) · 6 TRs · 11 áreas de desvio. Produtos por volume ≈ <b data-o="prod"></b>.</p>`;
     const at = () => {
       el.querySelectorAll('[data-o]').forEach((o) => {
         const k = o.dataset.o;
@@ -527,17 +620,24 @@ canvas { display: block; width: 100%; }
     });
     at();
   }
-  painelLinha('M');
   painelLinha('P');
-  const comuns = { pAlto: [0, '%'], vEst: [2, ''], tAlto: [1, ' s'], t45: [1, ' s'], tBaixo: [1, ' s'], tUni: [1, ' s'], tCaixa: [0, ' s'], tProc: [1, ' s'], fila: [0, ''] };
+  painelLinha('M');
+  const comuns = { pAlto: [0, '%'], vEst: [2, ''], tAlto: [1, ' s'], t45: [1, ' s'], tBaixo: [1, ' s'], tUni: [1, ' s'], tCaixa: [0, ' s'], tProc: [1, ' s'], fila: [0, ''],
+    entrada: [0, ' m'], conf: [0, ''], tConf: [0, ' s'], loopM: [0, ' m'], voltas: [0, ''] };
   Object.entries(comuns).forEach(([k, [dec, un]]) => {
     const i = $('#' + k), o = $('#o' + k);
     i.value = P[k];
-    const at = () => { P[k] = +i.value; o.textContent = fmt(P[k], dec) + un; };
+    const at = () => { P[k] = +i.value; o.textContent = fmt(P[k], dec) + un; if (k === 'entrada') montarLinhas(); };
     i.addEventListener('input', at);
     at();
   });
-  $('#modo').addEventListener('change', (e) => { P.modo = e.target.value; });
+  function aplicarModo(m, avisar) {
+    P.modo = m;
+    $('#selLed').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x.dataset.v === m));
+    if (avisar && window.parent !== window) window.parent.postMessage({ ptlFilho: true, tipo: 'led', valor: m === 'ptl' }, '*');
+    tudo();
+  }
+  $('#selLed').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && b.dataset.v !== P.modo) aplicarModo(b.dataset.v, true); });
   $('#btnPlay').addEventListener('click', () => { rodando = !rodando; $('#btnPlay').textContent = rodando ? 'Pausar' : 'Continuar'; });
   $('#btnReset').addEventListener('click', () => { reiniciar(); tudo(); });
   $('#selVel').addEventListener('click', (e) => {
@@ -560,25 +660,25 @@ canvas { display: block; width: 100%; }
       $('#btnPlay').textContent = 'Continuar';
     }, 30);
   });
-  // capacidade: maior entrada de volumes/h que a linha ainda escoa (>= 97% concluído nas horas 2 e 3, sem fila crescendo)
+  // capacidade: maior entrada de volumes/h que a linha escoa nas horas 2 e 3: ≥ 97% conferido, ≤ 2% incompletos, ≤ 1% no escape
   function escoa(id, vph) {
     const L = LINHAS[id];
     P[id].vph = vph;
     reiniciar();
     let ent = 0;
-    while (T < 3 * 3600) { passo(1); if (T > 3600) ent += (vph * 1) / 3600; }
+    while (T < 3 * 3600) { passo(1); if (T > 3600) ent += vph / 3600; }
     const feitos = conc[id].filter((t) => t > 3600).length;
-    const naLinha = vols.filter((v) => v.L === L && v.est !== 'X').length;
-    return feitos >= 0.97 * ent && naLinha < Math.max(30, vph * 0.35);
+    const naLinha = vols.filter((v) => v.L === L && 'TDFSC'.includes(v.est)).length;
+    return feitos >= 0.97 * ent && incompletas[id] <= 0.02 * conc[id].length && escape[id] <= 0.01 * (conc[id].length + escape[id]) && naLinha < Math.max(30, vph * 0.35);
   }
   function capacidade(id, modo) {
     const guarda = JSON.stringify(P), outro = id === 'M' ? 'P' : 'M';
     P[outro].on = false; P[id].on = true; P.modo = modo;
-    let lo = 20, hi = 1000;
+    let lo = 0, hi = 1000;
     while (hi - lo > 10) { const m = Math.round((lo + hi) / 2); if (escoa(id, m)) lo = m; else hi = m; }
     const r = { vph: lo, ih: lo * P[id].itens };
-    Object.assign(P, JSON.parse(guarda));
-    P.M = JSON.parse(guarda).M; P.P = JSON.parse(guarda).P;
+    const g = JSON.parse(guarda);
+    Object.assign(P, g);
     return r;
   }
   $('#btnCap').addEventListener('click', () => {
@@ -588,13 +688,13 @@ canvas { display: block; width: 100%; }
     setTimeout(() => {
       const t0 = performance.now();
       const r = {};
-      ['M', 'P'].forEach((id) => { r[id] = { ptl: capacidade(id, 'ptl'), manual: capacidade(id, 'manual') }; });
+      ['P', 'M'].forEach((id) => { r[id] = { ptl: capacidade(id, 'ptl'), manual: capacidade(id, 'manual') }; });
       reiniciar();
       const lin = (id) => {
         const x = r[id], g = x.manual.vph ? (x.ptl.vph / x.manual.vph - 1) * 100 : 0;
-        return `<b>${LINHAS[id].nome}</b>: até <b>${fmt(x.ptl.vph)}</b> volumes/h com PTL (${fmt(x.ptl.ih / LINHAS[id].n)} itens/h por operador) e ${fmt(x.manual.vph)} sem PTL, <b>${g >= 0 ? '+' : ''}${fmt(g)}%</b>.`;
+        return `<b>${LINHAS[id].nome}</b>: até <b>${fmt(x.ptl.vph)}</b> volumes/h com LEDs (${fmt(x.ptl.ih / LINHAS[id].n)} itens/h por operador) e ${fmt(x.manual.vph)} sem LEDs, <b>${g >= 0 ? '+' : ''}${fmt(g)}%</b>.`;
       };
-      out.innerHTML = `${lin('M')}<br>${lin('P')}<br>Com os itens por volume e as premissas atuais. Calculado em ${fmt((performance.now() - t0) / 1000, 1)} s.`;
+      out.innerHTML = `${lin('P')}<br>${lin('M')}<br>Com os itens por volume e as premissas atuais (uma linha por vez, sem incompletos nem escape). Calculado em ${fmt((performance.now() - t0) / 1000, 1)} s.`;
       window.PTL_OP.capacidade = r;
       b.disabled = false;
       tudo();
@@ -605,8 +705,14 @@ canvas { display: block; width: 100%; }
   // ------------------------------------------------------------------ laço
   let tAnt = performance.now(), uiT = 0, visivel = window.parent === window;
   if (!visivel) window.parent.postMessage({ ptlFilho: true, tipo: 'pronto' }, '*');
-  // dentro do simulador unificado: só avança quando a aba "Operação completa" está aberta
-  window.addEventListener('message', (e) => { const d = e.data || {}; if (d.ptlPai && d.tipo === 'visivel') visivel = !!d.valor; });
+  // dentro do simulador unificado: só avança quando a aba "Operação completa" está aberta; o modo com/sem LEDs acompanha o 3D
+  window.addEventListener('message', (e) => {
+    const d = e.data || {};
+    if (!d.ptlPai) return;
+    if (d.tipo === 'visivel') visivel = !!d.valor;
+    if (d.tipo === 'led') { const m = d.valor ? 'ptl' : 'manual'; if (m !== P.modo) aplicarModo(m, false); }
+  });
+  if (new URLSearchParams(location.search).has('semled')) aplicarModo('manual', false);
   function laco(agora) {
     requestAnimationFrame(laco);
     const real = Math.min(0.25, (agora - tAnt) / 1000);
@@ -620,7 +726,7 @@ canvas { display: block; width: 100%; }
     if (uiT > 0.4) { uiT = 0; renderKPIs(); grafico(); ocupacao(); }
   }
   window.addEventListener('resize', tudo);
-  window.PTL_OP = { P, LINHAS, passo, reiniciar, indicadores, T: () => T };
+  window.PTL_OP = { P, LINHAS, passo, reiniciar, indicadores, T: () => T, aplicarModo, estado: () => ({ perdidos, incompletas, escape, emConf, conc }) };
   requestAnimationFrame(laco);
 })();
 </script>

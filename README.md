@@ -12,7 +12,7 @@ O navegador abre em http://127.0.0.1:8780 com as abas *Estação 3D*, *Comunica�
 
 | Pasta | Conteúdo |
 |---|---|
-| [`simulador-unificado/`](simulador-unificado/) | **Versão unificada**: estação 3D, comunicação e interface de controle sincronizadas, com abas para alternar (3D, comunicação, lado a lado, controle) e a aba *Operação completa*, que simula as duas linhas com as 40 estações e mostra volumes por hora, produtividade e capacidade. Abra `index.html`. |
+| [`simulador-unificado/`](simulador-unificado/) | **Versão unificada**: estação 3D, comunicação e interface de controle sincronizadas, com abas para alternar (3D, comunicação, lado a lado, controle) e a aba *Operação completa*, que simula as duas linhas com as 40 estações no layout do desenho (divisor, 12 TRs, 22 áreas de desvio e conferência) e mostra volumes por hora, produtividade e capacidade. Todas as telas têm a opção **com LEDs (PTL)** ou **sem LEDs (como funciona hoje)**. Abra `index.html`. |
 | [`demo-comunicacao/`](demo-comunicacao/) | **Demonstração da comunicação** entre coletor, Serviço PTL, broker MQTT, concentrador e módulos de LED, com os bytes de cada mensagem. Abra `index.html`. |
 | [`simulador-3d/`](simulador-3d/) | **Simulador 3D da estação completa** (estações 05 e 27, endereços reais, arquiteturas A e B). Abra `index.html`. |
 | [`projeto/entregaveis/`](projeto/entregaveis/) | Apresentação (.pptx), documento técnico (.docx), orçamentos (.xlsx: completo, só da POC, projeto interno com RFID futuro e peças com o link de cada preço) e `Simulador_PTL.html`, o simulador unificado em um único arquivo que abre com duplo clique, sem internet |
