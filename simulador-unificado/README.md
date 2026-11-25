@@ -9,11 +9,12 @@ Junta as aplicações em uma só tela, sincronizadas:
 - **Controle** (`controle.html`): a interface de controle da manutenção. Mostra qual LED falhou (endereço no
   formato da etiqueta, por exemplo `0.05.0042.A`, nó e porta ou endereço RS-485 do E+Q, local e tipo de falha)
   e tem o cadastro de LED por endereço, com busca, teste (888) e troca de módulo por tela + botão.
-- **Operação completa** (`operacao.html`): as duas linhas inteiras (Medicamento · Asi 3 e Perfumaria · Asi 1,
-  40 estações, 1 operador por estação) em uma planta 2D animada, com volumes por hora, itens por hora,
-  produtividade por operador e a capacidade máxima de cada linha com e sem PTL.
+- **Operação completa** (`operacao.html`): as duas linhas inteiras no layout do desenho (divisor, Perfumaria · Asi 1
+  e Medicamento · Asi 3, 40 estações, 12 TRs, 22 áreas de desvio e o loop da conferência) em uma planta 2D animada,
+  com volumes por hora, produtividade, conferência e a capacidade máxima com e sem LEDs.
 
-Abra `index.html` (funciona sem internet). As abas no topo alternam a visualização:
+Abra `index.html` (funciona sem internet). O modo **com ou sem LEDs** fica sincronizado entre a Estação 3D e a
+Operação completa. As abas no topo alternam a visualização:
 
 | Aba | O que mostra |
 |---|---|
@@ -58,29 +59,50 @@ de novo, por exemplo quando um módulo muda de lugar.
 
 ## Operação completa
 
-Simula a entrada de volumes nas duas esteiras e a separação nas 40 estações. Cada volume pertence a uma
-linha só (um pedido com Medicamento e Perfumaria vira volumes separados). As estações EP_01 e EP_02 não
-entram na simulação.
+Segue o layout do *Desenho_esteira* (25/11/2026). As caixas saem das impressoras, sobem pela esteira de entrada e o
+**divisor** manda para a esquerda as de Medicamento (Asi 3, estações 03 a 22) e deixa seguir reto as de Perfumaria
+(Asi 1, estações 26 a 45). As duas linhas correm do divisor para a **conferência** (loop TR_04), onde se encontram.
+Cada volume pertence a uma linha só (um pedido com Medicamento e Perfumaria vira volumes separados).
+
+**Separação com ou sem LEDs.** O seletor no topo alterna entre *Com LEDs (PTL)*, em que os endereços da caixa acendem
+juntos, e *Sem LEDs (como hoje)*, em que o coletor mostra um endereço por vez e o operador procura e bipa (soma o
+tempo de procura por item). O seletor acompanha o da Estação 3D. `operacao.html?semled` já abre sem LEDs.
+
+Transferências e áreas de desvio (iguais no 3D):
+
+| Linha | TR | Fica entre | Áreas de desvio (estações) |
+|---|---|---|---|
+| Medicamento · Asi 3 | TR_02_01 | 03 \| 04 | EP_01_01 (03) · EP_01_02 (04, 05) |
+| | TR_02_02 | 07 \| 08 | EP_01_03 (06, 07) · EP_01_04 (08, 09) |
+| | TR_02_03 | 11 \| 12 | EP_01_05 (10, 11) · EP_01_06 (12, 13) |
+| | TR_02_04 | 15 \| 16 | EP_01_07 (14, 15) — um lado só |
+| | TR_02_05 | 17 \| 18 | EP_01_08 (16, 17) · EP_01_09 (18, 19) |
+| | TR_02_06 | 21 \| 22 | EP_01_10 (20, 21) · EP_01_11 (22) |
+| Perfumaria · Asi 1 | TR_03_01 | 26 \| 27 | EP_02_01 (26) · EP_02_02 (27, 28) |
+| | TR_03_02 | 30 \| 31 | EP_02_03 (29, 30) · EP_02_04 (31, 32) |
+| | TR_03_03 | 34 \| 35 | EP_02_05 (33, 34) · EP_02_06 (35, 36) |
+| | TR_03_04 | 38 \| 39 | EP_02_07 (37, 38) — um lado só |
+| | TR_03_05 | 40 \| 41 | EP_02_08 (39, 40) · EP_02_09 (41, 42) |
+| | TR_03_06 | 44 \| 45 | EP_02_10 (43, 44) · EP_02_11 (45) |
 
 Como funciona:
 
 - **Entrada**: volumes por hora em cada linha. Cada volume tem em média N itens (varia de 0,5 a 1,5 vez),
   sorteados entre as estações proporcionalmente ao número de endereços de cada uma (`projeto/dados/estacoes.json`),
   com a fração de itens no alto giro ajustável.
-- **Transferência**: cada transferência atende as estações do seu grupo (2 de cada lado; na ponta 1 + 2),
-  como no 3D. A caixa entra se a estação tiver lugar na esteira de separação (padrão: 2 caixas). Se não
-  tiver, segue e volta pelo retorno (TR_04) para tentar de novo: isso conta como recirculação.
-- **Separação**: tempo por item conforme o local (alto giro 0-3, andares 4-5 ou baixo giro, com
-  deslocamento) mais um tempo por unidade e o tempo de abrir, fechar e empurrar a caixa. No modo
-  **Sem PTL** soma o tempo de procurar o endereço em cada item.
-- **Mesma transferência**: terminada uma estação, a caixa vai direto para a próxima estação do mesmo grupo
-  pela esteira de separação, sem voltar ao transporte.
+- **Desvio**: ao passar por uma TR, a caixa entra na área de desvio da estação que tem item dela, se a estação tiver
+  lugar na esteira de separação (padrão: 2 caixas). Terminada uma estação, vai direto para a próxima da mesma TR.
+- **Sem retorno às linhas** (como no desenho): se a estação estiver cheia, a caixa segue e o item fica sem separar;
+  ela chega **incompleta** à conferência. Os indicadores mostram os itens não separados e os volumes incompletos.
+- **Conferência**: a caixa tenta um conferente a cada volta no loop. Depois de 6 voltas sem ser conferida vai para a
+  **área de escape**. Conferentes, tempo por caixa, tamanho da volta e número de voltas são editáveis.
+- **Separação**: tempo por item conforme o local (alto giro 0-3, andares 4-5 ou baixo giro, com deslocamento) mais
+  um tempo por unidade e o tempo de abrir, fechar e empurrar a caixa. Sem LEDs soma a procura do endereço em cada item.
 
-Indicadores por linha e da operação: volumes por hora e itens por hora (média da última hora), itens por
-hora por operador, itens por hora de trabalho efetivo, ocupação das estações, tempo médio do volume na linha,
-volumes esperando, recirculações e a estação mais ocupada. O botão **Simular turno de 8 h** roda o turno
-inteiro de uma vez, e **Calcular capacidade máxima** procura o maior volume por hora que cada linha ainda
-escoa, com e sem PTL.
+Indicadores por linha, da operação e da conferência: volumes conferidos por hora, itens por hora, itens por hora por
+operador, ocupação, tempo do divisor até conferida, itens não separados, volumes incompletos, caixas no loop, voltas
+e escape. **Simular turno de 8 h** roda o turno inteiro de uma vez e **Calcular capacidade máxima** procura o maior
+volume por hora que cada linha escoa (≥ 97% conferido, até 2% incompletos e 1% no escape), com e sem LEDs.
 
-Todos os tempos são premissas iniciais, editáveis em **Premissas de tempo e esteira**. Os dados das
-estações são embutidos na página por `projeto/dados/embutir_operacao.py`.
+Todos os tempos e medidas são premissas iniciais, editáveis na tela. Os dados das estações são embutidos na página
+por `projeto/dados/embutir_operacao.py`.

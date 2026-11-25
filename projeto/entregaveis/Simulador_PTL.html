@@ -238,6 +238,13 @@ body.pip #topo, body.pip .painel, body.pip #legenda, body.pip .modal { display: 
     &lt;/div&gt;
   &lt;/div&gt;
   &lt;div class=&quot;grupo&quot;&gt;
+    &lt;label&gt;Separação&lt;/label&gt;
+    &lt;div class=&quot;seg&quot; id=&quot;selLed&quot;&gt;
+      &lt;button data-v=&quot;1&quot; class=&quot;on&quot;&gt;Com LEDs (PTL)&lt;/button&gt;
+      &lt;button data-v=&quot;0&quot;&gt;Sem LEDs (como hoje)&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;grupo&quot;&gt;
     &lt;label&gt;Câmera&lt;/label&gt;
     &lt;div class=&quot;seg&quot; id=&quot;selCam&quot;&gt;
       &lt;button data-v=&quot;geral&quot; class=&quot;on&quot;&gt;Geral&lt;/button&gt;
@@ -1490,6 +1497,7 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
     xPega: 0.0, distFila: 1.45,
     velEsteira: 1.8, velEmpurre: 0.9, velOperador: 1.3,
     tempoPega: 1.6, tempoPorUnidade: 0.25, tempoDeposito: 0.5,
+    tempoProcura: 4, tempoBip: 0.7,   // sem LEDs (como hoje): procurar o endereço mostrado no coletor e bipar
     bacia: { c: 0.56, a: 0.26, l: 0.4, cor: &#x27;#2E9E4F&#x27;, borda: &#x27;#1d6b35&#x27; },   // bacia retornável verde, tamanho único
     // caixa do endereço por tipo (fração da largura e da altura do vão) — em geral pequenas
     // caixa ocupa quase toda a largura do vão; o tipo muda a altura (e um pouco a largura)
@@ -1507,19 +1515,27 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
 
   const CORES_ZONA = [&#x27;#2E8B57&#x27;, &#x27;#2F5597&#x27;, &#x27;#D68910&#x27;, &#x27;#7B4FA0&#x27;, &#x27;#C0392B&#x27;, &#x27;#138D90&#x27;, &#x27;#8E6C3A&#x27;, &#x27;#D35400&#x27;, &#x27;#5B6675&#x27;];
 
-  // transferência que atende a estação: cada uma atende 2 estações à esquerda e 2 à direita;
-  // na ponta inicial (3 ou 26) atende a ponta à esquerda e as duas seguintes à direita
+  // transferências conforme o desenho do layout (Desenho_esteira, 25/11/2026). Cada TR fica entre as estações b e b+1
+  // e desvia para as áreas EP listadas: [código, b, [[EP, estações], ...]]. TR_02_04 e TR_03_04 desviam para um lado só.
+  const TRS = {
+    Medicamento: [[&#x27;TR_02_01&#x27;, 3, [[&#x27;EP_01_01&#x27;, [3]], [&#x27;EP_01_02&#x27;, [4, 5]]]], [&#x27;TR_02_02&#x27;, 7, [[&#x27;EP_01_03&#x27;, [6, 7]], [&#x27;EP_01_04&#x27;, [8, 9]]]],
+      [&#x27;TR_02_03&#x27;, 11, [[&#x27;EP_01_05&#x27;, [10, 11]], [&#x27;EP_01_06&#x27;, [12, 13]]]], [&#x27;TR_02_04&#x27;, 15, [[&#x27;EP_01_07&#x27;, [14, 15]]]],
+      [&#x27;TR_02_05&#x27;, 17, [[&#x27;EP_01_08&#x27;, [16, 17]], [&#x27;EP_01_09&#x27;, [18, 19]]]], [&#x27;TR_02_06&#x27;, 21, [[&#x27;EP_01_10&#x27;, [20, 21]], [&#x27;EP_01_11&#x27;, [22]]]]],
+    Perfumaria: [[&#x27;TR_03_01&#x27;, 26, [[&#x27;EP_02_01&#x27;, [26]], [&#x27;EP_02_02&#x27;, [27, 28]]]], [&#x27;TR_03_02&#x27;, 30, [[&#x27;EP_02_03&#x27;, [29, 30]], [&#x27;EP_02_04&#x27;, [31, 32]]]],
+      [&#x27;TR_03_03&#x27;, 34, [[&#x27;EP_02_05&#x27;, [33, 34]], [&#x27;EP_02_06&#x27;, [35, 36]]]], [&#x27;TR_03_04&#x27;, 38, [[&#x27;EP_02_07&#x27;, [37, 38]]]],
+      [&#x27;TR_03_05&#x27;, 40, [[&#x27;EP_02_08&#x27;, [39, 40]], [&#x27;EP_02_09&#x27;, [41, 42]]]], [&#x27;TR_03_06&#x27;, 44, [[&#x27;EP_02_10&#x27;, [43, 44]], [&#x27;EP_02_11&#x27;, [45]]]]],
+  };
   function transferenciaDe(est) {
-    const seg = DADOS[est].info.segmento;
+    const seg = DADOS[est].info.segmento, n = +est;
     const [p0, p1] = CFG.segmentos[seg] || [3, 22];
-    let b = p0 + 4 * Math.round((est - p0 - 0.5) / 4);
-    if (b + 1 &gt; p1) b = p1 - 1;
-    if (b &lt; p0) b = p0;
-    return { b, x: (b + 0.5 - est) * CFG.passo, lado: est &lt;= b ? &#x27;esquerda&#x27; : &#x27;direita&#x27;, p0, p1 };
+    const [cod, b, eps] = (TRS[seg] || TRS.Medicamento).find(([, , e]) =&gt; e.some(([, r]) =&gt; r.includes(n)));
+    const ep = eps.find(([, r]) =&gt; r.includes(n))[0];
+    const atende = eps.flatMap(([, r]) =&gt; r);
+    return { cod, ep, b, eps, atende, x: (b + 0.5 - n) * CFG.passo, lado: n &lt;= b ? &#x27;esquerda&#x27; : &#x27;direita&#x27;, p0, p1 };
   }
 
   // ======================================================================= ESTADO
-  const S = { redeOk: true, est: &#x27;05&#x27;, modo: &#x27;A&#x27;, itens: 8, vel: 1, auto: false, guia: true, destaque: true, cabos: true, cam: &#x27;geral&#x27; };
+  const S = { redeOk: true, led: true, est: &#x27;05&#x27;, modo: &#x27;A&#x27;, itens: 8, vel: 1, auto: false, guia: true, destaque: true, cabos: true, cam: &#x27;geral&#x27; };
   const K = { caixas: 0, itens: 0, tempoTotal: 0, pendencias: 0, falhas: 0 };
   let simT = 0;
   let estado = &#x27;AGUARDANDO&#x27;;
@@ -1845,7 +1861,7 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
     const { ctx, c, t } = m.tc;
     ctx.fillStyle = &#x27;#07090c&#x27;;
     ctx.fillRect(0, 0, c.width, c.height);
-    const it = m.falha ? null : m.item;
+    const it = m.falha || !S.led ? null : m.item;
     if (m.tipo === &#x27;Q&#x27;) {
       const txt = m.cad ? (m.cadPisca ? &#x27;CAd&#x27; : &#x27;   &#x27;) : m.ident &gt; 0 ? &#x27;888&#x27; : m.falha ? &#x27;   &#x27; : it ? String(it.qtd).padStart(3, &#x27; &#x27;) : m.flash &gt; 0 ? &#x27;---&#x27; : &#x27;   &#x27;;
       seg7(ctx, txt, 44, 20, 34, 70, &#x27;#ff3b30&#x27;, &#x27;#170808&#x27;);
@@ -1860,7 +1876,7 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
       ctx.fillText(&#x27;QTD&#x27;, 26 + 8 * 30 * 1.42 + 38, 104);
     }
     t.needsUpdate = true;
-    const aceso = (!m.falha &amp;&amp; !!m.item) || m.ident &gt; 0 || (m.cad &amp;&amp; m.cadPisca);
+    const aceso = (S.led &amp;&amp; !m.falha &amp;&amp; !!m.item) || m.ident &gt; 0 || (m.cad &amp;&amp; m.cadPisca);
     m.btnMat.color.set(m.cad ? &#x27;#F2A33A&#x27; : aceso ? &#x27;#2ecc71&#x27; : m.falha ? &#x27;#8e1b12&#x27; : &#x27;#1d4b31&#x27;);
     m.btnMat.emissive.set(m.cad &amp;&amp; m.cadPisca ? &#x27;#b86e10&#x27; : aceso ? &#x27;#1fbf5a&#x27; : &#x27;#000000&#x27;);
   }
@@ -2036,7 +2052,7 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
     const porPredio = {};
     enderecos.forEach((e) =&gt; { (porPredio[e.predio] = porPredio[e.predio] || []).push(e); });
     transf = transferenciaDe(S.est);
-    const sMin = Math.max(transf.p0, Math.min(transf.b, est - 1)), sMax = Math.min(transf.p1, Math.max(transf.b + 1, est + 1));
+    const sMin = Math.max(transf.p0, Math.min(...transf.atende, est - 1)), sMax = Math.min(transf.p1, Math.max(...transf.atende, est + 1));
     faixaX = [(sMin - est - 0.5) * CFG.passo - 3, (sMax - est + 0.5) * CFG.passo + 3];
 
     grpAlto = new THREE.Group();
@@ -2205,8 +2221,8 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
     dir.position.set(xt, CFG.altSep + 0.01, CFG.zSep);
     g.add(dir);
     const st = transf.b;
-    const alc = st === transf.p0 ? `esquerda: ${pad(st, 2)} · direita: ${pad(st + 1, 2)} e ${pad(st + 2, 2)}` : `esquerda: ${pad(st - 1, 2)} e ${pad(st, 2)} · direita: ${pad(st + 1, 2)} e ${pad(st + 2, 2)}`;
-    const sp = sprite([`Transferência ${pad(st, 2)}|${pad(st + 1, 2)} · rolete direcionador`, alc], 1.7, { fundo: &#x27;rgba(46,139,87,0.92)&#x27; });
+    const alc = transf.eps.map(([ep, r]) =&gt; `${ep}: ${r.map((x) =&gt; pad(x, 2)).join(&#x27; e &#x27;)}`).join(&#x27; · &#x27;);
+    const sp = sprite([`${transf.cod} · entre ${pad(st, 2)}|${pad(st + 1, 2)} · rolete direcionador`, alc], 1.7, { fundo: &#x27;rgba(46,139,87,0.92)&#x27; });
     sp.position.set(xt, 3.25, CFG.zSep);
     g.add(sp);
     const e1 = sprite([&#x27;Separação (frente, aberta) · transporte (por dentro do alto giro)&#x27;, &#x27;≈ 20 cm entre elas · transporte entre o andar 3 e o andar 4&#x27;], 2.1, { fundo: &#x27;rgba(46,58,79,0.88)&#x27; });
@@ -2295,7 +2311,7 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
   const pendBaixo = () =&gt; (atual &amp;&amp; [&#x27;SEPARANDO&#x27;, &#x27;ALERTA&#x27;].includes(estado) ? atual.itens.filter((i) =&gt; i.status === &#x27;pendente&#x27; &amp;&amp; i.e.cat === &#x27;baixo&#x27;).length : 0);
   function atualizarSinal() {
     if (!sinalBG) return;
-    const v = pendBaixo() &gt; 0;
+    const v = S.led &amp;&amp; pendBaixo() &gt; 0;
     if (v === sinalBG.aceso) return;
     sinalBG.aceso = v;
     log(&#x27;EVT&#x27;, `Sinal de baixo giro ${v ? &#x27;aceso: a caixa tem itens no corredor&#x27; : &#x27;apagado: baixo giro concluído&#x27;}`);
@@ -2484,7 +2500,7 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
   }
   function mover(c, pontos, vel, aoChegar) { c.rota = pontos.map((p) =&gt; new THREE.Vector3(...p)); c.vel = vel; c.aoChegar = aoChegar || null; }
   function logTransferencia(c) {
-    log(&#x27;BHT&#x27;, `Bacia ${c.id} desviada na transferência ${pad(transf.b, 2)}|${pad(transf.b + 1, 2)} → rolete para a ${transf.lado} → estação ${S.est}`);
+    log(&#x27;BHT&#x27;, `Bacia ${c.id} desviada na ${transf.cod} → ${transf.ep} → rolete para a ${transf.lado} → estação ${S.est}`);
   }
   function reiniciarCaixas() {
     caixasCena.forEach((c) =&gt; scene.remove(c.g));
@@ -2508,6 +2524,8 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
   // ======================================================================= REGRAS DO SERVIÇO PTL
   const ordemRota = (a, b) =&gt; a.e.ordem - b.e.ordem || a.e.predio - b.e.predio || a.e.andar - b.e.andar;
   function pendentes() { return atual ? atual.itens.filter((i) =&gt; i.status === &#x27;pendente&#x27;).length : 0; }
+  // sem LEDs (como hoje): o coletor mostra um endereço por vez, na ordem da rota; o operador procura, pega e bipa
+  function itemColetor() { return modulos.filter((m) =&gt; m.item).map((m) =&gt; m.item).sort(ordemRota)[0] || null; }
 
   function leitura(origem) {
     const ori = origem || (S.modo === &#x27;A&#x27; ? &#x27;coletor&#x27; : S.modo === &#x27;B1&#x27; ? &#x27;pulseira&#x27; : &#x27;leitor fixo&#x27;);
@@ -2523,6 +2541,10 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
       return;
     }
     if (estado === &#x27;NA_POSICAO&#x27;) return abrirCaixa(ori);
+    if (estado === &#x27;SEPARANDO&#x27; &amp;&amp; !S.led &amp;&amp; ori === &#x27;coletor&#x27;) {
+      const it = itemColetor();
+      if (it) return confirmar(it.e.modulo, &#x27;coletor&#x27;);
+    }
     if (estado === &#x27;SEPARANDO&#x27;) {
       const p = pendentes();
       if (p &gt; 0) {
@@ -2554,6 +2576,15 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
       desenhar(m);
     });
     const blocos = Object.keys(grupos).filter((k) =&gt; k.startsWith(&#x27;AG&#x27;)).length, zonas = Object.keys(grupos).filter((k) =&gt; k.startsWith(&#x27;BG&#x27;)).length;
+    if (!S.led) {
+      const it = itemColetor();
+      log(&#x27;API&#x27;, `200 → coletor mostra o 1º endereço da rota: ${rotEnd(it.e)} qtd ${it.qtd} (sem LEDs: ${its.length} itens, um por vez)`);
+      emitir(&#x27;abrir&#x27;, { caixa: atual.id, origem: ori || &#x27;coletor&#x27;, total: its.length, displays: [], semLed: true, sinalBG: false,
+        proximo: { end: rotEnd(it.e), qtd: it.qtd }, itens: its.map((i) =&gt; ({ end: rotEnd(i.e), qtd: i.qtd, cd: i.e.end })) });
+      atualizarDestaques();
+      atualizarUI();
+      return;
+    }
     log(&#x27;MQTT&#x27;, `ptl/est${S.est}/cmd SEPARAR caixa=${atual.id} itens=${its.length} (Q:${q.length} · andares 4-5:${blocos} · zonas:${zonas})`);
     log(&#x27;EVT&#x27;, `ptl/est${S.est}/evt ACK ${q.length + blocos + zonas} display(s) aceso(s)`);
     const displays = modulos.filter((m) =&gt; m.item).map((m) =&gt; Object.assign(dispDe(m), { end: rotEnd(m.item.e), qtd: m.item.qtd, fila: m.fila.length, falha: m.falha }));
@@ -2565,12 +2596,23 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
 
   function confirmar(m, quem) {
     if (!m.item || m.falha || (estado !== &#x27;SEPARANDO&#x27; &amp;&amp; estado !== &#x27;ALERTA&#x27;)) return;
+    if (!S.led &amp;&amp; quem !== &#x27;coletor&#x27;) return;   // sem LEDs não há botão nos endereços: confirma bipando no coletor
     const it = m.item;
     it.status = &#x27;ok&#x27;;
     m.press = 0.18;
     m.fila.shift();
     m.item = m.fila[0] || null;
     K.itens++;
+    if (!S.led) {
+      const prox = itemColetor(), concluiu = pendentes() === 0;
+      log(&#x27;API&#x27;, `POST /v1/estacoes/${S.est}/itens {caixa:&quot;${atual.id}&quot;, endereco:&quot;${rotEnd(it.e)}&quot;, qtd:${it.qtd}} (bipado no coletor)`);
+      if (concluiu) { estado = &#x27;PRONTA&#x27;; log(&#x27;API&#x27;, `200 → caixa ${atual.id} sem itens nesta estação · leia de novo para fechar`); }
+      emitir(&#x27;item_coletor&#x27;, { caixa: atual.id, end: rotEnd(it.e), qtd: it.qtd, cd: it.e.end, proximo: prox ? { end: rotEnd(prox.e), qtd: prox.qtd } : null,
+        concluida: concluiu, ok: atual.itens.length - pendentes(), total: atual.itens.length });
+      atualizarDestaques();
+      atualizarUI();
+      return;
+    }
     log(&#x27;EVT&#x27;, `ptl/est${S.est}/evt BTN ${rotEnd(it.e)} qtd=${it.qtd}${quem === &#x27;operador&#x27; ? &#x27;&#x27; : &#x27; (clique)&#x27;}`);
     if (m.tipo === &#x27;EQ&#x27; &amp;&amp; !m.item) { m.flash = 0.7; log(&#x27;EVT&#x27;, `ptl/est${S.est}/evt ZONA_FIM ${m.nome || m.id}`); }
     if (m.tipo === &#x27;Q&#x27;) m.flash = 0.5;
@@ -2790,7 +2832,7 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
 
     acesos = [];
     modulos.forEach((m) =&gt; {
-      if (!m.item) return;
+      if (!m.item || !S.led) return;
       acesos.push(m.item.e);
 
     });
@@ -2809,6 +2851,7 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
   const posCaixa = () =&gt; ({ x: CFG.xPega + 0.35, z: CFG.zOperAlto });
 
   function proximoAlvo() {
+    if (!S.led) return itemColetor();
     let melhor = null, dMin = 1e9;
     modulos.forEach((m) =&gt; {
       if (!m.item || m.falha) return;
@@ -2855,11 +2898,17 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
         await andarAte(p.x, p.z);
         if (!ativo()) break;
         oper.rot = p.rot;
+        if (!S.led) { await esperar(CFG.tempoProcura); if (!ativo()) break; }   // procura o endereço na prateleira
         const tp = CFG.tempoPega + alvo.qtd * CFG.tempoPorUnidade;
         oper.anim = &#x27;pega&#x27;; oper.animT = tp;
         await esperar(tp);
         if (!ativo()) break;
-        if (alvo.e.modulo.item === alvo &amp;&amp; !alvo.e.modulo.falha) { confirmar(alvo.e.modulo, &#x27;operador&#x27;); carregando++; }
+        if (!S.led) {
+          oper.anim = &#x27;leitura&#x27;; oper.animT = CFG.tempoBip;
+          await esperar(CFG.tempoBip);
+          if (!ativo()) break;
+          if (alvo.e.modulo.item === alvo &amp;&amp; estado === &#x27;SEPARANDO&#x27;) { confirmar(alvo.e.modulo, &#x27;coletor&#x27;); carregando++; }
+        } else if (alvo.e.modulo.item === alvo &amp;&amp; !alvo.e.modulo.falha) { confirmar(alvo.e.modulo, &#x27;operador&#x27;); carregando++; }
         oper.olhar = null;
         continue;
       }
@@ -2915,8 +2964,12 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
     }
     if (estado === &#x27;AGUARDANDO&#x27;) return { cor: &#x27;#2F5597&#x27;, tit: `PTL · Estação ${est}`, corpo: &#x27;&lt;div class=&quot;media&quot;&gt;Aguardando bacia&lt;/div&gt;&lt;div class=&quot;p&quot;&gt;A próxima bacia está vindo pela esteira de separação&lt;/div&gt;&#x27;, rod: &#x27;Leitura abre a bacia&#x27; };
     if (estado === &#x27;NA_POSICAO&#x27;) return { cor: &#x27;#2F5597&#x27;, tit: `PTL · Estação ${est}`, corpo: `&lt;div class=&quot;media&quot;&gt;Bacia na posição&lt;/div&gt;&lt;div class=&quot;p&quot;&gt;${S.modo === &#x27;A&#x27; ? &#x27;Aponte para a etiqueta e aperte o gatilho&#x27; : S.modo === &#x27;B1&#x27; ? &#x27;Aproxime a pulseira da tag da bacia&#x27; : &#x27;Leitor fixo lendo a tag…&#x27;}&lt;/div&gt;`, rod: &#x27;Leitura abre a bacia&#x27; };
+    if (estado === &#x27;SEPARANDO&#x27; &amp;&amp; !S.led) {
+      const it = itemColetor();
+      return { cor: &#x27;#5B6675&#x27;, tit: `Bacia ${atual.id} · sem LEDs`, corpo: it ? `&lt;div class=&quot;p&quot;&gt;Vá até o endereço&lt;/div&gt;&lt;div class=&quot;media&quot; style=&quot;font-size:22px&quot;&gt;${rotEnd(it.e)}&lt;/div&gt;&lt;div class=&quot;grande&quot;&gt;${it.qtd} un&lt;/div&gt;&lt;div class=&quot;progresso&quot;&gt;&lt;i style=&quot;width:${(100 * ok) / n}%&quot;&gt;&lt;/i&gt;&lt;/div&gt;&lt;div class=&quot;p&quot;&gt;Item ${ok + 1} de ${n}&lt;/div&gt;` : &#x27;&#x27;, rod: &#x27;Pegue e bipe o endereço (gatilho)&#x27; };
+    }
     if (estado === &#x27;SEPARANDO&#x27;) return { cor: &#x27;#2E8B57&#x27;, tit: `Bacia ${atual.id}`, corpo: `&lt;div class=&quot;p&quot;&gt;Separando&lt;/div&gt;&lt;div class=&quot;grande&quot;&gt;${ok} / ${n}&lt;/div&gt;&lt;div class=&quot;progresso&quot;&gt;&lt;i style=&quot;width:${(100 * ok) / n}%&quot;&gt;&lt;/i&gt;&lt;/div&gt;&lt;div class=&quot;lista&quot;&gt;&lt;div&gt;&lt;span&gt;Alto giro&lt;/span&gt;&lt;b&gt;${ct.alto}&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;Baixo giro&lt;/span&gt;&lt;b&gt;${ct.baixo}&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;span&gt;Zonas ativas&lt;/span&gt;&lt;b&gt;${ct.zonas || &#x27;—&#x27;}&lt;/b&gt;&lt;/div&gt;&lt;/div&gt;`, rod: &#x27;Nova leitura fecha a bacia&#x27; };
-    if (estado === &#x27;PRONTA&#x27;) return { cor: &#x27;#2E8B57&#x27;, tit: &#x27;Estação concluída&#x27;, corpo: `&lt;div class=&quot;grande&quot;&gt;${n} / ${n}&lt;/div&gt;&lt;div class=&quot;media&quot;&gt;Todos os LEDs apagados&lt;/div&gt;&lt;div class=&quot;p&quot;&gt;Leia a etiqueta de novo para fechar&lt;/div&gt;`, rod: &#x27;Gatilho fecha a bacia&#x27; };
+    if (estado === &#x27;PRONTA&#x27;) return { cor: &#x27;#2E8B57&#x27;, tit: &#x27;Estação concluída&#x27;, corpo: `&lt;div class=&quot;grande&quot;&gt;${n} / ${n}&lt;/div&gt;&lt;div class=&quot;media&quot;&gt;${S.led ? &#x27;Todos os LEDs apagados&#x27; : &#x27;Todos os itens bipados&#x27;}&lt;/div&gt;&lt;div class=&quot;p&quot;&gt;Leia a etiqueta de novo para fechar&lt;/div&gt;`, rod: &#x27;Gatilho fecha a bacia&#x27; };
     if (estado === &#x27;ALERTA&#x27;) return { cor: &#x27;#C0392B&#x27;, tit: &#x27;Atenção&#x27;, corpo: `&lt;div class=&quot;media&quot; style=&quot;color:#C0392B&quot;&gt;Bacia com itens pendentes&lt;/div&gt;&lt;div class=&quot;grande&quot;&gt;${n - ok}&lt;/div&gt;&lt;div class=&quot;p&quot;&gt;itens não confirmados. Continue separando ou leia de novo para fechar mesmo assim.&lt;/div&gt;`, rod: &#x27;Pendência vai para a conferência&#x27; };
     return { cor: &#x27;#2F5597&#x27;, tit: &#x27;&#x27;, corpo: &#x27;&#x27;, rod: &#x27;&#x27; };
   }
@@ -2983,7 +3036,7 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
     const med = K.caixas ? K.tempoTotal / K.caixas : 0;
     $(&#x27;#kTempo&#x27;).textContent = K.caixas ? fmtT(med) : &#x27;–&#x27;;
     $(&#x27;#kHora&#x27;).textContent = K.caixas ? Math.round(3600 / med) : &#x27;–&#x27;;
-    $(&#x27;#kAcesos&#x27;).textContent = modulos.filter((m) =&gt; m.item &amp;&amp; !m.falha).length;
+    $(&#x27;#kAcesos&#x27;).textContent = S.led ? modulos.filter((m) =&gt; m.item &amp;&amp; !m.falha).length : 0;
     $(&#x27;#kPend&#x27;).textContent = K.pendencias;
     const al = $(&#x27;#alertas&#x27;);
     al.innerHTML = &#x27;&#x27;;
@@ -3038,6 +3091,14 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
     log(&#x27;API&#x27;, `Modo de identificação: ${v === &#x27;A&#x27; ? &#x27;A · coletor (código de barras)&#x27; : &#x27;RFID com pulseira (melhoria futura)&#x27;}`);
     emitir(&#x27;modo&#x27;, {});
     if (v === &#x27;B2&#x27; &amp;&amp; estado === &#x27;NA_POSICAO&#x27;) esperar(0.8).then(() =&gt; { if (estado === &#x27;NA_POSICAO&#x27; &amp;&amp; S.modo === &#x27;B2&#x27;) leitura(&#x27;leitor fixo&#x27;); });
+    atualizarUI();
+  });
+  segmentado(&#x27;#selLed&#x27;, (v) =&gt; {
+    S.led = v === &#x27;1&#x27;;
+    modulos.forEach(desenhar);
+    atualizarDestaques();
+    log(&#x27;API&#x27;, S.led ? &#x27;Separação com LEDs (pick-to-light): todos os itens da caixa acendem juntos&#x27; : &#x27;Separação sem LEDs (como funciona hoje): o coletor mostra um endereço por vez e o operador procura e bipa&#x27;, S.led ? undefined : &#x27;ERRO&#x27;);
+    emitir(&#x27;led&#x27;, { led: S.led });
     atualizarUI();
   });
   segmentado(&#x27;#selCam&#x27;, (v) =&gt; aplicarCamera(v));
@@ -3244,7 +3305,7 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
       uiT = 0;
       relogioEl.textContent = relogio();
       renderDispositivo();
-      $(&#x27;#kAcesos&#x27;).textContent = modulos.filter((m) =&gt; m.item &amp;&amp; !m.falha).length;
+      $(&#x27;#kAcesos&#x27;).textContent = S.led ? modulos.filter((m) =&gt; m.item &amp;&amp; !m.falha).length : 0;
     }
     renderer.render(scene, camera);
   }
@@ -3270,6 +3331,7 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
   log(&#x27;EVT&#x27;, `ptl/est${S.est}/status ONLINE (retained) · concentrador 12 V`);
   aplicarCamera(&#x27;geral&#x27;, true);
   atualizarUI();
+  if (params.has(&#x27;semled&#x27;)) document.querySelector(&#x27;#selLed button[data-v=&quot;0&quot;]&#x27;).click();
   if (params.has(&#x27;auto&#x27;)) { $(&#x27;#optAuto&#x27;).checked = true; ligarAuto(true); }
   if (params.has(&#x27;semajuda&#x27;) || window.parent !== window) $(&#x27;#ajuda&#x27;).classList.add(&#x27;oculto&#x27;);
   if (params.get(&#x27;cam&#x27;)) { const b = document.querySelector(`#selCam button[data-v=&quot;${params.get(&#x27;cam&#x27;)}&quot;]`); if (b) b.click(); }
@@ -3292,6 +3354,7 @@ window.PTL_DADOS = {&quot;27&quot;:{&quot;info&quot;:{&quot;rua&quot;:&quot;27&q
     if (d.tipo === &#x27;compacto&#x27;) document.body.classList.toggle(&#x27;compacto&#x27;, !!d.valor);
     if (d.tipo === &#x27;pedirMapa&#x27;) emitir(&#x27;estacao&#x27;, mapaEstacao());
     if (d.tipo === &#x27;gatilho&#x27;) leitura();
+    if (d.tipo === &#x27;led&#x27;) { const b = document.querySelector(`#selLed button[data-v=&quot;${d.valor ? 1 : 0}&quot;]`); if (b &amp;&amp; !b.classList.contains(&#x27;on&#x27;)) b.click(); }
     if (d.tipo === &#x27;falhar&#x27;) { const antes = new Set(modulos.filter((m) =&gt; m.falha)); simularFalha(d.falha); localizar(modulos.find((m) =&gt; m.falha &amp;&amp; !antes.has(m))); }
     if (d.tipo === &#x27;cad_iniciar&#x27;) { const m = moduloPorEnd(d.cd); iniciarCadastro(m, &#x27;interface de controle&#x27;); localizar(m); }
     if (d.tipo === &#x27;cad_apertar&#x27; &amp;&amp; emCadastro) confirmarCadastro(emCadastro);
@@ -3761,6 +3824,10 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
         await leituraIda(ev);
         await enviar(&#x27;servico&#x27;, &#x27;sybase&#x27;, sql(`SELECT cd_endereco, qt_item\n  FROM vw_ptl_itens_caixa\n WHERE nr_caixa = &#x27;${ev.caixa}&#x27; AND cd_rua = &#x27;${S.est}&#x27;\n ORDER BY nr_ordem_separacao_flow, cd_predio, cd_andar`, &#x27;SELECT&#x27;, &#x27;itens da caixa nesta estação&#x27;));
         await enviar(&#x27;sybase&#x27;, &#x27;servico&#x27;, sql(ev.itens.map((i) =&gt; `${i.cd}  ${i.qtd}`).join(&#x27;\n&#x27;) + `\n(${ev.itens.length} linhas)`, `${ev.itens.length} linhas`, `${ev.itens.length} itens`));
+        if (ev.semLed) {   // como funciona hoje: sem concentrador e sem displays, o coletor mostra um endereço por vez
+          await respostaFonte(ev, 200, { estado: &#x27;SEPARANDO&#x27;, caixa: ev.caixa, total: ev.total, modo: &#x27;sem LEDs&#x27;, proximo: ev.proximo, painel: [`${ev.caixa} 0/${ev.total}`] });
+          return;
+        }
         const carga = { tipo: &#x27;SEPARAR&#x27;, caixa: ev.caixa, displays: ev.displays.map((d) =&gt; ({ disp: &#x27;0x&#x27; + hex(d.addr), andar: d.tipo === &#x27;Q&#x27; ? d.pos : undefined, end: d.end, qtd: d.qtd, fila: d.fila })) };
         await servicoParaConc(carga, &#x27;SEPARAR&#x27;);
         const falhos = ev.displays.filter((d) =&gt; d.falha);
@@ -3787,6 +3854,13 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
           await enviar(&#x27;servico&#x27;, &#x27;sybase&#x27;, sql(`INSERT INTO ptl_caixa_item_conf\n  (nr_caixa, cd_endereco, quantidade, confirmado_em)\nVALUES (&#x27;${d.caixa}&#x27;, &#x27;${d.cd}&#x27;, ${d.qtd}, getdate())`, &#x27;INSERT&#x27;, &#x27;grava a confirmação&#x27;));
           await consultaColetor();
         }
+        return;
+      }
+      case &#x27;item_coletor&#x27;: {
+        await enviar(&#x27;fonte&#x27;, &#x27;servico&#x27;, http(&#x27;POST&#x27;, `/v1/estacoes/${S.est}/itens`, { caixa: ev.caixa, endereco: ev.end, qtd: ev.qtd, origem: &#x27;coletor (bipado)&#x27; }, `POST item ${ev.end}`));
+        await enviar(&#x27;servico&#x27;, &#x27;sybase&#x27;, sql(`INSERT INTO ptl_caixa_item_conf\n  (nr_caixa, cd_endereco, quantidade, confirmado_em)\nVALUES (&#x27;${ev.caixa}&#x27;, &#x27;${ev.cd}&#x27;, ${ev.qtd}, getdate())`, &#x27;INSERT&#x27;, &#x27;grava a confirmação&#x27;));
+        S.ok = ev.ok; if (ev.concluida) S.estado = &#x27;concluída&#x27;; textos();
+        await enviar(&#x27;servico&#x27;, &#x27;fonte&#x27;, resp(200, { caixa: ev.caixa, confirmados: ev.ok, total: ev.total, proximo: ev.proximo }));
         return;
       }
       case &#x27;alerta&#x27;:
@@ -4174,18 +4248,19 @@ td .bts { display: flex; gap: 4px; }
 &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
 &lt;title&gt;Operação completa&lt;/title&gt;
 &lt;style&gt;
-/* Operação completa: simulação das duas linhas (Medicamento · Asi 3 e Perfumaria · Asi 1) com as 40 estações */
+/* Operação completa: as duas linhas no layout do Desenho_esteira (25/11/2026), com as 40 estações,
+   as transferências TR_02/TR_03, as áreas de desvio EP_01/EP_02, o divisor e o loop da conferência (TR_04). */
 :root {
   --bg: #eef1f5; --painel: #ffffff; --tinta: #1b2638; --suave: #5b6675; --linha: #d5dbe3; --chip: #f6f8fb;
-  --azul: #2f5597; --verde: #2e8b57; --ambar: #d68910; --vermelho: #c0392b; --med: #2f5597; --perf: #b0569b;
-  --mono: ui-monospace, &quot;SFMono-Regular&quot;, Consolas, &quot;Liberation Mono&quot;, monospace;
+  --azul: #2f5597; --verde: #2e8b57; --ambar: #d68910; --vermelho: #c0392b; --asi1: #2b5f9e; --asi3: #7a4aa8;
+  --ep: #d9741f; --epf: #fdeedd;
   --sans: system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme=&quot;light&quot;]) {
   --bg: #11161f; --painel: #19202c; --tinta: #e8ecf2; --suave: #9aa6b8; --linha: #2c3647; --chip: #202938;
-  --med: #6f9be8; --perf: #e08ccd; color-scheme: dark; } }
+  --asi1: #6f9be8; --asi3: #b48ae0; --ep: #f0a060; --epf: #3a2716; color-scheme: dark; } }
 :root[data-theme=&quot;dark&quot;] { --bg: #11161f; --painel: #19202c; --tinta: #e8ecf2; --suave: #9aa6b8; --linha: #2c3647; --chip: #202938;
-  --med: #6f9be8; --perf: #e08ccd; color-scheme: dark; }
+  --asi1: #6f9be8; --asi3: #b48ae0; --ep: #f0a060; --epf: #3a2716; color-scheme: dark; }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body { background: var(--bg); color: var(--tinta); font: 13.5px/1.45 var(--sans); padding: 10px 12px 18px; }
@@ -4201,6 +4276,8 @@ h2 { font-size: 12px; margin: 0 0 8px; color: var(--suave); text-transform: uppe
 .seg { display: inline-flex; background: var(--painel); border: 1px solid var(--linha); border-radius: 8px; padding: 2px; }
 .seg button { border: 0; background: transparent; padding: 3px 9px; border-radius: 6px; cursor: pointer; font-size: 12.5px; color: var(--suave); }
 .seg button.on { background: #f2a33a; color: #1b2638; font-weight: 700; }
+#selLed button { padding: 5px 12px; font-size: 13px; }
+#selLed button[data-v=&quot;manual&quot;].on { background: #5b6675; color: #fff; }
 .relogio { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; }
 .relogio b { font-size: 18px; }
 .relogio small { display: block; color: var(--suave); font-size: 11px; }
@@ -4218,15 +4295,18 @@ h2 { font-size: 12px; margin: 0 0 8px; color: var(--suave); text-transform: uppe
 details summary { cursor: pointer; font-weight: 600; font-size: 12.5px; color: var(--suave); }
 .nota { color: var(--suave); font-size: 12px; margin: 6px 0 0; }
 canvas { display: block; width: 100%; }
-#planta { height: 360px; border-radius: 8px; }
-.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.rolar { overflow-x: auto; }
+#planta { height: 470px; min-width: 900px; border-radius: 8px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 1250px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .kpis { grid-template-columns: 1fr; } }
 .kpi { border: 1px solid var(--linha); border-radius: 10px; padding: 10px 12px; background: var(--chip); }
 .kpi h3 { margin: 0 0 6px; font-size: 13px; display: flex; gap: 6px; align-items: center; }
 .kpi table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .kpi td { padding: 2px 0; }
-.kpi td:last-child { text-align: right; font-weight: 700; }
+.kpi td:last-child { text-align: right; font-weight: 700; padding-left: 6px; }
 .kpi .grande td:last-child { font-size: 18px; }
+.kpi .ruim td:last-child { color: var(--vermelho); }
 .leg { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--suave); margin-top: 6px; }
 .leg i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -2px; }
 #grafico { height: 190px; }
@@ -4237,7 +4317,10 @@ canvas { display: block; width: 100%; }
 &lt;/head&gt;
 &lt;body&gt;
 &lt;div class=&quot;topo&quot;&gt;
-  &lt;div&gt;&lt;div class=&quot;tit&quot;&gt;Operação completa&lt;/div&gt;&lt;div class=&quot;sub&quot;&gt;As duas linhas e as 40 estações com PTL · volumes entrando, transferências, separação e recirculação&lt;/div&gt;&lt;/div&gt;
+  &lt;div&gt;&lt;div class=&quot;tit&quot;&gt;Operação completa&lt;/div&gt;&lt;div class=&quot;sub&quot;&gt;Layout do desenho: divisor → linhas Asi 1 e Asi 3 → conferência · 40 estações, 12 TRs, 22 áreas de desvio&lt;/div&gt;&lt;/div&gt;
+  &lt;span class=&quot;seg&quot; id=&quot;selLed&quot; role=&quot;group&quot; aria-label=&quot;Separação com ou sem LEDs&quot;&gt;
+    &lt;button data-v=&quot;ptl&quot; class=&quot;on&quot;&gt;Com LEDs (PTL)&lt;/button&gt;&lt;button data-v=&quot;manual&quot;&gt;Sem LEDs (como hoje)&lt;/button&gt;
+  &lt;/span&gt;
   &lt;button class=&quot;btn forte&quot; id=&quot;btnPlay&quot;&gt;Pausar&lt;/button&gt;
   &lt;button class=&quot;btn&quot; id=&quot;btnReset&quot;&gt;Reiniciar&lt;/button&gt;
   &lt;span class=&quot;seg&quot; id=&quot;selVel&quot; role=&quot;group&quot; aria-label=&quot;Velocidade&quot;&gt;
@@ -4249,15 +4332,14 @@ canvas { display: block; width: 100%; }
 
 &lt;div class=&quot;grade&quot;&gt;
   &lt;div&gt;
-    &lt;section class=&quot;caixa&quot; id=&quot;pM&quot;&gt;&lt;/section&gt;
     &lt;section class=&quot;caixa&quot; id=&quot;pP&quot;&gt;&lt;/section&gt;
+    &lt;section class=&quot;caixa&quot; id=&quot;pM&quot;&gt;&lt;/section&gt;
     &lt;section class=&quot;caixa&quot;&gt;
       &lt;h2&gt;Comum às duas linhas&lt;/h2&gt;
-      &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;modo&quot;&gt;Modo de separação&lt;/label&gt;&lt;span&gt;&lt;/span&gt;
-        &lt;select id=&quot;modo&quot; class=&quot;btn&quot; style=&quot;grid-column:1/3&quot;&gt;&lt;option value=&quot;ptl&quot;&gt;Com PTL (displays acendem)&lt;/option&gt;&lt;option value=&quot;manual&quot;&gt;Sem PTL (procura o endereço na tela)&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;
       &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;pAlto&quot;&gt;Itens no alto giro&lt;/label&gt;&lt;output id=&quot;opAlto&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;pAlto&quot; min=&quot;30&quot; max=&quot;95&quot; step=&quot;1&quot;&gt;&lt;/div&gt;
+      &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;fila&quot;&gt;Caixas na esteira de separação por estação&lt;/label&gt;&lt;output id=&quot;ofila&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;fila&quot; min=&quot;1&quot; max=&quot;4&quot; step=&quot;1&quot;&gt;&lt;/div&gt;
       &lt;details&gt;
-        &lt;summary&gt;Premissas de tempo e esteira&lt;/summary&gt;
+        &lt;summary&gt;Tempos de separação e esteira&lt;/summary&gt;
         &lt;div style=&quot;margin-top:8px&quot;&gt;
           &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;vEst&quot;&gt;Velocidade da esteira (m/s)&lt;/label&gt;&lt;output id=&quot;ovEst&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;vEst&quot; min=&quot;0.2&quot; max=&quot;1&quot; step=&quot;0.05&quot;&gt;&lt;/div&gt;
           &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;tAlto&quot;&gt;Pega no alto giro 0-3 (s)&lt;/label&gt;&lt;output id=&quot;otAlto&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;tAlto&quot; min=&quot;1&quot; max=&quot;10&quot; step=&quot;0.5&quot;&gt;&lt;/div&gt;
@@ -4265,11 +4347,20 @@ canvas { display: block; width: 100%; }
           &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;tBaixo&quot;&gt;Pega no baixo giro, com deslocamento (s)&lt;/label&gt;&lt;output id=&quot;otBaixo&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;tBaixo&quot; min=&quot;3&quot; max=&quot;25&quot; step=&quot;0.5&quot;&gt;&lt;/div&gt;
           &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;tUni&quot;&gt;Por unidade a mais (s)&lt;/label&gt;&lt;output id=&quot;otUni&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;tUni&quot; min=&quot;0.2&quot; max=&quot;2&quot; step=&quot;0.1&quot;&gt;&lt;/div&gt;
           &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;tCaixa&quot;&gt;Abrir, fechar e empurrar a caixa (s)&lt;/label&gt;&lt;output id=&quot;otCaixa&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;tCaixa&quot; min=&quot;2&quot; max=&quot;20&quot; step=&quot;1&quot;&gt;&lt;/div&gt;
-          &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;tProc&quot;&gt;Procura sem PTL, por item (s)&lt;/label&gt;&lt;output id=&quot;otProc&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;tProc&quot; min=&quot;0&quot; max=&quot;15&quot; step=&quot;0.5&quot;&gt;&lt;/div&gt;
-          &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;fila&quot;&gt;Caixas na esteira de separação por estação&lt;/label&gt;&lt;output id=&quot;ofila&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;fila&quot; min=&quot;1&quot; max=&quot;4&quot; step=&quot;1&quot;&gt;&lt;/div&gt;
+          &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;tProc&quot;&gt;Sem LEDs: procurar o endereço e bipar, por item (s)&lt;/label&gt;&lt;output id=&quot;otProc&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;tProc&quot; min=&quot;0&quot; max=&quot;15&quot; step=&quot;0.5&quot;&gt;&lt;/div&gt;
+          &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;entrada&quot;&gt;Do divisor até a primeira estação (m)&lt;/label&gt;&lt;output id=&quot;oentrada&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;entrada&quot; min=&quot;2&quot; max=&quot;40&quot; step=&quot;1&quot;&gt;&lt;/div&gt;
         &lt;/div&gt;
       &lt;/details&gt;
-      &lt;button class=&quot;btn&quot; id=&quot;btnCap&quot; style=&quot;width:100%;margin-top:4px&quot;&gt;Calcular capacidade máxima (com e sem PTL)&lt;/button&gt;
+      &lt;details&gt;
+        &lt;summary&gt;Conferência (loop TR_04)&lt;/summary&gt;
+        &lt;div style=&quot;margin-top:8px&quot;&gt;
+          &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;conf&quot;&gt;Conferentes&lt;/label&gt;&lt;output id=&quot;oconf&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;conf&quot; min=&quot;1&quot; max=&quot;12&quot; step=&quot;1&quot;&gt;&lt;/div&gt;
+          &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;tConf&quot;&gt;Conferência por caixa (s)&lt;/label&gt;&lt;output id=&quot;otConf&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;tConf&quot; min=&quot;5&quot; max=&quot;120&quot; step=&quot;1&quot;&gt;&lt;/div&gt;
+          &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;loopM&quot;&gt;Uma volta no loop (m)&lt;/label&gt;&lt;output id=&quot;oloopM&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;loopM&quot; min=&quot;10&quot; max=&quot;120&quot; step=&quot;1&quot;&gt;&lt;/div&gt;
+          &lt;div class=&quot;param&quot;&gt;&lt;label for=&quot;voltas&quot;&gt;Voltas antes do escape&lt;/label&gt;&lt;output id=&quot;ovoltas&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; id=&quot;voltas&quot; min=&quot;1&quot; max=&quot;12&quot; step=&quot;1&quot;&gt;&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/details&gt;
+      &lt;button class=&quot;btn&quot; id=&quot;btnCap&quot; style=&quot;width:100%;margin-top:6px&quot;&gt;Calcular capacidade máxima (com e sem LEDs)&lt;/button&gt;
       &lt;div id=&quot;cap&quot; class=&quot;nota&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
       &lt;p class=&quot;nota&quot;&gt;Valores iniciais são premissas: ~3.000 volumes/dia e 250 a 270 mil produtos/dia em 2 turnos. Ajuste com os dados reais da operação.&lt;/p&gt;
     &lt;/section&gt;
@@ -4277,14 +4368,15 @@ canvas { display: block; width: 100%; }
 
   &lt;div&gt;
     &lt;section class=&quot;caixa&quot;&gt;
-      &lt;h2&gt;Planta das esteiras&lt;/h2&gt;
-      &lt;canvas id=&quot;planta&quot; role=&quot;img&quot; aria-label=&quot;Planta animada das duas linhas com as estações, as transferências e as caixas&quot;&gt;&lt;/canvas&gt;
+      &lt;h2&gt;Planta das esteiras (como no desenho)&lt;/h2&gt;
+      &lt;div class=&quot;rolar&quot;&gt;&lt;canvas id=&quot;planta&quot; role=&quot;img&quot; aria-label=&quot;Planta animada: divisor, linhas Asi 1 e Asi 3 com as estações, transferências, áreas de desvio e o loop da conferência&quot;&gt;&lt;/canvas&gt;&lt;/div&gt;
       &lt;div class=&quot;leg&quot;&gt;
         &lt;span&gt;&lt;i style=&quot;background:#2E9E4F&quot;&gt;&lt;/i&gt;Caixa (volume)&lt;/span&gt;
+        &lt;span&gt;&lt;i style=&quot;background:#2e9e4f;opacity:.75&quot;&gt;&lt;/i&gt;TR (transferência)&lt;/span&gt;
+        &lt;span&gt;&lt;i style=&quot;background:var(--epf);border:1px solid var(--ep)&quot;&gt;&lt;/i&gt;Área de desvio (EP)&lt;/span&gt;
         &lt;span&gt;&lt;i style=&quot;background:#e8eef6;border:1px solid #9aa6b8&quot;&gt;&lt;/i&gt;Estação ociosa&lt;/span&gt;
         &lt;span&gt;&lt;i style=&quot;background:#f6c36b&quot;&gt;&lt;/i&gt;Ocupação média&lt;/span&gt;
-        &lt;span&gt;&lt;i style=&quot;background:#e0533f&quot;&gt;&lt;/i&gt;Gargalo (ocupação alta)&lt;/span&gt;
-        &lt;span&gt;&lt;i style=&quot;background:#2e8b57&quot;&gt;&lt;/i&gt;Transferência&lt;/span&gt;
+        &lt;span&gt;&lt;i style=&quot;background:#e0533f&quot;&gt;&lt;/i&gt;Gargalo&lt;/span&gt;
         &lt;span&gt;● operador separando · número = caixas esperando&lt;/span&gt;
       &lt;/div&gt;
     &lt;/section&gt;
@@ -4293,7 +4385,7 @@ canvas { display: block; width: 100%; }
       &lt;div class=&quot;kpis&quot; id=&quot;kpis&quot;&gt;&lt;/div&gt;
     &lt;/section&gt;
     &lt;div class=&quot;duas&quot;&gt;
-      &lt;section class=&quot;caixa&quot;&gt;&lt;h2&gt;Volumes por hora (média da última hora)&lt;/h2&gt;&lt;canvas id=&quot;grafico&quot; role=&quot;img&quot; aria-label=&quot;Gráfico de volumes por hora ao longo do tempo&quot;&gt;&lt;/canvas&gt;&lt;/section&gt;
+      &lt;section class=&quot;caixa&quot;&gt;&lt;h2&gt;Volumes conferidos por hora (média da última hora)&lt;/h2&gt;&lt;canvas id=&quot;grafico&quot; role=&quot;img&quot; aria-label=&quot;Gráfico de volumes conferidos por hora ao longo do tempo&quot;&gt;&lt;/canvas&gt;&lt;/section&gt;
       &lt;section class=&quot;caixa&quot;&gt;&lt;h2&gt;Ocupação por estação&lt;/h2&gt;&lt;canvas id=&quot;ocupacao&quot; role=&quot;img&quot; aria-label=&quot;Ocupação de cada estação&quot;&gt;&lt;/canvas&gt;&lt;/section&gt;
     &lt;/div&gt;
   &lt;/div&gt;
@@ -4314,41 +4406,62 @@ canvas { display: block; width: 100%; }
   const P = {
     M: { on: true, vph: 95, itens: 20, unid: 4 },
     P: { on: true, vph: 95, itens: 20, unid: 4 },
-    modo: &#x27;ptl&#x27;, pAlto: 70, vEst: 0.5, tAlto: 3, t45: 5, tBaixo: 9, tUni: 0.6, tCaixa: 7, tProc: 4, fila: 2,
+    modo: &#x27;ptl&#x27;, pAlto: 70, vEst: 0.5, tAlto: 3, t45: 5, tBaixo: 9, tUni: 0.6, tCaixa: 7, tProc: 4, fila: 2, entrada: 8,
+    conf: 4, tConf: 25, loopM: 40, voltas: 6,
   };
-  const PASSO = 2.5, ENTRADA = 6, SAIDA = 4, LOOP = 40;   // metros
+  const PASSO = 2.5, SAIDA = 4;   // metros
+  // transferências do desenho: [código, estação b (a TR fica entre b e b+1), [[área de desvio, estações], ...]]
+  const TRS = {
+    M: [[&#x27;TR_02_01&#x27;, 3, [[&#x27;EP_01_01&#x27;, [3]], [&#x27;EP_01_02&#x27;, [4, 5]]]], [&#x27;TR_02_02&#x27;, 7, [[&#x27;EP_01_03&#x27;, [6, 7]], [&#x27;EP_01_04&#x27;, [8, 9]]]],
+      [&#x27;TR_02_03&#x27;, 11, [[&#x27;EP_01_05&#x27;, [10, 11]], [&#x27;EP_01_06&#x27;, [12, 13]]]], [&#x27;TR_02_04&#x27;, 15, [[&#x27;EP_01_07&#x27;, [14, 15]]]],
+      [&#x27;TR_02_05&#x27;, 17, [[&#x27;EP_01_08&#x27;, [16, 17]], [&#x27;EP_01_09&#x27;, [18, 19]]]], [&#x27;TR_02_06&#x27;, 21, [[&#x27;EP_01_10&#x27;, [20, 21]], [&#x27;EP_01_11&#x27;, [22]]]]],
+    P: [[&#x27;TR_03_01&#x27;, 26, [[&#x27;EP_02_01&#x27;, [26]], [&#x27;EP_02_02&#x27;, [27, 28]]]], [&#x27;TR_03_02&#x27;, 30, [[&#x27;EP_02_03&#x27;, [29, 30]], [&#x27;EP_02_04&#x27;, [31, 32]]]],
+      [&#x27;TR_03_03&#x27;, 34, [[&#x27;EP_02_05&#x27;, [33, 34]], [&#x27;EP_02_06&#x27;, [35, 36]]]], [&#x27;TR_03_04&#x27;, 38, [[&#x27;EP_02_07&#x27;, [37, 38]]]],
+      [&#x27;TR_03_05&#x27;, 40, [[&#x27;EP_02_08&#x27;, [39, 40]], [&#x27;EP_02_09&#x27;, [41, 42]]]], [&#x27;TR_03_06&#x27;, 44, [[&#x27;EP_02_10&#x27;, [43, 44]], [&#x27;EP_02_11&#x27;, [45]]]]],
+  };
   const LINHAS = {
-    M: { id: &#x27;M&#x27;, nome: &#x27;Medicamento&#x27;, esteira: &#x27;Asi 3&#x27;, cor: &#x27;#2f5597&#x27; },
-    P: { id: &#x27;P&#x27;, nome: &#x27;Perfumaria&#x27;, esteira: &#x27;Asi 1&#x27;, cor: &#x27;#b0569b&#x27; },
+    P: { id: &#x27;P&#x27;, nome: &#x27;Perfumaria&#x27;, esteira: &#x27;Asi 1&#x27;, cor: &#x27;#2b5f9e&#x27; },
+    M: { id: &#x27;M&#x27;, nome: &#x27;Medicamento&#x27;, esteira: &#x27;Asi 3&#x27;, cor: &#x27;#7a4aa8&#x27; },
   };
-  Object.values(LINHAS).forEach((L) =&gt; {
-    L.ruas = Object.keys(ESTACOES).filter((r) =&gt; ESTACOES[r][0] === L.nome).sort();
-    L.n = L.ruas.length;
-    L.comp = ENTRADA + L.n * PASSO + SAIDA;
-    const p0 = +L.ruas[0], p1 = +L.ruas[L.n - 1];
-    L.est = L.ruas.map((r, k) =&gt; {
-      const [, a03, a45, bx] = ESTACOES[r];
-      // transferência: cada uma atende 2 estações à esquerda e 2 à direita (ponta: 1 + 2)
-      let b = p0 + 4 * Math.round((+r - p0 - 0.5) / 4);
-      if (b + 1 &gt; p1) b = p1 - 1;
-      if (b &lt; p0) b = p0;
-      const kb = L.ruas.indexOf(pad(b));
-      return { rua: r, k, x: ENTRADA + k * PASSO + PASSO / 2, a03, a45, bx, grupo: b, xt: ENTRADA + (kb + 1) * PASSO,
-        fila: [], chegando: 0, atual: null, fim: 0, ocupado: 0, itens: 0 };
+  function montarLinhas() {   // posições ao longo do fluxo (0 = divisor); recalcula quando muda a distância do divisor
+    Object.values(LINHAS).forEach((L) =&gt; {
+      L.ruas = Object.keys(ESTACOES).filter((r) =&gt; ESTACOES[r][0] === L.nome).sort();
+      L.n = L.ruas.length;
+      L.comp = P.entrada + L.n * PASSO + SAIDA;
+      const xDe = (r) =&gt; P.entrada + L.ruas.indexOf(pad(r)) * PASSO + PASSO / 2;
+      const antigas = L.est || [];
+      L.est = L.ruas.map((r, k) =&gt; {
+        const [, a03, a45, bx] = ESTACOES[r];
+        const velha = antigas[k];
+        return Object.assign(velha || { fila: [], chegando: 0, atual: null, fim: 0, ocupado: 0, itens: 0 }, { rua: r, k, x: xDe(+r), a03, a45, bx });
+      });
+      L.trs = TRS[L.id].map(([cod, b, eps]) =&gt; {
+        const tr = { cod, b, x: xDe(b) + PASSO / 2, eps: [] };
+        eps.forEach(([ep, rs]) =&gt; {
+          const e = { cod: ep, ruas: rs.map(pad), tr };
+          e.x0 = Math.min(...rs.map(xDe)) - PASSO / 2; e.x1 = Math.max(...rs.map(xDe)) + PASSO / 2;
+          e.dir = (e.x0 + e.x1) / 2 &gt; tr.x ? 1 : -1;
+          tr.eps.push(e);
+          e.ruas.forEach((r) =&gt; { const s = L.est.find((x) =&gt; x.rua === r); s.tr = tr; s.ep = e; });
+        });
+        return tr;
+      });
+      L.alto = L.est.reduce((s, e) =&gt; s + e.a03 + e.a45, 0);
+      L.baixo = L.est.reduce((s, e) =&gt; s + e.bx, 0);
     });
-    L.alto = L.est.reduce((s, e) =&gt; s + e.a03 + e.a45, 0);
-    L.baixo = L.est.reduce((s, e) =&gt; s + e.bx, 0);
-    L.transf = [...new Set(L.est.map((e) =&gt; e.grupo))].map((b) =&gt; ({ b, x: L.est.find((e) =&gt; e.grupo === b).xt }));
-  });
+  }
+  montarLinhas();
 
   // ------------------------------------------------------------------ estado
-  let T = 0, seq = 0, vols = [], acum = { M: 0, P: 0 }, conc = { M: [], P: [] }, itensFeitos = { M: [], P: [] };
-  let serie = [], proxAmostra = 0, proxLimpa = 0, rodando = true, vel = 10, recirc = { M: 0, P: 0 }, lead = { M: [], P: [] };
+  let T, seq, vols, acum, conc, itensFeitos, serie, proxAmostra, proxLimpa, rodando = true, vel = 10, lead, perdidos, incompletas, escape, confOcup, voltasTot, emConf;
+  const zera2 = () =&gt; ({ M: 0, P: 0 });
   function reiniciar() {
-    T = 0; seq = 0; vols = []; acum = { M: 0, P: 0 }; conc = { M: [], P: [] }; itensFeitos = { M: [], P: [] };
-    serie = []; proxAmostra = 0; proxLimpa = 0; recirc = { M: 0, P: 0 }; lead = { M: [], P: [] };
+    T = 0; seq = 0; vols = []; acum = zera2(); conc = { M: [], P: [] }; itensFeitos = { M: [], P: [] };
+    serie = []; proxAmostra = 0; proxLimpa = 0; lead = { M: [], P: [] }; perdidos = zera2(); incompletas = zera2(); escape = zera2();
+    confOcup = 0; voltasTot = 0; emConf = 0;
     Object.values(LINHAS).forEach((L) =&gt; L.est.forEach((e) =&gt; { e.fila = []; e.chegando = 0; e.atual = null; e.fim = 0; e.ocupado = 0; e.itens = 0; }));
   }
+  reiniciar();
 
   // sorteio de itens: % no alto giro (P.pAlto); dentro de cada área, proporcional ao número de endereços da estação
   function sortearEstacao(L) {
@@ -4374,10 +4487,10 @@ canvas { display: block; width: 100%; }
       if (!porEst.has(e)) porEst.set(e, []);
       porEst.get(e).push({ cat, u: geom(pl.unid) });
     }
-    const alvos = [...porEst.entries()].sort((a, b) =&gt; a[0].k - b[0].k).map(([e, its]) =&gt; ({ e, its, feito: false }));
-    vols.push({ id: ++seq, L, x: 0, est: &#x27;T&#x27;, alvos, t0: T, delay: 0, para: null, itens: n, rec: 0 });
+    const alvos = [...porEst.entries()].sort((a, b) =&gt; a[0].k - b[0].k).map(([e, its]) =&gt; ({ e, its, feito: false, perdido: false }));
+    vols.push({ id: ++seq, L, x: 0, est: &#x27;T&#x27;, alvos, t0: T, delay: 0, para: null, itens: n, voltas: 0 });
   }
-  const proximo = (v) =&gt; v.alvos.find((a) =&gt; !a.feito);
+  const pendente = (a) =&gt; !a.feito &amp;&amp; !a.perdido;
   const lotacao = (e) =&gt; e.fila.length + e.chegando + (e.atual ? 1 : 0);
   function tempoSeparacao(alvo) {
     let t = P.tCaixa;
@@ -4387,12 +4500,14 @@ canvas { display: block; width: 100%; }
     });
     return t;
   }
-  function desviar(v, e, de) {   // vai pela esteira de separação até a estação e
+  function desviar(v, e, de) {   // pela área de desvio (esteira de separação) até a estação e
     v.est = &#x27;D&#x27;;
     v.para = e;
     v.delay = Math.abs(e.x - de) / P.vEst + 1;
     e.chegando++;
   }
+  function perder(v, a) { a.perdido = true; perdidos[v.L.id] += a.its.length; }
+  const voltaS = () =&gt; P.loopM / P.vEst;
 
   // ------------------------------------------------------------------ passo da simulação (dt em segundos)
   function passo(dt) {
@@ -4407,46 +4522,65 @@ canvas { display: block; width: 100%; }
       if (v.est === &#x27;T&#x27;) {
         const x0 = v.x;
         v.x += P.vEst * dt;
-        // tenta entrar em cada estação pendente cuja transferência foi cruzada neste passo
-        for (const a of v.alvos) {
-          if (a.feito || a.e.xt &lt;= x0 || a.e.xt &gt; v.x) continue;
-          if (lotacao(a.e) &lt; P.fila) { desviar(v, a.e, a.e.xt); break; }
+        // TRs cruzadas neste passo: desvia para a primeira estação pendente com lugar; se nenhuma tem lugar, passa direto
+        for (const tr of L.trs) {
+          if (tr.x &lt;= x0 || tr.x &gt; v.x) continue;
+          const aqui = v.alvos.filter((a) =&gt; pendente(a) &amp;&amp; a.e.tr === tr);
+          if (!aqui.length) continue;
+          const livre = aqui.find((a) =&gt; lotacao(a.e) &lt; P.fila);
+          if (livre) { desviar(v, livre.e, tr.x); break; }
+          aqui.forEach((a) =&gt; perder(v, a));   // não há retorno às linhas no desenho: o item fica para a conferência
         }
-        if (v.est === &#x27;T&#x27; &amp;&amp; v.x &gt;= L.comp) {
-          if (proximo(v)) { v.est = &#x27;R&#x27;; v.delay = LOOP / P.vEst; v.rec++; recirc[L.id]++; }
-          else { v.est = &#x27;X&#x27;; conc[L.id].push(T); lead[L.id].push(T - v.t0); }
+        if (v.est === &#x27;T&#x27; &amp;&amp; v.x &gt;= L.comp) {   // chega ao loop da conferência
+          v.est = &#x27;C&#x27;; v.tC = T; v.prox = T; v.voltas = 0; emConf++;
         }
-      } else if (v.est === &#x27;D&#x27; || v.est === &#x27;R&#x27;) {
+      } else if (v.est === &#x27;D&#x27;) {
         v.delay -= dt;
-        if (v.delay &lt;= 0) {
-          if (v.est === &#x27;R&#x27;) { v.est = &#x27;T&#x27;; v.x = 0; }
-          else { v.est = &#x27;F&#x27;; v.para.chegando--; v.para.fila.push(v); }
-        }
+        if (v.delay &lt;= 0) { v.est = &#x27;F&#x27;; v.para.chegando--; v.para.fila.push(v); }
       }
     }
     // estações
     Object.values(LINHAS).forEach((L) =&gt; L.est.forEach((e) =&gt; {
       if (e.atual &amp;&amp; T &gt;= e.fim) {
-        const v = e.atual, a = v.alvos.find((x) =&gt; x.e === e &amp;&amp; !x.feito);
+        const v = e.atual, a = v.alvos.find((x) =&gt; x.e === e &amp;&amp; pendente(x));
         a.feito = true;
         e.itens += a.its.length;
         itensFeitos[L.id].push([T, a.its.length]);
         e.atual = null;
-        const prox = v.alvos.find((x) =&gt; !x.feito &amp;&amp; x.e.grupo === e.grupo &amp;&amp; lotacao(x.e) &lt; P.fila);
+        // outra estação da mesma TR: vai direto pela esteira de separação
+        const outras = v.alvos.filter((x) =&gt; pendente(x) &amp;&amp; x.e.tr === e.tr);
+        const prox = outras.find((x) =&gt; lotacao(x.e) &lt; P.fila);
         if (prox) desviar(v, prox.e, e.x);
-        else { v.est = &#x27;T&#x27;; v.x = Math.max(e.x, e.xt) + 0.01; }
+        else {
+          outras.forEach((x) =&gt; perder(v, x));
+          v.est = &#x27;T&#x27;; v.x = e.tr.x + 0.01;
+        }
       }
       if (!e.atual &amp;&amp; e.fila.length) {
-        const v = e.fila.shift(), a = v.alvos.find((x) =&gt; x.e === e &amp;&amp; !x.feito);
+        const v = e.fila.shift(), a = v.alvos.find((x) =&gt; x.e === e &amp;&amp; pendente(x));
         v.est = &#x27;S&#x27;;
         e.atual = v;
-        const t = tempoSeparacao(a);
-        e.fim = T + t;
+        e.fim = T + tempoSeparacao(a);
       }
       if (e.atual) e.ocupado += dt;
     }));
-    if (T &gt;= proxLimpa) { proxLimpa = T + 30; vols = vols.filter((v) =&gt; v.est !== &#x27;X&#x27;); }
-    // série para o gráfico
+    // conferência: a caixa tenta um conferente a cada volta; depois de P.voltas voltas vai para o escape
+    let ocupados = vols.reduce((s, v) =&gt; s + (v.est === &#x27;K&#x27; ? 1 : 0), 0);
+    for (const v of vols) {
+      if (v.est === &#x27;K&#x27; &amp;&amp; T &gt;= v.fimK) {
+        v.est = &#x27;X&#x27;; ocupados--; emConf--;
+        conc[v.L.id].push(T); lead[v.L.id].push(T - v.t0);
+        if (v.alvos.some((a) =&gt; !a.feito)) incompletas[v.L.id]++;
+      }
+    }
+    const fila = vols.filter((v) =&gt; v.est === &#x27;C&#x27; &amp;&amp; T &gt;= v.prox).sort((a, b) =&gt; a.prox - b.prox);
+    for (const v of fila) {
+      if (ocupados &lt; P.conf) { v.est = &#x27;K&#x27;; v.fimK = T + P.tConf; ocupados++; voltasTot += v.voltas; }
+      else if (v.voltas + 1 &gt;= P.voltas) { v.est = &#x27;E&#x27;; emConf--; escape[v.L.id]++; voltasTot += v.voltas + 1; }
+      else { v.voltas++; v.prox = T + voltaS(); }
+    }
+    confOcup += ocupados * dt;
+    if (T &gt;= proxLimpa) { proxLimpa = T + 30; vols = vols.filter((v) =&gt; v.est !== &#x27;X&#x27; &amp;&amp; v.est !== &#x27;E&#x27;); }
     if (T &gt;= proxAmostra) {
       proxAmostra = T + 300;
       serie.push({ t: T, M: porHora(conc.M), P: porHora(conc.P) });
@@ -4476,39 +4610,50 @@ canvas { display: block; width: 100%; }
     const top = L.est.slice().sort((a, b) =&gt; b.ocupado - a.ocupado)[0];
     const ld = lead[id].slice(-300);
     const fila = vols.filter((v) =&gt; v.L === L &amp;&amp; (v.est === &#x27;F&#x27; || v.est === &#x27;D&#x27;)).length;
-    const linha = vols.filter((v) =&gt; v.L === L &amp;&amp; v.est !== &#x27;X&#x27;).length;
+    const linha = vols.filter((v) =&gt; v.L === L &amp;&amp; &#x27;TDFS&#x27;.includes(v.est)).length;
     const ocupH = L.est.reduce((s, e) =&gt; s + e.ocupado, 0) / 3600;
     const itensTot = L.est.reduce((s, e) =&gt; s + e.itens, 0);
     return { vh, ih, prod: ops ? ih / ops : 0, ocup, efet: ocupH &gt; 0 ? itensTot / ocupH : 0, ocupH, itensTot, top, lead: ld.length ? ld.reduce((s, x) =&gt; s + x, 0) / ld.length : 0,
-      fila, linha, rec: recirc[id], total: conc[id].length, ops };
+      fila, linha, perd: perdidos[id], inc: incompletas[id], esc: escape[id], total: conc[id].length, ops };
   }
+  const tempo = (s) =&gt; (s ? (s &gt;= 3600 ? fmtT(s) : fmtT(s).slice(3)) : &#x27;–&#x27;);
   function renderKPIs() {
     const k = { M: indicadores(&#x27;M&#x27;), P: indicadores(&#x27;P&#x27;) };
     const card = (titulo, cor, x) =&gt; `&lt;div class=&quot;kpi&quot;&gt;&lt;h3&gt;&lt;span style=&quot;width:10px;height:10px;border-radius:50%;background:${cor};display:inline-block&quot;&gt;&lt;/span&gt;${titulo}&lt;/h3&gt;&lt;table&gt;
-      &lt;tr class=&quot;grande&quot;&gt;&lt;td&gt;Volumes por hora&lt;/td&gt;&lt;td&gt;${fmt(x.vh)}&lt;/td&gt;&lt;/tr&gt;
-      &lt;tr&gt;&lt;td&gt;Itens por hora&lt;/td&gt;&lt;td&gt;${fmt(x.ih)}&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr class=&quot;grande&quot;&gt;&lt;td&gt;Volumes conferidos por hora&lt;/td&gt;&lt;td&gt;${fmt(x.vh)}&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr&gt;&lt;td&gt;Itens separados por hora&lt;/td&gt;&lt;td&gt;${fmt(x.ih)}&lt;/td&gt;&lt;/tr&gt;
       &lt;tr&gt;&lt;td&gt;Itens/h por operador&lt;/td&gt;&lt;td&gt;${fmt(x.prod)}&lt;/td&gt;&lt;/tr&gt;
       &lt;tr&gt;&lt;td&gt;Itens por hora de trabalho efetivo&lt;/td&gt;&lt;td&gt;${fmt(x.efet)}&lt;/td&gt;&lt;/tr&gt;
       &lt;tr&gt;&lt;td&gt;Ocupação média das estações&lt;/td&gt;&lt;td&gt;${fmt(x.ocup * 100)}%&lt;/td&gt;&lt;/tr&gt;
-      &lt;tr&gt;&lt;td&gt;Tempo médio do volume na linha&lt;/td&gt;&lt;td&gt;${x.lead ? (x.lead &gt;= 3600 ? fmtT(x.lead) : fmtT(x.lead).slice(3)) : &#x27;–&#x27;}&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr&gt;&lt;td&gt;Tempo do divisor até conferida&lt;/td&gt;&lt;td&gt;${tempo(x.lead)}&lt;/td&gt;&lt;/tr&gt;
       &lt;tr&gt;&lt;td&gt;Volumes na linha / esperando&lt;/td&gt;&lt;td&gt;${fmt(x.linha)} / ${fmt(x.fila)}&lt;/td&gt;&lt;/tr&gt;
-      &lt;tr&gt;&lt;td&gt;Recirculações&lt;/td&gt;&lt;td&gt;${fmt(x.rec)}&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr class=&quot;${x.perd ? &#x27;ruim&#x27; : &#x27;&#x27;}&quot;&gt;&lt;td&gt;Itens não separados (estação cheia)&lt;/td&gt;&lt;td&gt;${fmt(x.perd)}&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr class=&quot;${x.inc ? &#x27;ruim&#x27; : &#x27;&#x27;}&quot;&gt;&lt;td&gt;Volumes conferidos incompletos&lt;/td&gt;&lt;td&gt;${fmt(x.inc)}&lt;/td&gt;&lt;/tr&gt;
       ${x.top ? `&lt;tr&gt;&lt;td&gt;Estação mais ocupada&lt;/td&gt;&lt;td&gt;est. ${x.top.rua} · ${fmt(T ? (x.top.ocupado / T) * 100 : 0)}%&lt;/td&gt;&lt;/tr&gt;` : &#x27;&#x27;}
-      &lt;tr&gt;&lt;td&gt;Volumes concluídos&lt;/td&gt;&lt;td&gt;${fmt(x.total)}&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/div&gt;`;
+      &lt;tr&gt;&lt;td&gt;Volumes conferidos&lt;/td&gt;&lt;td&gt;${fmt(x.total)}&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/div&gt;`;
     const tot = { vh: k.M.vh + k.P.vh, ih: k.M.ih + k.P.ih, ops: k.M.ops + k.P.ops, linha: k.M.linha + k.P.linha, fila: k.M.fila + k.P.fila,
-      rec: k.M.rec + k.P.rec, total: k.M.total + k.P.total };
+      perd: k.M.perd + k.P.perd, inc: k.M.inc + k.P.inc, total: k.M.total + k.P.total };
     tot.prod = tot.ops ? tot.ih / tot.ops : 0;
     tot.efet = k.M.ocupH + k.P.ocupH &gt; 0 ? (k.M.itensTot + k.P.itensTot) / (k.M.ocupH + k.P.ocupH) : 0;
     tot.ocup = (k.M.ocup * k.M.ops + k.P.ocup * k.P.ops) / Math.max(1, tot.ops);
     const lds = lead.M.slice(-300).concat(lead.P.slice(-300));
     tot.lead = lds.length ? lds.reduce((s, x) =&gt; s + x, 0) / lds.length : 0;
     tot.top = (k.M.top &amp;&amp; k.P.top) ? (k.M.top.ocupado &gt;= k.P.top.ocupado ? k.M.top : k.P.top) : null;
-    $(&#x27;#kpis&#x27;).innerHTML = card(&#x27;Medicamento · Asi 3&#x27;, LINHAS.M.cor, k.M) + card(&#x27;Perfumaria · Asi 1&#x27;, LINHAS.P.cor, k.P) +
-      card(`Operação (${tot.ops} operadores)`, &#x27;#f2a33a&#x27;, tot);
+    const nConf = conc.M.length + conc.P.length, esc = escape.M + escape.P;
+    const cardConf = `&lt;div class=&quot;kpi&quot;&gt;&lt;h3&gt;&lt;span style=&quot;width:10px;height:10px;border-radius:50%;background:#2e9e4f;display:inline-block&quot;&gt;&lt;/span&gt;Conferência · loop TR_04&lt;/h3&gt;&lt;table&gt;
+      &lt;tr class=&quot;grande&quot;&gt;&lt;td&gt;Caixas no loop agora&lt;/td&gt;&lt;td&gt;${fmt(emConf)}&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr&gt;&lt;td&gt;Conferentes ocupados (média)&lt;/td&gt;&lt;td&gt;${fmt(T ? (confOcup / T / P.conf) * 100 : 0)}%&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr&gt;&lt;td&gt;Voltas por caixa (média)&lt;/td&gt;&lt;td&gt;${fmt(nConf + esc ? voltasTot / (nConf + esc) : 0, 1)}&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr class=&quot;${esc ? &#x27;ruim&#x27; : &#x27;&#x27;}&quot;&gt;&lt;td&gt;Foram para o escape (${P.voltas} voltas)&lt;/td&gt;&lt;td&gt;${fmt(esc)}&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr&gt;&lt;td&gt;Capacidade dos conferentes&lt;/td&gt;&lt;td&gt;${fmt((P.conf * 3600) / P.tConf)} cx/h&lt;/td&gt;&lt;/tr&gt;
+      &lt;tr&gt;&lt;td&gt;Uma volta no loop&lt;/td&gt;&lt;td&gt;${tempo(voltaS())}&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+      &lt;p class=&quot;nota&quot;&gt;${P.modo === &#x27;manual&#x27; ? &#x27;Separação &lt;b&gt;sem LEDs&lt;/b&gt;: o operador procura cada endereço na tela do coletor.&#x27; : &#x27;Separação &lt;b&gt;com LEDs&lt;/b&gt;: os endereços da caixa acendem juntos.&#x27;}&lt;/p&gt;&lt;/div&gt;`;
+    $(&#x27;#kpis&#x27;).innerHTML = card(&#x27;Perfumaria · Asi 1&#x27;, LINHAS.P.cor, k.P) + card(&#x27;Medicamento · Asi 3&#x27;, LINHAS.M.cor, k.M) +
+      card(`Operação (${tot.ops} operadores)`, &#x27;#f2a33a&#x27;, tot) + cardConf;
     $(&#x27;#relogio&#x27;).textContent = fmtT(T);
   }
 
-  // ------------------------------------------------------------------ desenho da planta
+  // ------------------------------------------------------------------ desenho da planta (como no desenho: divisor à direita, conferência à esquerda)
   const cv = $(&#x27;#planta&#x27;), cx = cv.getContext(&#x27;2d&#x27;);
   const css = (n) =&gt; getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   function ajustar(c) {
@@ -4521,93 +4666,116 @@ canvas { display: block; width: 100%; }
     const m = o &lt; 0.5 ? [a, b, o / 0.5] : [b, c, Math.min(1, (o - 0.5) / 0.4)];
     return `rgb(${m[0].map((v, i) =&gt; Math.round(v + (m[1][i] - v) * m[2])).join(&#x27;,&#x27;)})`;
   }
+  const rr = (x, y, w, h, r) =&gt; { cx.beginPath(); cx.roundRect ? cx.roundRect(x, y, w, h, r) : cx.rect(x, y, w, h); };
   function desenhar() {
     const [w, h, d] = ajustar(cv);
     cx.setTransform(d, 0, 0, d, 0, 0);
     cx.clearRect(0, 0, w, h);
-    const tinta = css(&#x27;--tinta&#x27;), suave = css(&#x27;--suave&#x27;), linha = css(&#x27;--linha&#x27;);
+    const tinta = css(&#x27;--tinta&#x27;), suave = css(&#x27;--suave&#x27;), linha = css(&#x27;--linha&#x27;), chip = css(&#x27;--chip&#x27;), ep = css(&#x27;--ep&#x27;), epf = css(&#x27;--epf&#x27;);
+    const xLoop0 = 10, xLoop1 = 150, xDiv = w - 104;
     const maxComp = Math.max(LINHAS.M.comp, LINHAS.P.comp);
-    const mx = 34, s = (w - mx * 2 - 40) / maxComp;   // px por metro
-    const X = (m) =&gt; mx + m * s;
-    const hEst = Math.min(46, h * 0.13), hEsteira = 14;
-    const conf = [ // Perfumaria em cima (estações acima da esteira), Medicamento embaixo (estações abaixo)
-      { L: LINHAS.P, y: h * 0.3, lado: -1 },
-      { L: LINHAS.M, y: h * 0.7, lado: 1 },
+    const s = (xDiv - 10 - (xLoop1 + 14)) / maxComp;   // px por metro
+    const X = (m) =&gt; xDiv - 10 - m * s;                 // posição ao longo do fluxo → tela (fluxo da direita para a esquerda)
+    const hEst = 40, hEp = 26;
+    const conf = [   // Perfumaria em cima: estações, pistas, área de desvio; Medicamento embaixo, espelhado
+      { L: LINHAS.P, yEst: 34, yPista: 104, yEp: 120, yTag: 90 },
+      { L: LINHAS.M, yEst: h - 34 - hEst, yPista: h - 104, yEp: h - 120 - hEp, yTag: h - 90 },
     ];
-    // entrada e saída
     cx.font = &#x27;600 11px system-ui, sans-serif&#x27;;
-    cx.fillStyle = suave;
-    cx.textAlign = &#x27;center&#x27;;
-    cx.fillText(&#x27;ENTRADA&#x27;, X(1.5), h * 0.5 + 4);
-    cx.fillText(&#x27;SAÍDA / TR_04&#x27;, X(maxComp) + 6, h * 0.5 + 4);
-    conf.forEach(({ L, y, lado }) =&gt; {
-      // retorno (recirculação) pelo meio
-      const yr = y - lado * (hEsteira + 18);
-      cx.strokeStyle = linha;
-      cx.setLineDash([4, 4]);
-      cx.lineWidth = 2;
-      cx.beginPath();
-      cx.moveTo(X(L.comp), y); cx.lineTo(X(L.comp) + 14, y); cx.lineTo(X(L.comp) + 14, yr); cx.lineTo(X(0) - 12, yr); cx.lineTo(X(0) - 12, y); cx.lineTo(X(0), y);
-      cx.stroke();
-      cx.setLineDash([]);
-      // esteira de transporte
-      cx.fillStyle = css(&#x27;--chip&#x27;);
-      cx.strokeStyle = suave;
-      cx.lineWidth = 1;
-      cx.fillRect(X(0), y - hEsteira / 2, L.comp * s, hEsteira);
-      cx.strokeRect(X(0), y - hEsteira / 2, L.comp * s, hEsteira);
+    // conferência (loop) e escape à esquerda
+    const yL0 = conf[0].yPista - 18, yL1 = conf[1].yPista + 18;
+    cx.strokeStyle = tinta; cx.lineWidth = 2.5; cx.fillStyle = chip;
+    rr(xLoop0, yL0, xLoop1 - xLoop0, yL1 - yL0, 22); cx.fill(); cx.stroke();
+    cx.fillStyle = tinta; cx.textAlign = &#x27;center&#x27;; cx.font = &#x27;700 12px system-ui, sans-serif&#x27;;
+    cx.fillText(&#x27;Conferência&#x27;, (xLoop0 + xLoop1) / 2, yL0 - 8);
+    cx.font = &#x27;11px system-ui, sans-serif&#x27;; cx.fillStyle = suave;
+    cx.fillText(`${P.conf} conferentes`, (xLoop0 + xLoop1) / 2 - 14, (yL0 + yL1) / 2 + 36);
+    cx.fillText(`até ${P.voltas} voltas`, (xLoop0 + xLoop1) / 2 - 14, (yL0 + yL1) / 2 + 51);
+    [&#x27;TR_04_03&#x27;, &#x27;TR_04_02&#x27;, &#x27;TR_04_01&#x27;].forEach((t, i) =&gt; {
+      const y = yL0 + 30 + i * ((yL1 - yL0 - 60) / 2);
+      cx.fillStyle = &#x27;#2e9e4f&#x27;; cx.fillRect(xLoop1 - 6, y - 7, 10, 14);
+      cx.fillStyle = suave; cx.textAlign = &#x27;right&#x27;; cx.fillText(t, xLoop1 - 10, y + 4);
+    });
+    const yEsc = yL1 + 14;
+    cx.strokeStyle = tinta; cx.lineWidth = 2; cx.fillStyle = css(&#x27;--painel&#x27;);
+    rr(xLoop0, yEsc, xLoop1 - xLoop0, 22, 8); cx.fill(); cx.stroke();
+    cx.fillStyle = tinta; cx.textAlign = &#x27;center&#x27;; cx.font = &#x27;600 11px system-ui, sans-serif&#x27;;
+    cx.fillText(`Escape: ${fmt(escape.M + escape.P)}`, (xLoop0 + xLoop1) / 2, yEsc + 15);
+    // caixas girando no loop e sendo conferidas
+    const per = 2 * ((xLoop1 - xLoop0 - 20) + (yL1 - yL0 - 20));
+    const pontoLoop = (f) =&gt; {
+      const W = xLoop1 - xLoop0 - 20, H = yL1 - yL0 - 20; let q = f * per;
+      if (q &lt; W) return [xLoop0 + 10 + q, yL0 + 10]; q -= W;
+      if (q &lt; H) return [xLoop1 - 10, yL0 + 10 + q]; q -= H;
+      if (q &lt; W) return [xLoop1 - 10 - q, yL1 - 10]; q -= W;
+      return [xLoop0 + 10, yL1 - 10 - q];
+    };
+    let nK = 0;
+    vols.forEach((v) =&gt; {
+      if (v.est === &#x27;C&#x27;) { const [px, py] = pontoLoop((((T - v.tC) / voltaS()) + (v.id % 7) / 7) % 1); cx.fillStyle = v.voltas &gt;= P.voltas - 1 ? &#x27;#e0533f&#x27; : &#x27;#2E9E4F&#x27;; cx.fillRect(px - 3, py - 3, 6, 6); }
+      if (v.est === &#x27;K&#x27;) { cx.fillStyle = &#x27;#2E9E4F&#x27;; cx.fillRect(xLoop0 + 22 + (nK % 6) * 10, yL0 + 22 + Math.floor(nK / 6) * 10, 7, 7); nK++; }
+    });
+    // divisor e alimentação à direita
+    const yTop = conf[0].yPista, yBot = conf[1].yPista;
+    cx.fillStyle = chip; cx.strokeStyle = tinta; cx.lineWidth = 2;
+    rr(xDiv, yTop - 8, 22, h - yTop + 4, 5); cx.fill(); cx.stroke();
+    cx.fillStyle = &#x27;#2e9e4f&#x27;; cx.fillRect(xDiv - 3, yBot - 14, 28, 28);
+    cx.fillStyle = tinta; cx.textAlign = &#x27;left&#x27;; cx.font = &#x27;700 11px system-ui, sans-serif&#x27;;
+    cx.fillText(&#x27;Divisor&#x27;, xDiv + 28, yBot - 2);
+    cx.font = &#x27;10.5px system-ui, sans-serif&#x27;; cx.fillStyle = suave;
+    cx.fillText(&#x27;↑ Perfumaria&#x27;, xDiv + 28, yBot + 12);
+    cx.fillText(&#x27;← Medicamento&#x27;, xDiv + 28, yBot + 25);
+    cx.fillText(&#x27;Impressoras&#x27;, xDiv + 28, h - 22);
+    cx.fillText(&#x27;↑ entrada&#x27;, xDiv + 28, h - 9);
+    conf.forEach(({ L, yEst, yPista, yEp, yTag }) =&gt; {
+      const desl = !P[L.id].on;
+      // pista principal (do divisor até o loop)
+      cx.strokeStyle = L.cor; cx.lineWidth = 4; cx.globalAlpha = desl ? 0.35 : 1;
+      cx.beginPath(); cx.moveTo(xDiv, yPista); cx.lineTo(xLoop1, yPista); cx.stroke();
       cx.fillStyle = L.cor;
-      cx.textAlign = &#x27;left&#x27;;
-      cx.font = &#x27;700 12px system-ui, sans-serif&#x27;;
-      cx.fillText(`${L.nome} · ${L.esteira}${P[L.id].on ? &#x27;&#x27; : &#x27; (desligada)&#x27;}`, X(0), lado &lt; 0 ? y - hEsteira / 2 - hEst - 14 : y + hEsteira / 2 + hEst + 24);
+      for (let m = 4; m &lt; L.comp; m += 10) { const px = X(m); cx.beginPath(); cx.moveTo(px - 5, yPista); cx.lineTo(px + 2, yPista - 5); cx.lineTo(px + 2, yPista + 5); cx.fill(); }
+      cx.globalAlpha = 1;
+      cx.fillStyle = L.cor; cx.textAlign = &#x27;right&#x27;; cx.font = &#x27;700 12px system-ui, sans-serif&#x27;;
+      const yNome = yEst &lt; h / 2 ? yEst - 10 : yEst + hEst + 20;
+      cx.fillText(`${L.esteira} · ${L.nome}${desl ? &#x27; (desligada)&#x27; : &#x27;&#x27;}`, X(0), yNome);
+      // áreas de desvio
+      L.trs.forEach((tr) =&gt; tr.eps.forEach((e) =&gt; {
+        const a = X(e.x1) + 1, b = X(e.x0) - 1;
+        cx.fillStyle = epf; cx.strokeStyle = ep; cx.lineWidth = 1;
+        rr(a, yEp, b - a, hEp, 4); cx.fill(); cx.stroke();
+        cx.fillStyle = tinta; cx.textAlign = &#x27;center&#x27;; cx.font = `600 ${b - a &lt; 40 ? 8.5 : 10}px system-ui, sans-serif`;
+        cx.fillText(e.cod.replace(&#x27;EP_&#x27;, &#x27;&#x27;), (a + b) / 2, yEp + 17);
+      }));
+      // TRs
+      L.trs.forEach((tr) =&gt; {
+        const px = X(tr.x), y0 = Math.min(yPista, yEp) - 6, y1 = Math.max(yPista, yEp + hEp) + 4;
+        cx.fillStyle = &#x27;#2e9e4f&#x27;; cx.fillRect(px - 3, y0, 6, y1 - y0);
+        cx.fillStyle = suave; cx.textAlign = &#x27;center&#x27;; cx.font = &#x27;600 10px system-ui, sans-serif&#x27;;
+        cx.fillText(tr.cod.slice(3), px, yTag + 4);
+      });
       // estações
       L.est.forEach((e) =&gt; {
-        const ox = X(e.x - PASSO / 2) + 1, oy = lado &lt; 0 ? y - hEsteira / 2 - 6 - hEst : y + hEsteira / 2 + 6;
+        const ox = X(e.x + PASSO / 2) + 1, wE = PASSO * s - 2;
         const o = T &gt; 0 ? e.ocupado / T : 0;
-        cx.fillStyle = corOcup(o);
-        cx.strokeStyle = &#x27;#9aa6b8&#x27;;
-        cx.fillRect(ox, oy, PASSO * s - 2, hEst);
-        cx.strokeRect(ox, oy, PASSO * s - 2, hEst);
-        cx.fillStyle = &#x27;#1b2638&#x27;;
-        cx.textAlign = &#x27;center&#x27;;
-        cx.font = &#x27;700 11px system-ui, sans-serif&#x27;;
-        cx.fillText(e.rua, X(e.x), oy + 13);
-        // operador
-        cx.beginPath();
-        cx.arc(X(e.x) - 6, oy + hEst - 12, 4.5, 0, Math.PI * 2);
-        cx.fillStyle = e.atual ? &#x27;#2E9E4F&#x27; : &#x27;#9aa6b8&#x27;;
-        cx.fill();
+        cx.fillStyle = corOcup(o); cx.strokeStyle = &#x27;#9aa6b8&#x27;; cx.lineWidth = 1;
+        cx.fillRect(ox, yEst, wE, hEst); cx.strokeRect(ox, yEst, wE, hEst);
+        cx.fillStyle = &#x27;#1b2638&#x27;; cx.textAlign = &#x27;center&#x27;; cx.font = &#x27;700 11px system-ui, sans-serif&#x27;;
+        cx.fillText(e.rua, X(e.x), yEst + 13);
+        cx.beginPath(); cx.arc(X(e.x) - 6, yEst + hEst - 11, 4.5, 0, Math.PI * 2);
+        cx.fillStyle = e.atual ? &#x27;#2E9E4F&#x27; : &#x27;#9aa6b8&#x27;; cx.fill();
         const nf = e.fila.length + e.chegando;
-        if (nf) { cx.fillStyle = &#x27;#1b2638&#x27;; cx.font = &#x27;700 11px system-ui, sans-serif&#x27;; cx.fillText(String(nf), X(e.x) + 7, oy + hEst - 8); }
+        if (nf) { cx.fillStyle = &#x27;#1b2638&#x27;; cx.fillText(String(nf), X(e.x) + 7, yEst + hEst - 7); }
+        if (e.atual) { cx.fillStyle = &#x27;#2E9E4F&#x27;; cx.fillRect(X(e.x) + 2, yEst + 17, 8, 8); }
       });
-      // transferências
-      L.transf.forEach((t) =&gt; {
-        cx.fillStyle = &#x27;#2e8b57&#x27;;
-        cx.fillRect(X(t.x) - 3, y - hEsteira / 2 - 5, 6, 5);
-        cx.fillRect(X(t.x) - 3, y + hEsteira / 2, 6, 5);
-      });
-      // caixas
+      // caixas na pista e na área de desvio
       vols.forEach((v) =&gt; {
-        if (v.L !== L || v.est === &#x27;X&#x27;) return;
-        let px, py;
-        if (v.est === &#x27;T&#x27;) { px = X(v.x); py = y; }
-        else if (v.est === &#x27;R&#x27;) { const f = 1 - Math.max(0, v.delay) / (LOOP / P.vEst); px = X(L.comp) - f * (X(L.comp) - X(0)); py = yr; }
-        else if (v.est === &#x27;D&#x27;) { px = X(v.para.x); py = y + lado * (hEsteira / 2 + 3); }
-        else return;
-        cx.fillStyle = &#x27;#2E9E4F&#x27;;
-        cx.fillRect(px - 3.5, py - 3.5, 7, 7);
-      });
-      L.est.forEach((e) =&gt; {   // caixa sendo separada
-        if (!e.atual) return;
-        const oy = lado &lt; 0 ? y - hEsteira / 2 - 6 - hEst : y + hEsteira / 2 + 6;
-        cx.fillStyle = &#x27;#2E9E4F&#x27;;
-        cx.fillRect(X(e.x) + 2, oy + hEst / 2 - 9, 9, 9);
+        if (v.L !== L) return;
+        if (v.est === &#x27;T&#x27;) { cx.fillStyle = &#x27;#2E9E4F&#x27;; cx.fillRect(X(v.x) - 3.5, yPista - 3.5, 7, 7); }
+        else if (v.est === &#x27;D&#x27;) { cx.fillStyle = &#x27;#2E9E4F&#x27;; cx.fillRect(X(v.para.x) - 3.5, yEp + 4, 7, 7); }
       });
     });
-    cx.fillStyle = suave;
-    cx.textAlign = &#x27;center&#x27;;
-    cx.font = &#x27;11px system-ui, sans-serif&#x27;;
-    cx.fillText(&#x27;linha tracejada = retorno da caixa que não conseguiu entrar na estação (recirculação)&#x27;, w / 2, h * 0.5 + 4);
+    cx.fillStyle = suave; cx.textAlign = &#x27;center&#x27;; cx.font = &#x27;11px system-ui, sans-serif&#x27;;
+    cx.fillText(`← as esteiras correm do divisor para a conferência · separação ${P.modo === &#x27;manual&#x27; ? &#x27;SEM LEDs (como hoje)&#x27; : &#x27;COM LEDs (PTL)&#x27;}`, (xLoop1 + xDiv) / 2, h / 2 + 4);
   }
 
   // ------------------------------------------------------------------ gráficos
@@ -4632,8 +4800,7 @@ canvas { display: block; width: 100%; }
     for (let hh = 0; hh &lt;= tMax / 3600; hh += Math.max(1, Math.round(tMax / 3600 / 8))) {
       g.fillText(hh + &#x27; h&#x27;, ml + ((w - ml - mr) * hh * 3600) / tMax, h - 5);
     }
-    [[&#x27;M&#x27;, LINHAS.M.cor], [&#x27;P&#x27;, LINHAS.P.cor]].forEach(([k, cor]) =&gt; {
-      // meta: volumes que entram por hora (tracejado)
+    [[&#x27;P&#x27;, LINHAS.P.cor], [&#x27;M&#x27;, LINHAS.M.cor]].forEach(([k, cor]) =&gt; {
       g.strokeStyle = cor;
       g.setLineDash([3, 4]);
       const ym = h - mb - ((h - mb - mt) * P[k].vph) / maxV;
@@ -4681,7 +4848,7 @@ canvas { display: block; width: 100%; }
       &lt;div class=&quot;param&quot;&gt;&lt;label&gt;Volumes que entram por hora&lt;/label&gt;&lt;output data-o=&quot;vph&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; data-k=&quot;vph&quot; min=&quot;0&quot; max=&quot;600&quot; step=&quot;5&quot; value=&quot;${P[id].vph}&quot;&gt;&lt;/div&gt;
       &lt;div class=&quot;param&quot;&gt;&lt;label&gt;Itens por volume (média)&lt;/label&gt;&lt;output data-o=&quot;itens&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; data-k=&quot;itens&quot; min=&quot;1&quot; max=&quot;60&quot; step=&quot;1&quot; value=&quot;${P[id].itens}&quot;&gt;&lt;/div&gt;
       &lt;div class=&quot;param&quot;&gt;&lt;label&gt;Unidades por item (média)&lt;/label&gt;&lt;output data-o=&quot;unid&quot;&gt;&lt;/output&gt;&lt;input type=&quot;range&quot; data-k=&quot;unid&quot; min=&quot;1&quot; max=&quot;12&quot; step=&quot;0.5&quot; value=&quot;${P[id].unid}&quot;&gt;&lt;/div&gt;
-      &lt;p class=&quot;nota&quot;&gt;${L.n} operadores (1 por estação). Produtos por volume ≈ &lt;b data-o=&quot;prod&quot;&gt;&lt;/b&gt;.&lt;/p&gt;`;
+      &lt;p class=&quot;nota&quot;&gt;${L.n} operadores (1 por estação) · 6 TRs · 11 áreas de desvio. Produtos por volume ≈ &lt;b data-o=&quot;prod&quot;&gt;&lt;/b&gt;.&lt;/p&gt;`;
     const at = () =&gt; {
       el.querySelectorAll(&#x27;[data-o]&#x27;).forEach((o) =&gt; {
         const k = o.dataset.o;
@@ -4696,17 +4863,24 @@ canvas { display: block; width: 100%; }
     });
     at();
   }
-  painelLinha(&#x27;M&#x27;);
   painelLinha(&#x27;P&#x27;);
-  const comuns = { pAlto: [0, &#x27;%&#x27;], vEst: [2, &#x27;&#x27;], tAlto: [1, &#x27; s&#x27;], t45: [1, &#x27; s&#x27;], tBaixo: [1, &#x27; s&#x27;], tUni: [1, &#x27; s&#x27;], tCaixa: [0, &#x27; s&#x27;], tProc: [1, &#x27; s&#x27;], fila: [0, &#x27;&#x27;] };
+  painelLinha(&#x27;M&#x27;);
+  const comuns = { pAlto: [0, &#x27;%&#x27;], vEst: [2, &#x27;&#x27;], tAlto: [1, &#x27; s&#x27;], t45: [1, &#x27; s&#x27;], tBaixo: [1, &#x27; s&#x27;], tUni: [1, &#x27; s&#x27;], tCaixa: [0, &#x27; s&#x27;], tProc: [1, &#x27; s&#x27;], fila: [0, &#x27;&#x27;],
+    entrada: [0, &#x27; m&#x27;], conf: [0, &#x27;&#x27;], tConf: [0, &#x27; s&#x27;], loopM: [0, &#x27; m&#x27;], voltas: [0, &#x27;&#x27;] };
   Object.entries(comuns).forEach(([k, [dec, un]]) =&gt; {
     const i = $(&#x27;#&#x27; + k), o = $(&#x27;#o&#x27; + k);
     i.value = P[k];
-    const at = () =&gt; { P[k] = +i.value; o.textContent = fmt(P[k], dec) + un; };
+    const at = () =&gt; { P[k] = +i.value; o.textContent = fmt(P[k], dec) + un; if (k === &#x27;entrada&#x27;) montarLinhas(); };
     i.addEventListener(&#x27;input&#x27;, at);
     at();
   });
-  $(&#x27;#modo&#x27;).addEventListener(&#x27;change&#x27;, (e) =&gt; { P.modo = e.target.value; });
+  function aplicarModo(m, avisar) {
+    P.modo = m;
+    $(&#x27;#selLed&#x27;).querySelectorAll(&#x27;button&#x27;).forEach((x) =&gt; x.classList.toggle(&#x27;on&#x27;, x.dataset.v === m));
+    if (avisar &amp;&amp; window.parent !== window) window.parent.postMessage({ ptlFilho: true, tipo: &#x27;led&#x27;, valor: m === &#x27;ptl&#x27; }, &#x27;*&#x27;);
+    tudo();
+  }
+  $(&#x27;#selLed&#x27;).addEventListener(&#x27;click&#x27;, (e) =&gt; { const b = e.target.closest(&#x27;button&#x27;); if (b &amp;&amp; b.dataset.v !== P.modo) aplicarModo(b.dataset.v, true); });
   $(&#x27;#btnPlay&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; { rodando = !rodando; $(&#x27;#btnPlay&#x27;).textContent = rodando ? &#x27;Pausar&#x27; : &#x27;Continuar&#x27;; });
   $(&#x27;#btnReset&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; { reiniciar(); tudo(); });
   $(&#x27;#selVel&#x27;).addEventListener(&#x27;click&#x27;, (e) =&gt; {
@@ -4729,25 +4903,25 @@ canvas { display: block; width: 100%; }
       $(&#x27;#btnPlay&#x27;).textContent = &#x27;Continuar&#x27;;
     }, 30);
   });
-  // capacidade: maior entrada de volumes/h que a linha ainda escoa (&gt;= 97% concluído nas horas 2 e 3, sem fila crescendo)
+  // capacidade: maior entrada de volumes/h que a linha escoa nas horas 2 e 3: ≥ 97% conferido, ≤ 2% incompletos, ≤ 1% no escape
   function escoa(id, vph) {
     const L = LINHAS[id];
     P[id].vph = vph;
     reiniciar();
     let ent = 0;
-    while (T &lt; 3 * 3600) { passo(1); if (T &gt; 3600) ent += (vph * 1) / 3600; }
+    while (T &lt; 3 * 3600) { passo(1); if (T &gt; 3600) ent += vph / 3600; }
     const feitos = conc[id].filter((t) =&gt; t &gt; 3600).length;
-    const naLinha = vols.filter((v) =&gt; v.L === L &amp;&amp; v.est !== &#x27;X&#x27;).length;
-    return feitos &gt;= 0.97 * ent &amp;&amp; naLinha &lt; Math.max(30, vph * 0.35);
+    const naLinha = vols.filter((v) =&gt; v.L === L &amp;&amp; &#x27;TDFSC&#x27;.includes(v.est)).length;
+    return feitos &gt;= 0.97 * ent &amp;&amp; incompletas[id] &lt;= 0.02 * conc[id].length &amp;&amp; escape[id] &lt;= 0.01 * (conc[id].length + escape[id]) &amp;&amp; naLinha &lt; Math.max(30, vph * 0.35);
   }
   function capacidade(id, modo) {
     const guarda = JSON.stringify(P), outro = id === &#x27;M&#x27; ? &#x27;P&#x27; : &#x27;M&#x27;;
     P[outro].on = false; P[id].on = true; P.modo = modo;
-    let lo = 20, hi = 1000;
+    let lo = 0, hi = 1000;
     while (hi - lo &gt; 10) { const m = Math.round((lo + hi) / 2); if (escoa(id, m)) lo = m; else hi = m; }
     const r = { vph: lo, ih: lo * P[id].itens };
-    Object.assign(P, JSON.parse(guarda));
-    P.M = JSON.parse(guarda).M; P.P = JSON.parse(guarda).P;
+    const g = JSON.parse(guarda);
+    Object.assign(P, g);
     return r;
   }
   $(&#x27;#btnCap&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; {
@@ -4757,13 +4931,13 @@ canvas { display: block; width: 100%; }
     setTimeout(() =&gt; {
       const t0 = performance.now();
       const r = {};
-      [&#x27;M&#x27;, &#x27;P&#x27;].forEach((id) =&gt; { r[id] = { ptl: capacidade(id, &#x27;ptl&#x27;), manual: capacidade(id, &#x27;manual&#x27;) }; });
+      [&#x27;P&#x27;, &#x27;M&#x27;].forEach((id) =&gt; { r[id] = { ptl: capacidade(id, &#x27;ptl&#x27;), manual: capacidade(id, &#x27;manual&#x27;) }; });
       reiniciar();
       const lin = (id) =&gt; {
         const x = r[id], g = x.manual.vph ? (x.ptl.vph / x.manual.vph - 1) * 100 : 0;
-        return `&lt;b&gt;${LINHAS[id].nome}&lt;/b&gt;: até &lt;b&gt;${fmt(x.ptl.vph)}&lt;/b&gt; volumes/h com PTL (${fmt(x.ptl.ih / LINHAS[id].n)} itens/h por operador) e ${fmt(x.manual.vph)} sem PTL, &lt;b&gt;${g &gt;= 0 ? &#x27;+&#x27; : &#x27;&#x27;}${fmt(g)}%&lt;/b&gt;.`;
+        return `&lt;b&gt;${LINHAS[id].nome}&lt;/b&gt;: até &lt;b&gt;${fmt(x.ptl.vph)}&lt;/b&gt; volumes/h com LEDs (${fmt(x.ptl.ih / LINHAS[id].n)} itens/h por operador) e ${fmt(x.manual.vph)} sem LEDs, &lt;b&gt;${g &gt;= 0 ? &#x27;+&#x27; : &#x27;&#x27;}${fmt(g)}%&lt;/b&gt;.`;
       };
-      out.innerHTML = `${lin(&#x27;M&#x27;)}&lt;br&gt;${lin(&#x27;P&#x27;)}&lt;br&gt;Com os itens por volume e as premissas atuais. Calculado em ${fmt((performance.now() - t0) / 1000, 1)} s.`;
+      out.innerHTML = `${lin(&#x27;P&#x27;)}&lt;br&gt;${lin(&#x27;M&#x27;)}&lt;br&gt;Com os itens por volume e as premissas atuais (uma linha por vez, sem incompletos nem escape). Calculado em ${fmt((performance.now() - t0) / 1000, 1)} s.`;
       window.PTL_OP.capacidade = r;
       b.disabled = false;
       tudo();
@@ -4774,8 +4948,14 @@ canvas { display: block; width: 100%; }
   // ------------------------------------------------------------------ laço
   let tAnt = performance.now(), uiT = 0, visivel = window.parent === window;
   if (!visivel) window.parent.postMessage({ ptlFilho: true, tipo: &#x27;pronto&#x27; }, &#x27;*&#x27;);
-  // dentro do simulador unificado: só avança quando a aba &quot;Operação completa&quot; está aberta
-  window.addEventListener(&#x27;message&#x27;, (e) =&gt; { const d = e.data || {}; if (d.ptlPai &amp;&amp; d.tipo === &#x27;visivel&#x27;) visivel = !!d.valor; });
+  // dentro do simulador unificado: só avança quando a aba &quot;Operação completa&quot; está aberta; o modo com/sem LEDs acompanha o 3D
+  window.addEventListener(&#x27;message&#x27;, (e) =&gt; {
+    const d = e.data || {};
+    if (!d.ptlPai) return;
+    if (d.tipo === &#x27;visivel&#x27;) visivel = !!d.valor;
+    if (d.tipo === &#x27;led&#x27;) { const m = d.valor ? &#x27;ptl&#x27; : &#x27;manual&#x27;; if (m !== P.modo) aplicarModo(m, false); }
+  });
+  if (new URLSearchParams(location.search).has(&#x27;semled&#x27;)) aplicarModo(&#x27;manual&#x27;, false);
   function laco(agora) {
     requestAnimationFrame(laco);
     const real = Math.min(0.25, (agora - tAnt) / 1000);
@@ -4789,7 +4969,7 @@ canvas { display: block; width: 100%; }
     if (uiT &gt; 0.4) { uiT = 0; renderKPIs(); grafico(); ocupacao(); }
   }
   window.addEventListener(&#x27;resize&#x27;, tudo);
-  window.PTL_OP = { P, LINHAS, passo, reiniciar, indicadores, T: () =&gt; T };
+  window.PTL_OP = { P, LINHAS, passo, reiniciar, indicadores, T: () =&gt; T, aplicarModo, estado: () =&gt; ({ perdidos, incompletas, escape, emConf, conc }) };
   requestAnimationFrame(laco);
 })();
 &lt;/script&gt;
@@ -4831,11 +5011,15 @@ canvas { display: block; width: 100%; }
   });
   window.addEventListener('message', (e) => {
     const d = e.data || {};
-    if (e.source === f3d.contentWindow && d.ptl) { paraCom(d); paraCtl(d); }
+    if (e.source === f3d.contentWindow && d.ptl) {
+      paraCom(d); paraCtl(d);
+      if (d.evento === 'led') { try { fop.contentWindow.postMessage({ ptlPai: true, tipo: 'led', valor: d.led }, '*'); } catch (x) { /* ainda carregando */ } }
+    }
     if (e.source === fcom.contentWindow && d.ptlFilho) {
       if (d.tipo === 'pronto') { para3d({ tipo: 'pedirMapa' }); aplicar(modo); }
       if (d.tipo === 'gatilho' || d.tipo === 'apertar' || d.tipo === 'rede') para3d(d);
     }
+    if (e.source === fop.contentWindow && d.ptlFilho && d.tipo === 'led') para3d({ tipo: 'led', valor: d.valor });
     if (e.source === fop.contentWindow && d.ptlFilho && d.tipo === 'pronto') fop.contentWindow.postMessage({ ptlPai: true, tipo: 'visivel', valor: modo === 'op' }, '*');
     if (e.source === fctl.contentWindow && d.ptlFilho) {
       if (d.tipo === 'pronto') para3d({ tipo: 'pedirMapa' });

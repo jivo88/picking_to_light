@@ -14,7 +14,7 @@ tamanho único; operador com uniforme verde. Estações vizinhas em cinza.
 - Duplo clique em `index.html` (funciona sem internet), **ou**
 - `python iniciar_3d.py` (sobe um servidor local na porta 8770 e abre o navegador).
 
-Parâmetros de URL úteis para a apresentação: `?auto` (operador automático), `?vel=4`,
+Parâmetros de URL úteis para a apresentação: `?semled` (sem LEDs, como hoje), `?auto` (operador automático), `?vel=4`,
 `?itens=12`, `?cam=planta` (ou `alto`, `baixo`, `operador`), `?semajuda`. Exemplo: `index.html?auto&vel=2&semajuda`.
 
 ## O que está modelado
@@ -32,6 +32,18 @@ Parâmetros de URL úteis para a apresentação: `?auto` (operador automático),
 
 O painel da esquerda mostra os indicadores e os eventos na ordem em que o Serviço PTL os
 produziria (API REST, MQTT, Sybase e BHT), com os mesmos nomes do documento técnico.
+
+## Com ou sem LEDs
+
+O seletor **Separação** alterna entre *Com LEDs (PTL)* e *Sem LEDs (como hoje)*. Sem LEDs, os módulos ficam
+apagados e a barra do baixo giro não acende: o coletor mostra um endereço por vez, na ordem da rota, e cada gatilho
+confirma (bipa) o item mostrado. O operador automático vai até o endereço, procura (`CFG.tempoProcura`), pega e bipa
+(`CFG.tempoBip`). Na comunicação aparecem só o coletor, o Serviço PTL e o Sybase. Parâmetro de URL: `?semled`.
+
+## Transferências
+
+A transferência e a área de desvio de cada estação seguem o *Desenho_esteira* (tabela `TRS` em `sim.js`, a mesma da
+Operação completa): por exemplo, a estação 05 é atendida pela TR_02_01 (entre 03 e 04), área EP_01_02.
 
 ## Ajustes
 

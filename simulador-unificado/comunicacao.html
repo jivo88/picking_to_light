@@ -444,6 +444,10 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
         await leituraIda(ev);
         await enviar('servico', 'sybase', sql(`SELECT cd_endereco, qt_item\n  FROM vw_ptl_itens_caixa\n WHERE nr_caixa = '${ev.caixa}' AND cd_rua = '${S.est}'\n ORDER BY nr_ordem_separacao_flow, cd_predio, cd_andar`, 'SELECT', 'itens da caixa nesta estação'));
         await enviar('sybase', 'servico', sql(ev.itens.map((i) => `${i.cd}  ${i.qtd}`).join('\n') + `\n(${ev.itens.length} linhas)`, `${ev.itens.length} linhas`, `${ev.itens.length} itens`));
+        if (ev.semLed) {   // como funciona hoje: sem concentrador e sem displays, o coletor mostra um endereço por vez
+          await respostaFonte(ev, 200, { estado: 'SEPARANDO', caixa: ev.caixa, total: ev.total, modo: 'sem LEDs', proximo: ev.proximo, painel: [`${ev.caixa} 0/${ev.total}`] });
+          return;
+        }
         const carga = { tipo: 'SEPARAR', caixa: ev.caixa, displays: ev.displays.map((d) => ({ disp: '0x' + hex(d.addr), andar: d.tipo === 'Q' ? d.pos : undefined, end: d.end, qtd: d.qtd, fila: d.fila })) };
         await servicoParaConc(carga, 'SEPARAR');
         const falhos = ev.displays.filter((d) => d.falha);
@@ -470,6 +474,13 @@ label.chk { display: inline-flex; gap: 6px; align-items: center; cursor: pointer
           await enviar('servico', 'sybase', sql(`INSERT INTO ptl_caixa_item_conf\n  (nr_caixa, cd_endereco, quantidade, confirmado_em)\nVALUES ('${d.caixa}', '${d.cd}', ${d.qtd}, getdate())`, 'INSERT', 'grava a confirmação'));
           await consultaColetor();
         }
+        return;
+      }
+      case 'item_coletor': {
+        await enviar('fonte', 'servico', http('POST', `/v1/estacoes/${S.est}/itens`, { caixa: ev.caixa, endereco: ev.end, qtd: ev.qtd, origem: 'coletor (bipado)' }, `POST item ${ev.end}`));
+        await enviar('servico', 'sybase', sql(`INSERT INTO ptl_caixa_item_conf\n  (nr_caixa, cd_endereco, quantidade, confirmado_em)\nVALUES ('${ev.caixa}', '${ev.cd}', ${ev.qtd}, getdate())`, 'INSERT', 'grava a confirmação'));
+        S.ok = ev.ok; if (ev.concluida) S.estado = 'concluída'; textos();
+        await enviar('servico', 'fonte', resp(200, { caixa: ev.caixa, confirmados: ev.ok, total: ev.total, proximo: ev.proximo }));
         return;
       }
       case 'alerta':

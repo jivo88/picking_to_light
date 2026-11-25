@@ -42,6 +42,7 @@
     xPega: 0.0, distFila: 1.45,
     velEsteira: 1.8, velEmpurre: 0.9, velOperador: 1.3,
     tempoPega: 1.6, tempoPorUnidade: 0.25, tempoDeposito: 0.5,
+    tempoProcura: 4, tempoBip: 0.7,   // sem LEDs (como hoje): procurar o endereço mostrado no coletor e bipar
     bacia: { c: 0.56, a: 0.26, l: 0.4, cor: '#2E9E4F', borda: '#1d6b35' },   // bacia retornável verde, tamanho único
     // caixa do endereço por tipo (fração da largura e da altura do vão) — em geral pequenas
     // caixa ocupa quase toda a largura do vão; o tipo muda a altura (e um pouco a largura)
@@ -59,19 +60,27 @@
 
   const CORES_ZONA = ['#2E8B57', '#2F5597', '#D68910', '#7B4FA0', '#C0392B', '#138D90', '#8E6C3A', '#D35400', '#5B6675'];
 
-  // transferência que atende a estação: cada uma atende 2 estações à esquerda e 2 à direita;
-  // na ponta inicial (3 ou 26) atende a ponta à esquerda e as duas seguintes à direita
+  // transferências conforme o desenho do layout (Desenho_esteira, 25/11/2026). Cada TR fica entre as estações b e b+1
+  // e desvia para as áreas EP listadas: [código, b, [[EP, estações], ...]]. TR_02_04 e TR_03_04 desviam para um lado só.
+  const TRS = {
+    Medicamento: [['TR_02_01', 3, [['EP_01_01', [3]], ['EP_01_02', [4, 5]]]], ['TR_02_02', 7, [['EP_01_03', [6, 7]], ['EP_01_04', [8, 9]]]],
+      ['TR_02_03', 11, [['EP_01_05', [10, 11]], ['EP_01_06', [12, 13]]]], ['TR_02_04', 15, [['EP_01_07', [14, 15]]]],
+      ['TR_02_05', 17, [['EP_01_08', [16, 17]], ['EP_01_09', [18, 19]]]], ['TR_02_06', 21, [['EP_01_10', [20, 21]], ['EP_01_11', [22]]]]],
+    Perfumaria: [['TR_03_01', 26, [['EP_02_01', [26]], ['EP_02_02', [27, 28]]]], ['TR_03_02', 30, [['EP_02_03', [29, 30]], ['EP_02_04', [31, 32]]]],
+      ['TR_03_03', 34, [['EP_02_05', [33, 34]], ['EP_02_06', [35, 36]]]], ['TR_03_04', 38, [['EP_02_07', [37, 38]]]],
+      ['TR_03_05', 40, [['EP_02_08', [39, 40]], ['EP_02_09', [41, 42]]]], ['TR_03_06', 44, [['EP_02_10', [43, 44]], ['EP_02_11', [45]]]]],
+  };
   function transferenciaDe(est) {
-    const seg = DADOS[est].info.segmento;
+    const seg = DADOS[est].info.segmento, n = +est;
     const [p0, p1] = CFG.segmentos[seg] || [3, 22];
-    let b = p0 + 4 * Math.round((est - p0 - 0.5) / 4);
-    if (b + 1 > p1) b = p1 - 1;
-    if (b < p0) b = p0;
-    return { b, x: (b + 0.5 - est) * CFG.passo, lado: est <= b ? 'esquerda' : 'direita', p0, p1 };
+    const [cod, b, eps] = (TRS[seg] || TRS.Medicamento).find(([, , e]) => e.some(([, r]) => r.includes(n)));
+    const ep = eps.find(([, r]) => r.includes(n))[0];
+    const atende = eps.flatMap(([, r]) => r);
+    return { cod, ep, b, eps, atende, x: (b + 0.5 - n) * CFG.passo, lado: n <= b ? 'esquerda' : 'direita', p0, p1 };
   }
 
   // ======================================================================= ESTADO
-  const S = { redeOk: true, est: '05', modo: 'A', itens: 8, vel: 1, auto: false, guia: true, destaque: true, cabos: true, cam: 'geral' };
+  const S = { redeOk: true, led: true, est: '05', modo: 'A', itens: 8, vel: 1, auto: false, guia: true, destaque: true, cabos: true, cam: 'geral' };
   const K = { caixas: 0, itens: 0, tempoTotal: 0, pendencias: 0, falhas: 0 };
   let simT = 0;
   let estado = 'AGUARDANDO';
@@ -397,7 +406,7 @@
     const { ctx, c, t } = m.tc;
     ctx.fillStyle = '#07090c';
     ctx.fillRect(0, 0, c.width, c.height);
-    const it = m.falha ? null : m.item;
+    const it = m.falha || !S.led ? null : m.item;
     if (m.tipo === 'Q') {
       const txt = m.cad ? (m.cadPisca ? 'CAd' : '   ') : m.ident > 0 ? '888' : m.falha ? '   ' : it ? String(it.qtd).padStart(3, ' ') : m.flash > 0 ? '---' : '   ';
       seg7(ctx, txt, 44, 20, 34, 70, '#ff3b30', '#170808');
@@ -412,7 +421,7 @@
       ctx.fillText('QTD', 26 + 8 * 30 * 1.42 + 38, 104);
     }
     t.needsUpdate = true;
-    const aceso = (!m.falha && !!m.item) || m.ident > 0 || (m.cad && m.cadPisca);
+    const aceso = (S.led && !m.falha && !!m.item) || m.ident > 0 || (m.cad && m.cadPisca);
     m.btnMat.color.set(m.cad ? '#F2A33A' : aceso ? '#2ecc71' : m.falha ? '#8e1b12' : '#1d4b31');
     m.btnMat.emissive.set(m.cad && m.cadPisca ? '#b86e10' : aceso ? '#1fbf5a' : '#000000');
   }
@@ -588,7 +597,7 @@
     const porPredio = {};
     enderecos.forEach((e) => { (porPredio[e.predio] = porPredio[e.predio] || []).push(e); });
     transf = transferenciaDe(S.est);
-    const sMin = Math.max(transf.p0, Math.min(transf.b, est - 1)), sMax = Math.min(transf.p1, Math.max(transf.b + 1, est + 1));
+    const sMin = Math.max(transf.p0, Math.min(...transf.atende, est - 1)), sMax = Math.min(transf.p1, Math.max(...transf.atende, est + 1));
     faixaX = [(sMin - est - 0.5) * CFG.passo - 3, (sMax - est + 0.5) * CFG.passo + 3];
 
     grpAlto = new THREE.Group();
@@ -757,8 +766,8 @@
     dir.position.set(xt, CFG.altSep + 0.01, CFG.zSep);
     g.add(dir);
     const st = transf.b;
-    const alc = st === transf.p0 ? `esquerda: ${pad(st, 2)} · direita: ${pad(st + 1, 2)} e ${pad(st + 2, 2)}` : `esquerda: ${pad(st - 1, 2)} e ${pad(st, 2)} · direita: ${pad(st + 1, 2)} e ${pad(st + 2, 2)}`;
-    const sp = sprite([`Transferência ${pad(st, 2)}|${pad(st + 1, 2)} · rolete direcionador`, alc], 1.7, { fundo: 'rgba(46,139,87,0.92)' });
+    const alc = transf.eps.map(([ep, r]) => `${ep}: ${r.map((x) => pad(x, 2)).join(' e ')}`).join(' · ');
+    const sp = sprite([`${transf.cod} · entre ${pad(st, 2)}|${pad(st + 1, 2)} · rolete direcionador`, alc], 1.7, { fundo: 'rgba(46,139,87,0.92)' });
     sp.position.set(xt, 3.25, CFG.zSep);
     g.add(sp);
     const e1 = sprite(['Separação (frente, aberta) · transporte (por dentro do alto giro)', '≈ 20 cm entre elas · transporte entre o andar 3 e o andar 4'], 2.1, { fundo: 'rgba(46,58,79,0.88)' });
@@ -847,7 +856,7 @@
   const pendBaixo = () => (atual && ['SEPARANDO', 'ALERTA'].includes(estado) ? atual.itens.filter((i) => i.status === 'pendente' && i.e.cat === 'baixo').length : 0);
   function atualizarSinal() {
     if (!sinalBG) return;
-    const v = pendBaixo() > 0;
+    const v = S.led && pendBaixo() > 0;
     if (v === sinalBG.aceso) return;
     sinalBG.aceso = v;
     log('EVT', `Sinal de baixo giro ${v ? 'aceso: a caixa tem itens no corredor' : 'apagado: baixo giro concluído'}`);
@@ -1036,7 +1045,7 @@
   }
   function mover(c, pontos, vel, aoChegar) { c.rota = pontos.map((p) => new THREE.Vector3(...p)); c.vel = vel; c.aoChegar = aoChegar || null; }
   function logTransferencia(c) {
-    log('BHT', `Bacia ${c.id} desviada na transferência ${pad(transf.b, 2)}|${pad(transf.b + 1, 2)} → rolete para a ${transf.lado} → estação ${S.est}`);
+    log('BHT', `Bacia ${c.id} desviada na ${transf.cod} → ${transf.ep} → rolete para a ${transf.lado} → estação ${S.est}`);
   }
   function reiniciarCaixas() {
     caixasCena.forEach((c) => scene.remove(c.g));
@@ -1060,6 +1069,8 @@
   // ======================================================================= REGRAS DO SERVIÇO PTL
   const ordemRota = (a, b) => a.e.ordem - b.e.ordem || a.e.predio - b.e.predio || a.e.andar - b.e.andar;
   function pendentes() { return atual ? atual.itens.filter((i) => i.status === 'pendente').length : 0; }
+  // sem LEDs (como hoje): o coletor mostra um endereço por vez, na ordem da rota; o operador procura, pega e bipa
+  function itemColetor() { return modulos.filter((m) => m.item).map((m) => m.item).sort(ordemRota)[0] || null; }
 
   function leitura(origem) {
     const ori = origem || (S.modo === 'A' ? 'coletor' : S.modo === 'B1' ? 'pulseira' : 'leitor fixo');
@@ -1075,6 +1086,10 @@
       return;
     }
     if (estado === 'NA_POSICAO') return abrirCaixa(ori);
+    if (estado === 'SEPARANDO' && !S.led && ori === 'coletor') {
+      const it = itemColetor();
+      if (it) return confirmar(it.e.modulo, 'coletor');
+    }
     if (estado === 'SEPARANDO') {
       const p = pendentes();
       if (p > 0) {
@@ -1106,6 +1121,15 @@
       desenhar(m);
     });
     const blocos = Object.keys(grupos).filter((k) => k.startsWith('AG')).length, zonas = Object.keys(grupos).filter((k) => k.startsWith('BG')).length;
+    if (!S.led) {
+      const it = itemColetor();
+      log('API', `200 → coletor mostra o 1º endereço da rota: ${rotEnd(it.e)} qtd ${it.qtd} (sem LEDs: ${its.length} itens, um por vez)`);
+      emitir('abrir', { caixa: atual.id, origem: ori || 'coletor', total: its.length, displays: [], semLed: true, sinalBG: false,
+        proximo: { end: rotEnd(it.e), qtd: it.qtd }, itens: its.map((i) => ({ end: rotEnd(i.e), qtd: i.qtd, cd: i.e.end })) });
+      atualizarDestaques();
+      atualizarUI();
+      return;
+    }
     log('MQTT', `ptl/est${S.est}/cmd SEPARAR caixa=${atual.id} itens=${its.length} (Q:${q.length} · andares 4-5:${blocos} · zonas:${zonas})`);
     log('EVT', `ptl/est${S.est}/evt ACK ${q.length + blocos + zonas} display(s) aceso(s)`);
     const displays = modulos.filter((m) => m.item).map((m) => Object.assign(dispDe(m), { end: rotEnd(m.item.e), qtd: m.item.qtd, fila: m.fila.length, falha: m.falha }));
@@ -1117,12 +1141,23 @@
 
   function confirmar(m, quem) {
     if (!m.item || m.falha || (estado !== 'SEPARANDO' && estado !== 'ALERTA')) return;
+    if (!S.led && quem !== 'coletor') return;   // sem LEDs não há botão nos endereços: confirma bipando no coletor
     const it = m.item;
     it.status = 'ok';
     m.press = 0.18;
     m.fila.shift();
     m.item = m.fila[0] || null;
     K.itens++;
+    if (!S.led) {
+      const prox = itemColetor(), concluiu = pendentes() === 0;
+      log('API', `POST /v1/estacoes/${S.est}/itens {caixa:"${atual.id}", endereco:"${rotEnd(it.e)}", qtd:${it.qtd}} (bipado no coletor)`);
+      if (concluiu) { estado = 'PRONTA'; log('API', `200 → caixa ${atual.id} sem itens nesta estação · leia de novo para fechar`); }
+      emitir('item_coletor', { caixa: atual.id, end: rotEnd(it.e), qtd: it.qtd, cd: it.e.end, proximo: prox ? { end: rotEnd(prox.e), qtd: prox.qtd } : null,
+        concluida: concluiu, ok: atual.itens.length - pendentes(), total: atual.itens.length });
+      atualizarDestaques();
+      atualizarUI();
+      return;
+    }
     log('EVT', `ptl/est${S.est}/evt BTN ${rotEnd(it.e)} qtd=${it.qtd}${quem === 'operador' ? '' : ' (clique)'}`);
     if (m.tipo === 'EQ' && !m.item) { m.flash = 0.7; log('EVT', `ptl/est${S.est}/evt ZONA_FIM ${m.nome || m.id}`); }
     if (m.tipo === 'Q') m.flash = 0.5;
@@ -1342,7 +1377,7 @@
 
     acesos = [];
     modulos.forEach((m) => {
-      if (!m.item) return;
+      if (!m.item || !S.led) return;
       acesos.push(m.item.e);
 
     });
@@ -1361,6 +1396,7 @@
   const posCaixa = () => ({ x: CFG.xPega + 0.35, z: CFG.zOperAlto });
 
   function proximoAlvo() {
+    if (!S.led) return itemColetor();
     let melhor = null, dMin = 1e9;
     modulos.forEach((m) => {
       if (!m.item || m.falha) return;
@@ -1407,11 +1443,17 @@
         await andarAte(p.x, p.z);
         if (!ativo()) break;
         oper.rot = p.rot;
+        if (!S.led) { await esperar(CFG.tempoProcura); if (!ativo()) break; }   // procura o endereço na prateleira
         const tp = CFG.tempoPega + alvo.qtd * CFG.tempoPorUnidade;
         oper.anim = 'pega'; oper.animT = tp;
         await esperar(tp);
         if (!ativo()) break;
-        if (alvo.e.modulo.item === alvo && !alvo.e.modulo.falha) { confirmar(alvo.e.modulo, 'operador'); carregando++; }
+        if (!S.led) {
+          oper.anim = 'leitura'; oper.animT = CFG.tempoBip;
+          await esperar(CFG.tempoBip);
+          if (!ativo()) break;
+          if (alvo.e.modulo.item === alvo && estado === 'SEPARANDO') { confirmar(alvo.e.modulo, 'coletor'); carregando++; }
+        } else if (alvo.e.modulo.item === alvo && !alvo.e.modulo.falha) { confirmar(alvo.e.modulo, 'operador'); carregando++; }
         oper.olhar = null;
         continue;
       }
@@ -1467,8 +1509,12 @@
     }
     if (estado === 'AGUARDANDO') return { cor: '#2F5597', tit: `PTL · Estação ${est}`, corpo: '<div class="media">Aguardando bacia</div><div class="p">A próxima bacia está vindo pela esteira de separação</div>', rod: 'Leitura abre a bacia' };
     if (estado === 'NA_POSICAO') return { cor: '#2F5597', tit: `PTL · Estação ${est}`, corpo: `<div class="media">Bacia na posição</div><div class="p">${S.modo === 'A' ? 'Aponte para a etiqueta e aperte o gatilho' : S.modo === 'B1' ? 'Aproxime a pulseira da tag da bacia' : 'Leitor fixo lendo a tag…'}</div>`, rod: 'Leitura abre a bacia' };
+    if (estado === 'SEPARANDO' && !S.led) {
+      const it = itemColetor();
+      return { cor: '#5B6675', tit: `Bacia ${atual.id} · sem LEDs`, corpo: it ? `<div class="p">Vá até o endereço</div><div class="media" style="font-size:22px">${rotEnd(it.e)}</div><div class="grande">${it.qtd} un</div><div class="progresso"><i style="width:${(100 * ok) / n}%"></i></div><div class="p">Item ${ok + 1} de ${n}</div>` : '', rod: 'Pegue e bipe o endereço (gatilho)' };
+    }
     if (estado === 'SEPARANDO') return { cor: '#2E8B57', tit: `Bacia ${atual.id}`, corpo: `<div class="p">Separando</div><div class="grande">${ok} / ${n}</div><div class="progresso"><i style="width:${(100 * ok) / n}%"></i></div><div class="lista"><div><span>Alto giro</span><b>${ct.alto}</b></div><div><span>Baixo giro</span><b>${ct.baixo}</b></div><div><span>Zonas ativas</span><b>${ct.zonas || '—'}</b></div></div>`, rod: 'Nova leitura fecha a bacia' };
-    if (estado === 'PRONTA') return { cor: '#2E8B57', tit: 'Estação concluída', corpo: `<div class="grande">${n} / ${n}</div><div class="media">Todos os LEDs apagados</div><div class="p">Leia a etiqueta de novo para fechar</div>`, rod: 'Gatilho fecha a bacia' };
+    if (estado === 'PRONTA') return { cor: '#2E8B57', tit: 'Estação concluída', corpo: `<div class="grande">${n} / ${n}</div><div class="media">${S.led ? 'Todos os LEDs apagados' : 'Todos os itens bipados'}</div><div class="p">Leia a etiqueta de novo para fechar</div>`, rod: 'Gatilho fecha a bacia' };
     if (estado === 'ALERTA') return { cor: '#C0392B', tit: 'Atenção', corpo: `<div class="media" style="color:#C0392B">Bacia com itens pendentes</div><div class="grande">${n - ok}</div><div class="p">itens não confirmados. Continue separando ou leia de novo para fechar mesmo assim.</div>`, rod: 'Pendência vai para a conferência' };
     return { cor: '#2F5597', tit: '', corpo: '', rod: '' };
   }
@@ -1535,7 +1581,7 @@
     const med = K.caixas ? K.tempoTotal / K.caixas : 0;
     $('#kTempo').textContent = K.caixas ? fmtT(med) : '–';
     $('#kHora').textContent = K.caixas ? Math.round(3600 / med) : '–';
-    $('#kAcesos').textContent = modulos.filter((m) => m.item && !m.falha).length;
+    $('#kAcesos').textContent = S.led ? modulos.filter((m) => m.item && !m.falha).length : 0;
     $('#kPend').textContent = K.pendencias;
     const al = $('#alertas');
     al.innerHTML = '';
@@ -1590,6 +1636,14 @@
     log('API', `Modo de identificação: ${v === 'A' ? 'A · coletor (código de barras)' : 'RFID com pulseira (melhoria futura)'}`);
     emitir('modo', {});
     if (v === 'B2' && estado === 'NA_POSICAO') esperar(0.8).then(() => { if (estado === 'NA_POSICAO' && S.modo === 'B2') leitura('leitor fixo'); });
+    atualizarUI();
+  });
+  segmentado('#selLed', (v) => {
+    S.led = v === '1';
+    modulos.forEach(desenhar);
+    atualizarDestaques();
+    log('API', S.led ? 'Separação com LEDs (pick-to-light): todos os itens da caixa acendem juntos' : 'Separação sem LEDs (como funciona hoje): o coletor mostra um endereço por vez e o operador procura e bipa', S.led ? undefined : 'ERRO');
+    emitir('led', { led: S.led });
     atualizarUI();
   });
   segmentado('#selCam', (v) => aplicarCamera(v));
@@ -1796,7 +1850,7 @@
       uiT = 0;
       relogioEl.textContent = relogio();
       renderDispositivo();
-      $('#kAcesos').textContent = modulos.filter((m) => m.item && !m.falha).length;
+      $('#kAcesos').textContent = S.led ? modulos.filter((m) => m.item && !m.falha).length : 0;
     }
     renderer.render(scene, camera);
   }
@@ -1822,6 +1876,7 @@
   log('EVT', `ptl/est${S.est}/status ONLINE (retained) · concentrador 12 V`);
   aplicarCamera('geral', true);
   atualizarUI();
+  if (params.has('semled')) document.querySelector('#selLed button[data-v="0"]').click();
   if (params.has('auto')) { $('#optAuto').checked = true; ligarAuto(true); }
   if (params.has('semajuda') || window.parent !== window) $('#ajuda').classList.add('oculto');
   if (params.get('cam')) { const b = document.querySelector(`#selCam button[data-v="${params.get('cam')}"]`); if (b) b.click(); }
@@ -1844,6 +1899,7 @@
     if (d.tipo === 'compacto') document.body.classList.toggle('compacto', !!d.valor);
     if (d.tipo === 'pedirMapa') emitir('estacao', mapaEstacao());
     if (d.tipo === 'gatilho') leitura();
+    if (d.tipo === 'led') { const b = document.querySelector(`#selLed button[data-v="${d.valor ? 1 : 0}"]`); if (b && !b.classList.contains('on')) b.click(); }
     if (d.tipo === 'falhar') { const antes = new Set(modulos.filter((m) => m.falha)); simularFalha(d.falha); localizar(modulos.find((m) => m.falha && !antes.has(m))); }
     if (d.tipo === 'cad_iniciar') { const m = moduloPorEnd(d.cd); iniciarCadastro(m, 'interface de controle'); localizar(m); }
     if (d.tipo === 'cad_apertar' && emCadastro) confirmarCadastro(emCadastro);
