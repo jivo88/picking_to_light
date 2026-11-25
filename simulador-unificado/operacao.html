@@ -935,6 +935,8 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
     C.zCorr = C.zFaces + C.prof015;
     C.nivAlto = [0, 1, 2, 3].map((a) => ({ yb: C.yAltoCima + (3 - a) * C.hAltoCima, h: C.hAltoCima }));
     C.niv45 = [{ yb: C.baseAlto + C.hAltoBaixo, h: C.hAltoBaixo }, { yb: C.baseAlto, h: C.hAltoBaixo }];
+    C.niv015 = [0, 1, 2, 3].map((a) => ({ yb: C.baseBaixo + (3 - a) * (C.alturaBaixo / 4), h: C.alturaBaixo / 4 }));
+    C.yVigaBaixo = C.baseBaixo + Math.round((1.5 - C.baseBaixo) / (C.alturaBaixo / C.niveisBaixo)) * (C.alturaBaixo / C.niveisBaixo);
     C.nivBaixo = Array.from({ length: C.niveisBaixo }, (_, a) => ({ yb: C.baseBaixo + (C.niveisBaixo - 1 - a) * (C.alturaBaixo / C.niveisBaixo), h: C.alturaBaixo / C.niveisBaixo }));
     const Z0 = C.zCorr + C.compBaixo + 0.35;   // linhas espelhadas: os fundos dos corredores do baixo giro ficam a 70 cm um do outro, no meio
     const scene = new THREE.Scene();
@@ -971,7 +973,7 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
       const esc = o.esc || 0.5; sp.scale.set((esc * c.width) / c.height, esc, 1); sp.position.set(x, y, z); scene.add(sp); return sp;
     };
     // estante de flow rack (como construirRack): frente em z local 0 virada para o operador, profundidade para −z, trilhos inclinados
-    function estante(ox, oz, ry, cols, wCol, niveis, prof, cheio, porVao, alto) {
+    function estante(ox, oz, ry, cols, wCol, niveis, prof, cheio, porVao, alto, modQ) {
       const R = (lx, lz) => [ox + lx * Math.cos(ry) + lz * Math.sin(ry), oz - lx * Math.sin(ry) + lz * Math.cos(ry)];
       const x0 = -(cols * wCol) / 2, top = Math.max(...niveis.map((n) => n.yb + n.h)), hM = top + (alto ? 0.5 : 0.05), tan = Math.tan(C.tilt);
       for (let i = 0; i <= cols; i += porVao) [-0.02, -prof].forEach((lz) => { const [x, z] = R(x0 + i * wCol, lz); caixa(M.montante, x, hM / 2, z, 0.05, hM, 0.04, ry); });
@@ -984,6 +986,7 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
         niveis.forEach((n) => {
           const [x, z] = R(lx, -prof / 2); add(M.trilho, BOX, x, n.yb + (prof / 2) * tan, z, C.tilt, ry, wCol, 0.012, prof);
           if (k++ >= cheio) return;
+          if (modQ) { const [mx, mz] = R(lx, 0.04); modQ.push([mx, n.yb - 0.036, mz, ry]); }
           const wt = wCol * 0.9 - 0.006, ht = n.h * (alto ? 0.715 : 0.55), dt = alto ? 0.38 : 0.3;
           [-0.2, ...profs].forEach((lz) => { const [xx, zz] = R(lx, lz); add(M.caixa, BOX, xx, n.yb + 0.012 + ht / 2 - lz * tan, zz, C.tilt, ry, wt, ht, dt); });
         });
@@ -1022,6 +1025,21 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
       scene.add(g);
       return g;
     }
+    const mods = [];   // [tipo, x, y, z, ry, estação, grupo]: grupo = 'a03' | 'a45' | 'bx'
+    const rotXZ = (dx, dz, ry) => [dx * Math.cos(ry) + dz * Math.sin(ry), -dx * Math.sin(ry) + dz * Math.cos(ry)];
+    const placaMesh = (txt, w, h, o = {}) => {
+      const c = document.createElement('canvas'); c.width = 512; c.height = Math.max(16, Math.round((512 * h) / w));
+      const g = c.getContext('2d'); g.fillStyle = o.fundo || '#1B2638'; g.fillRect(0, 0, c.width, c.height);
+      g.fillStyle = o.cor || '#fff'; g.font = `700 ${Math.round(c.height * (o.escala || 0.6))}px Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, c.width / 2, c.height / 2 + 1);
+      return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c) }));
+    };
+    const textoPiso = (txt, w, h) => {
+      const c = document.createElement('canvas'); c.width = 1024; c.height = Math.round((1024 * h) / w);
+      const g = c.getContext('2d'); g.fillStyle = 'rgba(91,102,117,0.55)'; g.font = `800 ${Math.round(c.height * 0.7)}px Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, c.width / 2, c.height / 2);
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+      m.rotation.x = -Math.PI / 2; return m;
+    };
+    const naFrente = (obj, x, y, z, ry) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; g.add(obj); scene.add(g); return g; };
     const maxComp = Math.max(LINHAS.M.comp, LINHAS.P.comp);
     const XW = (m) => maxComp / 2 - m;   // divisor à direita (+x), conferência à esquerda (−x), como no desenho
     const piso = new THREE.Mesh(new THREE.PlaneGeometry(maxComp + 50, 44), M.piso);
@@ -1030,7 +1048,7 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
     const ops = [];
     Object.values(LINHAS).forEach((L) => {
       const sg = L.id === 'P' ? -1 : 1, W = (zl) => sg * (Z0 - zl);      // z local da estação → z do mundo (linhas espelhadas)
-      const ryFrente = sg > 0 ? 0 : Math.PI;                                 // estantes do alto giro viradas para o operador
+      const ryFrente = sg > 0 ? Math.PI : 0;                                 // frente do alto giro virada para o operador (z local +)
       L.v3 = { sg, zT: W(C.zTransp), zS: W(C.zSep), W };
       const xa = XW(L.comp) - 0.4, xb = XW(0) + 0.8;
       esteiraX(xa, xb, W(C.zTransp), C.altTransp, C.largTransp, false);
@@ -1048,12 +1066,29 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
       L.est.forEach((e) => {
         const xc = XW(e.x);
         // alto giro: andares 0-3 em cima (transporte por dentro) e 4-5 embaixo da esteira de separação, 10 prédios de 25 cm
-        const top = estante(xc, W(C.zAltoFace), ryFrente, 10, C.WA, C.nivAlto, C.profAlto, e.a03, 5, true);
+        const mq = [];
+        const top = estante(xc, W(C.zAltoFace), ryFrente, 10, C.WA, C.nivAlto, C.profAlto, e.a03, 5, true, mq);
+        mq.forEach(([x, y, z, ry]) => mods.push(['Q', x, y, z, ry, e, 'a03']));
         estante(xc, W(C.zAltoBaixoFace), ryFrente, 10, C.WA, C.niv45, C.profAltoBaixo, e.a45, 5, false);
-        rotulo(`ESTAÇÃO ${e.rua}`, xc, top + 0.78, W(C.zAltoFace), { esc: 0.3 });
+        // andares 4-5: 2 displays E+Q (P001–P005 e P006–P010) na longarina entre A4 e A5
+        [-1, 1].forEach((sd) => { const [dx, dz] = rotXZ(sd * 2.5 * C.WA, 0.05, ryFrente); mods.push(['EQ', xc + dx, C.niv45[0].yb - 0.035, W(C.zAltoBaixoFace) + dz, ryFrente, e, 'a45']); });
+        naFrente(placaMesh(`ALTO GIRO · ESTAÇÃO ${e.rua} · P001–P010`, 10 * C.WA - 0.1, 0.16, { escala: 0.5 }), xc, top + 0.66, W(C.zAltoFace - 0.01), ryFrente);
+        naFrente(textoPiso(`ESTAÇÃO ${e.rua}`, 1.9, 0.34), xc, 0.008, W(0.85), ryFrente);
+        // barra luminosa âmbar do baixo giro, na frente do alto giro entre o transporte e o andar 3
+        caixa(mat('#1d2129', { roughness: 0.5 }), xc, 1.215, W(C.zAltoFace + 0.05), 1.3, 0.07, 0.03, ryFrente);
+        [-1, 1].forEach((sd) => { const [dx, dz] = rotXZ(sd * 0.39, 0.018, ryFrente); mods.push(['BAR', xc + dx, 1.215, W(C.zAltoFace + 0.05) + dz, ryFrente, e, 'bx']); });
+        // concentrador atrás do alto giro
+        const [cx0, cz0] = [xc + 0.7, W(C.zAltoFace - C.profAlto - 0.13)];
+        caixa(M.mesa, cx0, 1.45, cz0, 0.36, 0.46, 0.2, ryFrente + Math.PI);
+        // prédio 015: faixa de 30 cm na frente do bloco do baixo giro (entre esta estação e a vizinha), virada para a esteira
+        estante(xc - C.larguraCorredor / 2 - C.profBaixo, W(C.zFaces), ryFrente + Math.PI, 1, 2 * C.profBaixo, C.niv015, C.prof015, 4, 1, false);
         // baixo giro: corredor de 1,5 m atrás do operador, 12 prédios × 8 andares de cada lado (2 m de prateleira, 50 cm de fundo)
         const zMeio = W(C.zCorr + C.compBaixo / 2), porLado = Math.ceil(e.bx / 2);
-        [[1, -Math.PI / 2], [-1, Math.PI / 2]].forEach(([s, ry], i) => estante(xc + s * C.larguraCorredor / 2, zMeio, ry, 12, C.compBaixo / 12, C.nivBaixo, C.profBaixo, i ? e.bx - porLado : porLado, 6, false));
+        [[1, -Math.PI / 2], [-1, Math.PI / 2]].forEach(([s, ry], i) => {
+          estante(xc + s * C.larguraCorredor / 2, zMeio, ry, 12, C.compBaixo / 12, C.nivBaixo, C.profBaixo, i ? e.bx - porLado : porLado, 6, false);
+          // 2 zonas por lado, display E+Q na altura dos olhos
+          [-0.5, 0.5].forEach((f) => { const [dx, dz] = rotXZ(f * C.compBaixo / 2, 0.06, ry); mods.push(['EQ', xc + s * C.larguraCorredor / 2 + dx, C.yVigaBaixo - 0.05, zMeio + dz, ry, e, 'bx']); });
+        });
         const op = pessoa(camCinza);
         op.position.set(xc, 0, W(C.zOper));
         ops.push({ e, g: op, sg, k: ops.length, W });
@@ -1076,6 +1111,47 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
     caixa(mat('#4a5361'), xlc, 0.18, zEsc, 6, 0.35, 1.4);
     rotulo('Escape (após 6 voltas)', xlc, 1.25, zEsc, { fundo: 'rgba(192,57,43,0.9)', esc: 0.4 });
     for (const [, { m, geo, ms }] of lotes) { const im = new THREE.InstancedMesh(geo, m, ms.length); ms.forEach((mt, i) => im.setMatrixAt(i, mt)); scene.add(im); }
+    // módulos: corpo preto, display (vermelho quando aceso) e botão (verde quando aceso), como criarModulo da Estação 3D
+    const modCorpo = new THREE.InstancedMesh(BOX, mat('#1d2129', { roughness: 0.5 }), mods.length);
+    const modDisp = new THREE.InstancedMesh(BOX, new THREE.MeshBasicMaterial({ color: '#ffffff' }), mods.length);
+    const modBtn = new THREE.InstancedMesh(BOX, new THREE.MeshBasicMaterial({ color: '#ffffff' }), mods.length);
+    mods.forEach(([t, x, y, z, ry], i) => {
+      const Q = t === 'Q', bar = t === 'BAR', Wm = Q ? 0.2 : 0.46, Hm = Q ? 0.066 : 0.1;
+      const put = (im, dx, dz, sx, sy, sz) => { const [ox, oz] = rotXZ(dx, dz, ry); o3.position.set(x + ox, y, z + oz); o3.rotation.set(0, ry, 0); o3.scale.set(sx, sy, sz); o3.updateMatrix(); im.setMatrixAt(i, o3.matrix); };
+      if (bar) { put(modCorpo, 0, 0, 0.001, 0.001, 0.001); put(modDisp, 0, 0, 0.4, 0.038, 0.012); put(modBtn, 0, 0, 0.001, 0.001, 0.001); }
+      else { put(modCorpo, 0, 0, Wm, Hm, 0.036); put(modDisp, Q ? -0.03 : -0.045, 0.0185, Q ? 0.118 : 0.33, Q ? 0.059 : 0.066, 0.003); put(modBtn, Wm / 2 - (Q ? 0.033 : 0.04), 0.024, Q ? 0.042 : 0.06, Q ? 0.042 : 0.06, 0.018); }
+    });
+    const cDispOff = new THREE.Color('#170808'), cDispOn = new THREE.Color('#ff3b30'), cBtnOff = new THREE.Color('#1d4b31'), cBtnOn = new THREE.Color('#2ecc71'), cBarOff = new THREE.Color('#5a3a08'), cBarOn = new THREE.Color('#ffb020');
+    mods.forEach(([t], i) => { modDisp.setColorAt(i, t === 'BAR' ? cBarOff : cDispOff); modBtn.setColorAt(i, cBtnOff); });
+    [modCorpo, modDisp, modBtn].forEach((im) => scene.add(im));
+    const modsPorEst = new Map();
+    mods.forEach(([t, , , , , e, gr], i) => { if (!modsPorEst.has(e)) modsPorEst.set(e, []); modsPorEst.get(e).push({ t, gr, i }); });
+    const acesos = new Map();
+    function acender() {   // com LEDs: acendem os módulos dos itens da caixa que está sendo separada
+      modsPorEst.forEach((lista, e) => {
+        let chave = '';
+        let nQ = 0, n45 = 0, nBx = 0;
+        if (P.modo === 'ptl' && e.atual) {
+          const a = e.atual.alvos.find((x) => x.e === e && !x.feito && !x.perdido);
+          if (a) a.its.forEach((it) => { if (it.cat === 'a03') nQ++; else if (it.cat === 'a45') n45++; else nBx++; });
+          chave = `${e.atual.id}:${nQ}:${n45}:${nBx}`;
+        }
+        if (acesos.get(e) === chave) return;
+        acesos.set(e, chave);
+        let q = 0, eq45 = 0, eqb = 0;
+        const sem = (e.atual ? e.atual.id : 0) * 7;
+        lista.forEach(({ t, gr, i }, j) => {
+          let on = false;
+          if (t === 'BAR') on = nBx > 0;
+          else if (gr === 'a03') on = ((j * 13 + sem) % lista.length) < nQ && q++ < nQ;
+          else if (gr === 'a45') on = eq45++ < Math.min(2, n45);
+          else on = eqb++ < Math.min(4, nBx);
+          modDisp.setColorAt(i, t === 'BAR' ? (on ? cBarOn : cBarOff) : on ? cDispOn : cDispOff);
+          modBtn.setColorAt(i, on && t !== 'BAR' ? cBtnOn : cBtnOff);
+        });
+        modDisp.instanceColor.needsUpdate = true; modBtn.instanceColor.needsUpdate = true;
+      });
+    }
     const conferentes = [];
     function montarConferentes() {
       conferentes.forEach((c) => scene.remove(c.g, c.mesa));
@@ -1145,6 +1221,7 @@ input[type=number] { width: 100%; border: 1px solid var(--linha); border-radius:
         op.g.userData.pernas[0].rotation.x = sw; op.g.userData.pernas[1].rotation.x = -sw;
         op.g.userData.tronco.material = ocup ? camVerde : camCinza;
       });
+      acender();
       controls.update();
       renderer.render(scene, camera);
     }

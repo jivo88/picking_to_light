@@ -83,7 +83,10 @@ com roletes, corredor do baixo giro de 1,5 m atrás do operador com 12 prédios 
 operador de uniforme verde. As caixas nos racks seguem o número de endereços de cada estação (`estacoes.json`). As
 linhas são espelhadas (corredores de costas no meio). Também aparecem as TRs com o rolete direcionador, as áreas de
 desvio, o divisor com as impressoras e o loop da conferência com as bancadas e os conferentes (padrão: 16). Câmeras:
-geral, Perfumaria, Medicamento, estação 05, conferência e divisor. O 3D com os endereços reais e os displays continua
+geral, Perfumaria, Medicamento, estação 05, conferência e divisor. Também como na Estação 3D: módulos Q em cada endereço
+do alto giro 0–3, displays E+Q nos andares 4–5 e nas zonas do baixo giro, prédio 015 na frente do bloco, barra âmbar
+do baixo giro, placa do alto giro, nome da estação no piso e concentrador atrás. Com LEDs, os módulos dos itens da
+caixa em separação acendem. O 3D com os endereços reais e os displays continua
 na aba Estação 3D (05 e 27).
 
 Transferências e áreas de desvio (iguais no 3D e em `projeto/layout-2d/`):
