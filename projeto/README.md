@@ -2,6 +2,7 @@
 
 | Pasta | O que gera | Como rodar |
 |---|---|---|
+| `layout-2d/` | Planta 2D das esteiras (TRs, áreas de desvio, divisor e conferência) em HTML, SVG e PNG | `python layout-2d/gerar_layout_2d.py --imagens` (Playwright) |
 | `dados/` | Classificação dos 7.981 endereços (alto giro 0–3, alto giro 4–5, baixo giro), zonas, totais por estação (`estacoes.json`) e endereços das estações 05 e 27 | `python dados/dimensionar.py <export_wms_endereco.json>` (o export da tabela não está no repositório) |
 | `orcamento/` | `Orcamento_PTL.xlsx` com premissas, preços, composição e cenários (piloto e completo) | `python orcamento/gerar_orcamento.py` (openpyxl) |
 | `orcamento/` | `Orcamento_Pecas_Fontes.xlsx`: orçamento das peças com o link de cada preço (loja, produto, preço e data da consulta), com o RFID futuro em abas separadas. As carcaças dos LEDs (impressão 3D, medida compacta) têm valor estipulado. Os preços ficam em `fontes_precos.py`, que também alimenta a aba Fontes do orçamento completo | `python orcamento/gerar_pecas_fontes.py` |

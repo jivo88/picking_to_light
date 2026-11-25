@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planta 2D das esteiras PTL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: planta de engenharia para conferência, clara e precisa, sem enfeite.
+   IDEA: a folha de layout do CD, redesenhada a limpo a partir do esboço do José.
+   PICTURE: a planta das duas linhas com as 40 estações, TRs, áreas de desvio, divisor e conferência.
+   COLOUR and TYPE: branco de prancheta; azul Asi 1 e roxo Asi 3 como no desenho; verde TR; laranja EP. Barlow e Barlow Condensed.
+   LAYOUT: título curto, planta em largura total, depois ficha da estação, tabela de TRs e pontos a confirmar. */
+:root{color-scheme:light dark;
+  --bg:light-dark(#ffffff,#10151d);--ink:light-dark(#18212e,#e6ebf2);--soft:light-dark(#5a6576,#9ba7b8);
+  --rule:light-dark(#d9dfe7,#2a3443);--chip:light-dark(#f4f6f9,#171e29);
+  --asi1:light-dark(#2b5f9e,#6f9fe0);--asi3:light-dark(#7a4aa8,#b48ae0);
+  --tr:#2e9e4f;--ep:light-dark(#d9741f,#f0a060);--epf:light-dark(#fdeedd,#3a2716);
+  --est:light-dark(#ffffff,#1a2230);--a03:light-dark(#2b5f9e,#6f9fe0);--a45:light-dark(#2aa1a1,#5cc8c8);--bx:light-dark(#d9a321,#e8c35a);
+  --sel:light-dark(#f2a33a,#f2a33a)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Barlow,system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(20px,3vw,40px) max(4vw,16px);max-width:1500px;margin:0 auto}
+h1{font:700 clamp(28px,4vw,44px)/1.05 "Barlow Condensed",Barlow,sans-serif;margin:0 0 8px;text-wrap:balance}
+h2{font:700 22px/1.2 "Barlow Condensed",Barlow,sans-serif;margin:0 0 10px}
+.lead{color:var(--soft);max-width:70ch;margin:0}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.planta{min-width:1080px;border:1px solid var(--rule);border-radius:12px;background:var(--bg)}
+.planta svg{display:block;width:100%;height:auto}
+.dica{font-size:13px;color:var(--soft);margin:6px 0 0}
+.leg{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--soft);margin-top:10px}
+.leg i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:6px;vertical-align:-2px}
+.grade{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:900px){.grade{grid-template-columns:minmax(0,1fr)}}
+.card{border:1px solid var(--rule);border-radius:12px;padding:16px;background:var(--chip)}
+.ficha dl{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin:0;font-size:15px}
+.ficha dt{color:var(--soft)}.ficha dd{margin:0;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.ficha .num{font:700 44px/1 "Barlow Condensed",sans-serif}
+.barra{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:10px 0 12px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
+th{font-size:13px;color:var(--soft);font-weight:600}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tbody tr{cursor:pointer}tbody tr:hover,tbody tr.on{background:color-mix(in srgb,var(--tr) 12%,transparent)}
+.cod{font-weight:700;white-space:nowrap}
+.tot{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.tot div{border-left:4px solid var(--c);padding:4px 0 4px 12px}
+.tot b{font:700 30px/1.1 "Barlow Condensed",sans-serif;display:block}
+.tot span{font-size:14px;color:var(--soft)}
+ol.conf{margin:0;padding-left:22px}ol.conf li{margin:0 0 10px;max-width:80ch}
+.alerta{color:var(--ep);font-weight:600}
+svg text{font-family:Barlow,system-ui,sans-serif}
+.est{cursor:pointer}.est:focus{outline:none}.est:focus rect.cx,.est.sel rect.cx{stroke:var(--sel);stroke-width:3}
+.tr,.ep{cursor:pointer}
+svg.foco .est,svg.foco .ep,svg.foco .tr{opacity:.25;transition:opacity .15s}
+svg.foco .lit{opacity:1}
+@media(prefers-reduced-motion:reduce){svg.foco *{transition:none}}
+@media(max-width:600px){table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal;color:var(--soft)}.stack td:empty{display:none}.tot{grid-template-columns:1fr}}
+</style><script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<section class="band">
+  <h1>Layout das linhas: 40 estações, 12 transferências e 22 áreas de desvio</h1>
+  <p class="lead">Planta das esteiras redesenhada a limpo do <i>Desenho_esteira</i> (25/11/2026), com os dados de cada estação (<code>projeto/dados/estacoes.json</code>). É a mesma tabela de TRs e áreas de desvio usada no simulador 3D e na Operação completa. Clique em uma estação para ver a ficha; passe o mouse em uma TR para ver o que ela atende.</p>
+</section>
+
+<section class="band" style="padding-top:0">
+  <div class="scroll"><div class="planta"><svg id="svg" viewBox="0 0 1780 690" role="img" aria-label="Planta das linhas Asi 1 (Perfumaria) e Asi 3 (Medicamento) com estações, transferências, áreas de desvio, divisor e conferência"></svg></div></div>
+  <p class="dica">Em tela pequena, arraste a planta para o lado.</p>
+  <div class="leg">
+    <span><i style="background:var(--tr)"></i>Transferência (TR, módulo de desvio)</span>
+    <span><i style="background:var(--epf);border:1px solid var(--ep)"></i>Área de desvio (EP) e sentido do desvio</span>
+    <span><i style="background:var(--asi1)"></i>Esteira lado Asi 1 (TR_03 / EP_02)</span>
+    <span><i style="background:var(--asi3)"></i>Esteira lado Asi 3 (TR_02 / EP_01)</span>
+    <span><i style="background:var(--a03)"></i>Alto giro 0–3</span>
+    <span><i style="background:var(--a45)"></i>Andares 4–5</span>
+    <span><i style="background:var(--bx)"></i>Baixo giro</span>
+    <span>P = ponta · E = esquina · número pequeno = endereços</span>
+  </div>
+</section>
+
+<section class="band grade" style="padding-top:0">
+  <div class="card ficha" id="ficha" aria-live="polite"></div>
+  <div>
+    <div class="tot" id="tot"></div>
+    <h2>Transferências e o que cada uma atende</h2>
+    <table class="stack"><thead><tr><th>TR</th><th>Linha</th><th>Área de desvio</th><th>Estações</th><th class="n">Endereços</th></tr></thead><tbody id="tab"></tbody></table>
+  </div>
+</section>
+
+<section class="band" style="padding-top:0">
+  <h2>Decisões (seguindo o desenho)</h2>
+  <ol class="conf">
+    <li><b>TR_03_04 e TR_02_04 atendem um lado só:</b> a TR entre 38|39 desvia só para EP_02_07 (37–38) e a entre 15|16 só para EP_01_07 (14–15). As outras TRs atendem os dois lados.</li>
+    <li><b>Duas pistas por lado:</b> transporte (por dentro do alto giro) e separação (na frente das estações), como no 3D da estação.</li>
+    <li><b>Sem retorno às linhas:</b> a caixa que não consegue entrar na estação segue para a conferência; no loop dá até 6 voltas e depois vai para a área de escape.</li>
+    <li><b>EP_01 e EP_02 são áreas de desvio,</b> não estações.</li>
+    <li><b>Medidas:</b> passo de 2,5 m por estação; as distâncias do divisor e da conferência são premissas editáveis no simulador.</li>
+  </ol>
+</section>
+
+<script>
+{
+const D = __DADOS__; // rua -> [segmento, tipo, total, alto 0-3, andares 4-5, baixo, zonas do baixo giro, prédios do fundo]
+const NS = 'http://www.w3.org/2000/svg';
+const P = 56, X0 = 330;
+const pad = (n) => String(n).padStart(2, '0');
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = (n) => n.toLocaleString('pt-BR');
+// TRs ficam depois destes índices (0 = estação mais à esquerda); números do desenho: 06 … 01
+const TR_APOS = [0, 4, 6, 10, 14, 18];
+// áreas de desvio: índices das estações, número da EP e qual TR (posição em TR_APOS) atende
+const EPS = [[[0], 11, 0], [[1, 2], 10, 0], [[3, 4], 9, 1], [[5, 6], 8, 1], [[7, 8], 7, 2], [[9, 10], 6, 3],
+  [[11, 12], 5, 3], [[13, 14], 4, 4], [[15, 16], 3, 4], [[17, 18], 2, 5], [[19], 1, 5]];
+const LINHAS = [
+  { id: 'P', nome: 'Perfumaria', asi: 'Asi 1', cor: 'var(--asi1)', tr: 'TR_03', ep: 'EP_02', ruas: Array.from({ length: 20 }, (_, i) => pad(45 - i)),
+    yEst: 62, yTag: 128, pistas: [160, 184], yEp: 198, cima: true },
+  { id: 'M', nome: 'Medicamento', asi: 'Asi 3', cor: 'var(--asi3)', tr: 'TR_02', ep: 'EP_01', ruas: Array.from({ length: 20 }, (_, i) => pad(22 - i)),
+    yEst: 446, yTag: 418, pistas: [378, 402], yEp: 318, cima: false },
+];
+// monta o modelo: estações, TRs e EPs de cada linha
+LINHAS.forEach((L) => {
+  L.trs = TR_APOS.map((k, j) => ({ cod: `${L.tr}_${pad(6 - j)}`, x: X0 + (k + 1) * P, eps: [], linha: L }));
+  L.eps = EPS.map(([idx, n, t]) => {
+    const tr = L.trs[t];
+    const e = { cod: `${L.ep}_${pad(n)}`, idx, ruas: idx.map((i) => L.ruas[i]), x0: X0 + idx[0] * P, x1: X0 + (idx[idx.length - 1] + 1) * P, tr };
+    e.dir = (e.x0 + e.x1) / 2 > tr.x ? 1 : -1;
+    tr.eps.push(e);
+    return e;
+  });
+});
+const ondeEsta = {};
+LINHAS.forEach((L) => L.eps.forEach((e) => e.ruas.forEach((r) => { ondeEsta[r] = { L, e }; })));
+
+// ------------------------------------------------------------------ desenho
+const svg = document.getElementById('svg');
+let h = '';
+const T = (x, y, txt, o = '') => `<text x="${x}" y="${y}" ${o}>${esc(txt)}</text>`;
+const seta = (x, y, d, cor, s = 6) => `<path d="M${x + d * s},${y} L${x - d * s},${y - s} L${x - d * s},${y + s} Z" fill="${cor}"/>`;
+const setaV = (x, y, d, cor, s = 6) => `<path d="M${x},${y + d * s} L${x - s},${y - d * s} L${x + s},${y - d * s} Z" fill="${cor}"/>`;
+
+// conferência (loop) à esquerda
+h += T(175, 108, 'Conferência', 'text-anchor="middle" font-size="18" font-weight="700" fill="var(--ink)"');
+h += T(175, 126, 'as duas linhas se encontram aqui', 'text-anchor="middle" font-size="12.5" fill="var(--soft)"');
+h += `<rect x="58" y="146" width="236" height="282" rx="34" fill="var(--chip)" stroke="var(--ink)" stroke-width="3"/>`;
+h += seta(176, 146, 1, 'var(--ink)', 7) + setaV(294, 287, 1, 'var(--ink)', 7) + seta(176, 428, -1, 'var(--ink)', 7) + setaV(58, 287, -1, 'var(--ink)', 7);
+h += `<rect x="92" y="178" width="26" height="222" rx="8" fill="none" stroke="var(--ink)" stroke-width="2"/><rect x="124" y="178" width="26" height="222" rx="8" fill="none" stroke="var(--ink)" stroke-width="2"/>`;
+[220, 290, 360].forEach((y) => { h += setaV(105, y, 1, 'var(--ink)', 5) + setaV(137, y, -1, 'var(--ink)', 5); });
+h += `<rect x="70" y="150" width="46" height="22" rx="6" fill="var(--tr)"/><rect x="96" y="398" width="54" height="22" rx="6" fill="var(--tr)"/><rect x="96" y="430" width="30" height="20" rx="5" fill="var(--tr)"/>`;
+['TR_04_03', 'TR_04_02', 'TR_04_01'].forEach((c, i) => {
+  const y = 212 + i * 72;
+  h += `<rect x="176" y="${y - 13}" width="82" height="22" rx="4" fill="var(--asi1)"/>` + T(217, y + 3, c, 'text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff"');
+});
+h += `<rect x="58" y="462" width="236" height="40" rx="14" fill="var(--bg)" stroke="var(--ink)" stroke-width="3"/>`;
+h += setaV(111, 456, 1, 'var(--ink)', 6) + seta(200, 482, 1, 'var(--ink)', 6);
+h += T(176, 522, 'Área de escape: após 6 voltas', 'text-anchor="middle" font-size="13" font-weight="600" fill="var(--ink)"');
+h += T(176, 538, 'sem conferência, a caixa sai aqui', 'text-anchor="middle" font-size="12.5" fill="var(--soft)"');
+
+// alimentação, impressoras e divisor à direita
+const XF = 1508;
+h += `<rect x="${XF}" y="150" width="34" height="500" rx="6" fill="var(--chip)" stroke="var(--ink)" stroke-width="2.5"/>`;
+[600, 520, 300, 230].forEach((y) => { h += setaV(XF + 17, y, -1, 'var(--ink)', 6); });
+h += `<rect x="${XF - 6}" y="366" width="46" height="48" rx="6" fill="var(--tr)"/>`;
+h += T(XF + 52, 382, 'Divisor', 'font-size="15" font-weight="700" fill="var(--ink)"');
+h += T(XF + 52, 400, 'à esquerda → Medicamento (Asi 3)', 'font-size="12.5" fill="var(--soft)"');
+h += T(XF + 52, 416, 'reto ↑ → Perfumaria (Asi 1)', 'font-size="12.5" fill="var(--soft)"');
+h += `<rect x="${XF + 46}" y="540" width="26" height="22" rx="3" fill="var(--bg)" stroke="var(--ink)" stroke-width="2"/><rect x="${XF + 46}" y="576" width="26" height="22" rx="3" fill="var(--bg)" stroke="var(--ink)" stroke-width="2"/>`;
+h += T(XF + 80, 560, 'Impressoras', 'font-size="14" font-weight="700" fill="var(--ink)"');
+h += T(XF + 80, 577, 'dos picking lists', 'font-size="12.5" fill="var(--soft)"');
+h += T(XF + 17, 672, 'entrada das caixas', 'text-anchor="middle" font-size="12.5" fill="var(--soft)"');
+
+// meio: sentido
+h += T((X0 + X0 + 20 * P) / 2, 290, '← as esteiras correm das estações 26 e 03 para a conferência', 'text-anchor="middle" font-size="13.5" fill="var(--soft)"');
+
+LINHAS.forEach((L) => {
+  // nome da linha
+  const yNome = L.cima ? L.yEst - 14 : L.yEst + 76;
+  h += `<circle cx="${X0 + 6}" cy="${yNome - 5}" r="6" fill="${L.cor}"/>` + T(X0 + 18, yNome, `${L.asi} · ${L.nome} · estações ${L.ruas[19]} a ${L.ruas[0]}`, `font-size="16" font-weight="700" fill="var(--ink)"`);
+  // pistas até o loop e até a alimentação
+  L.pistas.forEach((y) => {
+    h += `<line x1="294" y1="${y}" x2="${XF}" y2="${y}" stroke="${L.cor}" stroke-width="4"/>`;
+    for (let x = X0 + 2 * P; x < X0 + 20 * P; x += 4 * P) h += seta(x, y, -1, L.cor, 6);
+    h += seta(310, y, -1, L.cor, 6);
+  });
+  // áreas de desvio
+  L.eps.forEach((e) => {
+    const w = e.x1 - e.x0 - 4, y = L.yEp, cx = (e.x0 + e.x1) / 2 + (w < 60 ? e.dir * 4 : 0);
+    const ax0 = e.dir > 0 ? e.x0 + 10 : e.x1 - 10, ax1 = e.dir > 0 ? e.x1 - 12 : e.x0 + 12;
+    h += `<g class="ep" data-tr="${e.tr.cod}" data-ruas="${e.ruas.join(',')}"><rect x="${e.x0 + 2}" y="${y}" width="${w}" height="50" rx="6" fill="var(--epf)" stroke="var(--ep)" stroke-width="1.5"/>`;
+    h += `<line x1="${ax0}" y1="${y + 12}" x2="${ax1}" y2="${y + 12}" stroke="var(--ep)" stroke-width="2.5"/>` + seta(ax1, y + 12, e.dir, 'var(--ep)', 5);
+    h += T(cx, y + 31, e.cod, `text-anchor="middle" font-size="${w < 60 ? 9.5 : 12.5}" font-weight="700" fill="var(--ink)"`);
+    h += T(cx, y + 44, e.ruas.length > 1 ? `Est. ${e.ruas.join('–')}` : `Est. ${e.ruas[0]}`, 'text-anchor="middle" font-size="11.5" fill="var(--soft)"') + '</g>';
+  });
+  // transferências
+  L.trs.forEach((t) => {
+    const y0 = Math.min(L.pistas[0], L.yEp) - 10, y1 = Math.max(L.pistas[1], L.yEp + 50) + 4;
+    h += `<g class="tr" data-tr="${t.cod}" tabindex="0"><rect x="${t.x - 6}" y="${y0}" width="12" height="${y1 - y0}" fill="var(--tr)"/>`;
+    h += `<rect x="${t.x - 38}" y="${L.yTag - 12}" width="76" height="22" rx="4" fill="var(--asi1)"/>` + T(t.x, L.yTag + 4, t.cod, 'text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff"') + '</g>';
+  });
+  // estações
+  L.ruas.forEach((r, i) => {
+    const [, tipo, tot, a03, a45, bx] = D[r], x = X0 + i * P + 3, w = P - 6, y = L.yEst;
+    const bw = w - 10, f = (v) => (bw * v) / tot;
+    h += `<g class="est" data-rua="${r}" tabindex="0" role="button" aria-label="Estação ${r}, ${tot} endereços"><rect class="cx" x="${x}" y="${y}" width="${w}" height="54" rx="6" fill="var(--est)" stroke="var(--rule)" stroke-width="1.5"/>`;
+    h += T(x + w / 2, y + 22, r, 'text-anchor="middle" font-size="19" font-weight="700" fill="var(--ink)" font-family="Barlow Condensed, sans-serif"');
+    h += T(x + w / 2, y + 37, fmt(tot), 'text-anchor="middle" font-size="11.5" fill="var(--soft)"');
+    if (tipo !== 'Comum') h += T(x + w - 5, y + 12, tipo[0], 'text-anchor="end" font-size="10.5" font-weight="700" fill="var(--ep)"');
+    h += `<rect x="${x + 5}" y="${y + 43}" width="${f(a03)}" height="5" fill="var(--a03)"/><rect x="${x + 5 + f(a03)}" y="${y + 43}" width="${f(a45)}" height="5" fill="var(--a45)"/><rect x="${x + 5 + f(a03) + f(a45)}" y="${y + 43}" width="${f(bx)}" height="5" fill="var(--bx)"/></g>`;
+  });
+});
+svg.innerHTML = h;
+
+// ------------------------------------------------------------------ ficha, tabela e totais
+const ficha = document.getElementById('ficha');
+function mostrar(r) {
+  const [seg, tipo, tot, a03, a45, bx, zonas, predios] = D[r], o = ondeEsta[r];
+  svg.querySelectorAll('.est').forEach((g) => g.classList.toggle('sel', g.dataset.rua === r));
+  ficha.innerHTML = `<div style="display:flex;align-items:baseline;gap:10px"><span class="num">${esc(r)}</span><span><b>${esc(seg)}</b> · ${esc(o.L.asi)}<br><span style="color:var(--soft)">${esc(tipo)}</span></span></div>
+    <div class="barra"><i style="width:${(a03 / tot) * 100}%;background:var(--a03)"></i><i style="width:${(a45 / tot) * 100}%;background:var(--a45)"></i><i style="width:${(bx / tot) * 100}%;background:var(--bx)"></i></div>
+    <dl><dt>Endereços</dt><dd>${fmt(tot)}</dd><dt>Alto giro 0–3</dt><dd>${fmt(a03)}</dd><dt>Andares 4–5</dt><dd>${fmt(a45)}</dd><dt>Baixo giro</dt><dd>${fmt(bx)}</dd>
+    <dt>Zonas do baixo giro</dt><dd>${fmt(zonas)}</dd><dt>Prédios no fundo</dt><dd>${fmt(predios)}</dd>
+    <dt>Transferência</dt><dd>${esc(o.e.tr.cod)}</dd><dt>Área de desvio</dt><dd>${esc(o.e.cod)}</dd><dt>Desvio para a</dt><dd>${o.e.dir > 0 ? 'direita →' : '← esquerda'}</dd>
+    <dt>Divide a área com</dt><dd>${o.e.ruas.filter((x) => x !== r).map(esc).join(', ') || 'ninguém'}</dd></dl>`;
+}
+const tab = document.getElementById('tab');
+tab.innerHTML = LINHAS.flatMap((L) => L.trs.map((t) => {
+  const ruas = t.eps.flatMap((e) => e.ruas), end = ruas.reduce((s, r) => s + D[r][2], 0);
+  return `<tr data-tr="${t.cod}"><td class="cod">${t.cod}</td><td>${esc(L.nome)}</td><td>${t.eps.map((e) => `${e.cod} ${e.dir > 0 ? '→' : '←'}`).join('<br>')}</td><td>${ruas.join(', ')}${t.eps.length < 2 ? ' <span class="alerta">(um lado só)</span>' : ''}</td><td class="n">${fmt(end)}</td></tr>`;
+})).join('');
+document.getElementById('tot').innerHTML = LINHAS.map((L) => {
+  const s = (k) => L.ruas.reduce((a, r) => a + D[r][k], 0);
+  return `<div style="--c:${L.cor}"><b>${fmt(s(2))} endereços</b><span>${esc(L.nome)} · ${esc(L.asi)} · 20 estações · ${fmt(s(5))} no baixo giro</span></div>`;
+}).join('');
+
+// ------------------------------------------------------------------ interação
+function focar(tr) {
+  if (!tr) { svg.classList.remove('foco'); svg.querySelectorAll('.lit').forEach((g) => g.classList.remove('lit')); tab.querySelectorAll('tr').forEach((x) => x.classList.remove('on')); return; }
+  const ruas = new Set([...svg.querySelectorAll(`.ep[data-tr="${tr}"]`)].flatMap((g) => g.dataset.ruas.split(',')));
+  svg.classList.add('foco');
+  svg.querySelectorAll('.est,.ep,.tr').forEach((g) => g.classList.toggle('lit', g.dataset.tr === tr || ruas.has(g.dataset.rua)));
+  tab.querySelectorAll('tr').forEach((x) => x.classList.toggle('on', x.dataset.tr === tr));
+}
+svg.addEventListener('mouseover', (ev) => { const g = ev.target.closest('.tr,.ep'); focar(g ? g.dataset.tr : null); });
+svg.addEventListener('mouseleave', () => focar(null));
+svg.addEventListener('focusin', (ev) => { const g = ev.target.closest('.tr'); focar(g ? g.dataset.tr : null); });
+svg.addEventListener('click', (ev) => { const g = ev.target.closest('.est'); if (g) mostrar(g.dataset.rua); });
+svg.addEventListener('keydown', (ev) => { const g = ev.target.closest('.est'); if (g && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); mostrar(g.dataset.rua); } });
+tab.addEventListener('mouseover', (ev) => { const r = ev.target.closest('tr'); if (r) focar(r.dataset.tr); });
+tab.addEventListener('mouseleave', () => focar(null));
+mostrar('05');
+}
+</script>
+</body>
+</html>
