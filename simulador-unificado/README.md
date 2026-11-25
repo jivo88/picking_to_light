@@ -77,10 +77,14 @@ itens por hora, ocupação, incompletos e escape, além do **ritmo máximo** de 
 incompletos e 1% no escape) e a curva de volumes conferidos.
 
 **Vista 3D das 40 estações.** O botão *3D · 40 estações* na planta mostra a operação inteira em 3D, andando junto com
-a simulação: cada estação com o alto giro (transporte por dentro) e a esteira de separação na frente do operador e o
-corredor do baixo giro atrás, as linhas espelhadas (corredores de costas no meio), as TRs, as áreas de desvio, o
-divisor com as impressoras e o loop da conferência com os conferentes. Os racks são esquemáticos (o número de caixas
-do alto giro segue `estacoes.json`); o 3D detalhado com os endereços reais continua na aba Estação 3D (05 e 27).
+a simulação, no formato da Estação 3D (mesmas medidas, cores e peças do `CFG` de `simulador-3d/sim.js`): alto giro com
+10 prédios de 25 cm, andares 0–3 por cima da esteira de transporte e 4–5 por baixo da esteira de separação, esteiras
+com roletes, corredor do baixo giro de 1,5 m atrás do operador com 12 prédios × 8 andares de cada lado e o mesmo
+operador de uniforme verde. As caixas nos racks seguem o número de endereços de cada estação (`estacoes.json`). As
+linhas são espelhadas (corredores de costas no meio). Também aparecem as TRs com o rolete direcionador, as áreas de
+desvio, o divisor com as impressoras e o loop da conferência com as bancadas e os conferentes (padrão: 16). Câmeras:
+geral, Perfumaria, Medicamento, estação 05, conferência e divisor. O 3D com os endereços reais e os displays continua
+na aba Estação 3D (05 e 27).
 
 Transferências e áreas de desvio (iguais no 3D e em `projeto/layout-2d/`):
 
@@ -109,7 +113,7 @@ Como funciona:
 - **Sem retorno às linhas** (como no desenho): se a estação estiver cheia, a caixa segue e o item fica sem separar;
   ela chega **incompleta** à conferência. Os indicadores mostram os itens não separados e os volumes incompletos.
 - **Conferência**: a caixa tenta um conferente a cada volta no loop. Depois de 6 voltas sem ser conferida vai para a
-  **área de escape**. Conferentes, tempo por caixa, tamanho da volta e número de voltas são editáveis.
+  **área de escape**. Conferentes (padrão: 16), tempo por caixa, tamanho da volta e número de voltas são editáveis.
 - **Separação**: tempo por item conforme o local (alto giro 0-3, andares 4-5 ou baixo giro, com deslocamento) mais
   um tempo por unidade e o tempo de abrir, fechar e empurrar a caixa. Sem LEDs soma a procura do endereço em cada item.
 
