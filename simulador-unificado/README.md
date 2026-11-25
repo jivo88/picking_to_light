@@ -86,7 +86,8 @@ desvio, o divisor com as impressoras e o loop da conferência com as bancadas e 
 geral, Perfumaria, Medicamento, estação 05, conferência e divisor. Também como na Estação 3D: módulos Q em cada endereço
 do alto giro 0–3, displays E+Q nos andares 4–5 e nas zonas do baixo giro, prédio 015 na frente do bloco, barra âmbar
 do baixo giro, placa do alto giro, nome da estação no piso e concentrador atrás. Com LEDs, os módulos dos itens da
-caixa em separação acendem. O 3D com os endereços reais e os displays continua
+caixa em separação acendem. Os operadores andam de verdade entre a bacia, o alto giro e o corredor do baixo giro, e as caixas
+percorrem as esteiras (transporte, TR, área de desvio, estação, volta ao transporte e loop da conferência) sem saltar. O 3D com os endereços reais e os displays continua
 na aba Estação 3D (05 e 27).
 
 Transferências e áreas de desvio (iguais no 3D e em `projeto/layout-2d/`):
